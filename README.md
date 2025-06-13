@@ -40,7 +40,7 @@ Feel free to connect with me!
 
 * **Email:** **bhargava.anandakumar@gmail.com**
 * **GitHub:** [https://github.com/bhargava562](https://github.com/bhargava562)
-* **LinkedIn:** [Your LinkedIn Profile URL] (Optional: Replace with your actual LinkedIn URL if you have one)
+* **LinkedIn:** [(https://www.linkedin.com/in/bhargava-a-a1426b325/)] (https://www.linkedin.com/in/bhargava-a-a1426b325/)
 
 ---
 
