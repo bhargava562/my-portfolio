@@ -4,11 +4,81 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
- 
+
 model Profile {
-  id    Int    @id @default(autoincrement())
-  name  String
-  email String
+  id        Int     @id @default(autoincrement())
+  name      String
+  title     String
+  bio       String
+  email     String
+  phone     String
+  avatarUrl String?
+}
+
+model Experience {
+  id          Int      @id @default(autoincrement())
+  company     String
+  role        String
+  startDate   DateTime
+  endDate     DateTime?
+  description String
+  type        String   // "Internship" or "FullTime"
+}
+
+model SocialLink {
+  id          Int    @id @default(autoincrement())
+  platformName String
+  url         String
+  iconKey     String // "linkedin", "github", etc.
+}
+
+model Skill {
+  id       Int    @id @default(autoincrement())
+  name     String
+  category String // "Languages", "DevOps", "AI"
+  icon     String?
+}
+
+// Keeping these for now if needed, or can remove
+model Project {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  imageUrl    String?
+  demoUrl     String?
+  repoUrl     String?
+  technologies String
+  featured    Boolean  @default(false)
+}
+
+model BlogPost {
+  id        Int      @id @default(autoincrement())
+  title     String
+  slug      String   @unique
+  excerpt   String
+  content   String
+  coverImage String?
+  publishedAt DateTime @default(now())
+  tags      String
+}
+
+model Education {
+  id          Int      @id @default(autoincrement())
+  institution String
+  degree      String
+  description String
+  startDate   DateTime
+  endDate     DateTime?
+}
+
+model Certification {
+  id        Int      @id @default(autoincrement())
+  name      String
+  issuer    String
+  date      DateTime
+  url       String?
+  credentialId String?
 }

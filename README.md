@@ -26,6 +26,12 @@ This project replicates the feel of a desktop OS using modern web technologies:
 *   **📂 File System Navigation:** Browse through "files" and "folders" representing my projects and resume.
 *   **🎨 Dynamic Theming:** Beautifully crafted UI components using Tailwind CSS and Radix UI.
 
+## ✨ Recent Enhancements
+
+*   **Advanced Window Physics:** Upgraded to `react-rnd` for seamless window dragging, resizing, and boundary enforcement (windows stay within the desktop).
+*   **Strict Navigation Logic:** Implemented a robust registry system to ensure precise folder routing (e.g., `/experience`, `/skills`).
+*   **Data-Driven Profile:** Integrated Prisma with SQLite to dynamically fetch profile, skills, and experience data.
+
 ## 🛠️ Tech Stack
 
 Built with a focus on performance, accessibility, and developer experience:

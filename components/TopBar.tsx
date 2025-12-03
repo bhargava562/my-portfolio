@@ -10,25 +10,33 @@ export default function TopBar() {
   const [showQuickSettings, setShowQuickSettings] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
 
-  const getCurrentDateTime = () => {
-    const now = new Date();
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const [dateString, setDateString] = useState<string>('');
 
-    const dayName = days[now.getDay()];
-    const month = months[now.getMonth()];
-    const day = now.getDate();
-    const hours = now.getHours().toString().padStart(2, '0');
-    const minutes = now.getMinutes().toString().padStart(2, '0');
+  useEffect(() => {
+    const updateDate = () => {
+      const now = new Date();
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-    return `${dayName} ${month} ${day} ${hours}:${minutes}`;
-  };
+      const dayName = days[now.getDay()];
+      const month = months[now.getMonth()];
+      const day = now.getDate();
+      const hours = now.getHours().toString().padStart(2, '0');
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+
+      setDateString(`${dayName} ${month} ${day} ${hours}:${minutes}`);
+    };
+
+    updateDate();
+    const interval = setInterval(updateDate, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <>
-      <div className="fixed top-0 left-0 right-0 h-7 ubuntu-header-bg backdrop-blur-sm z-50 flex items-center justify-between px-2 text-white">
+      <div className="fixed top-0 left-0 right-0 h-7 bg-[#1E1E1E] text-[#AEA79F] z-50 flex items-center justify-between px-2 shadow-sm font-ubuntu select-none">
         {/* Left: Activities */}
-        <button className="px-3 py-0.5 hover:bg-white/10 rounded transition-colors">
+        <button className="px-3 py-0.5 hover:bg-white/10 rounded-full transition-colors text-sm font-medium">
           Activities
         </button>
 
@@ -37,7 +45,7 @@ export default function TopBar() {
           onClick={() => setShowCalendar(!showCalendar)}
           className="px-3 py-0.5 hover:bg-white/10 rounded transition-colors"
         >
-          {getCurrentDateTime()}
+          {dateString}
         </button>
 
         {/* Right: System Tray */}

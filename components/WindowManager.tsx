@@ -1,16 +1,20 @@
 "use client";
 
 import { createContext, useContext, useState, ReactNode } from 'react';
+import { DesktopItemType } from '@/types/desktop';
 
 export interface WindowData {
   id: string;
   title: string;
   icon: string;
+  type: DesktopItemType;
   content: ReactNode;
   isMinimized: boolean;
   isMaximized: boolean;
   position: { x: number; y: number };
   size: { width: number; height: number };
+  currentPath?: string; // For navigation
+  props?: any; // Data to pass to the component
 }
 
 interface WindowContextType {
@@ -23,6 +27,7 @@ interface WindowContextType {
   setActiveWindow: (id: string) => void;
   updateWindowPosition: (id: string, position: { x: number; y: number }) => void;
   updateWindowSize: (id: string, size: { width: number; height: number }) => void;
+  navigateWindow: (id: string, path: string) => void;
   isWindowOpen: (id: string) => boolean;
 }
 
@@ -51,6 +56,7 @@ export function WindowProvider({ children }: { children: ReactNode }) {
       isMaximized: false,
       position: { x: 100 + windows.length * 30, y: 80 + windows.length * 30 },
       size: { width: 800, height: 600 },
+      currentPath: windowData.currentPath || windowData.props?.initialPath || '/', // Default path
     };
 
     setWindows(prev => [...prev, newWindow]);
@@ -95,6 +101,12 @@ export function WindowProvider({ children }: { children: ReactNode }) {
     ));
   };
 
+  const navigateWindow = (id: string, path: string) => {
+    setWindows(prev => prev.map(w =>
+      w.id === id ? { ...w, currentPath: path } : w
+    ));
+  };
+
   const isWindowOpen = (id: string) => {
     return windows.some(w => w.id === id && !w.isMinimized);
   };
@@ -110,6 +122,7 @@ export function WindowProvider({ children }: { children: ReactNode }) {
       setActiveWindow,
       updateWindowPosition,
       updateWindowSize,
+      navigateWindow,
       isWindowOpen,
     }}>
       {children}

@@ -1,6 +1,18 @@
+"use client";
+
+import { useEffect, useState } from 'react';
 import { Github, Linkedin, Twitter, Mail, MapPin } from 'lucide-react';
+import { getProfile } from '@/lib/actions';
 
 export default function AboutContent() {
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    getProfile().then(setProfile);
+  }, []);
+
+  if (!profile) return <div className="p-8 text-white">Loading profile...</div>;
+
   return (
     <div className="flex h-full">
       {/* Sidebar */}
@@ -24,15 +36,16 @@ export default function AboutContent() {
           <div className="max-w-3xl">
             {/* Profile Section */}
             <div className="flex items-start gap-6 mb-8">
-              <div className="w-32 h-32 bg-gradient-to-br from-orange-500 to-purple-600 rounded-full flex items-center justify-center text-5xl">
-                JD
+              <div className="w-32 h-32 bg-gradient-to-br from-orange-500 to-purple-600 rounded-full flex items-center justify-center text-5xl overflow-hidden">
+                {/* Use avatarUrl if available, else initials */}
+                {profile.avatarUrl ? <img src={profile.avatarUrl} alt={profile.name} className="w-full h-full object-cover" /> : "JD"}
               </div>
               <div className="flex-1">
-                <h1 className="mb-2">John Doe</h1>
-                <h3 className="ubuntu-orange mb-3">Full Stack Developer & UI/UX Designer</h3>
+                <h1 className="mb-2">{profile.name}</h1>
+                <h3 className="ubuntu-orange mb-3">{profile.title}</h3>
                 <div className="flex items-center gap-2 text-gray-300 mb-2">
                   <MapPin className="w-4 h-4" />
-                  <span>San Francisco, CA</span>
+                  <span>Chennai, India</span>
                 </div>
               </div>
             </div>
@@ -40,14 +53,8 @@ export default function AboutContent() {
             {/* Bio */}
             <section className="mb-8">
               <h2 className="mb-3">About</h2>
-              <p className="text-gray-300 leading-relaxed mb-3">
-                Passionate software engineer with 5+ years of experience building modern web applications. 
-                Specialized in React, TypeScript, and Node.js with a keen eye for design and user experience.
-              </p>
-              <p className="text-gray-300 leading-relaxed">
-                I love creating intuitive interfaces and solving complex problems with elegant solutions. 
-                When I'm not coding, you can find me exploring new technologies, contributing to open source, 
-                or enjoying the outdoors.
+              <p className="text-gray-300 leading-relaxed mb-3 whitespace-pre-wrap">
+                {profile.bio}
               </p>
             </section>
 
@@ -56,32 +63,29 @@ export default function AboutContent() {
               <h2 className="mb-3">Connect With Me</h2>
               <div className="grid grid-cols-2 gap-3">
                 <a
-                  href="#"
+                  href="https://github.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex items-center gap-3 p-3 bg-gray-700 rounded-lg hover:ubuntu-orange-bg transition-colors"
                 >
                   <Github className="w-5 h-5" />
-                  <span>github.com/johndoe</span>
+                  <span>GitHub</span>
                 </a>
                 <a
-                  href="#"
+                  href="https://linkedin.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex items-center gap-3 p-3 bg-gray-700 rounded-lg hover:ubuntu-orange-bg transition-colors"
                 >
                   <Linkedin className="w-5 h-5" />
-                  <span>linkedin.com/in/johndoe</span>
+                  <span>LinkedIn</span>
                 </a>
                 <a
-                  href="#"
-                  className="flex items-center gap-3 p-3 bg-gray-700 rounded-lg hover:ubuntu-orange-bg transition-colors"
-                >
-                  <Twitter className="w-5 h-5" />
-                  <span>@johndoe</span>
-                </a>
-                <a
-                  href="mailto:john@example.com"
+                  href={`mailto:${profile.email}`}
                   className="flex items-center gap-3 p-3 bg-gray-700 rounded-lg hover:ubuntu-orange-bg transition-colors"
                 >
                   <Mail className="w-5 h-5" />
-                  <span>john@example.com</span>
+                  <span>{profile.email}</span>
                 </a>
               </div>
             </section>

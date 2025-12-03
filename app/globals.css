@@ -1,26 +1,45 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Yaru Theme Colors */
+  --ubuntu-orange: #E95420;
+  --jet-black: #1E1E1E;
+  --aubergine: #2C001E;
+  --dark-grey: #3E3E3E;
+  --warm-grey: #AEA79F;
+  --selection-orange: rgba(233, 84, 32, 0.4);
+
+  --background: var(--jet-black);
+  --foreground: #ffffff;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-ubuntu-orange: var(--ubuntu-orange);
+  --color-jet-black: var(--jet-black);
+  --color-aubergine: var(--aubergine);
+  --color-dark-grey: var(--dark-grey);
+  --color-warm-grey: var(--warm-grey);
+  --color-selection-orange: var(--selection-orange);
+
+  --font-ubuntu: "Ubuntu", sans-serif;
+  --font-ubuntu-mono: "Ubuntu Mono", monospace;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-ubuntu);
+  overflow: hidden;
+  /* Prevent body scroll for desktop feel */
+  font-size: clamp(14px, 1vw + 0.5rem, 16px);
+  /* Fluid font scaling */
+}
+
+/* Selection style */
+::selection {
+  background: var(--ubuntu-orange);
+  color: white;
 }

@@ -43,9 +43,11 @@ coverage/
 # Environment Variables
 # ============================
 .env
-.env.local
-.env.development.local
-.env.test.local
+.env.# local env files
+.env*.local
+
+# vercel
+.vercel
 .env.production.local
 .env.production
 *.env

@@ -88,25 +88,25 @@ export default function SkillsContent() {
         <div className="flex-1 p-8 overflow-auto text-white">
           <h1 className="mb-8">Technical Skills & Expertise</h1>
 
-          <div className="grid grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {skillCategories.map((category) => {
               const Icon = category.icon;
               return (
-                <div key={category.title} className="bg-gray-700 rounded-lg p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <Icon className="w-6 h-6 ubuntu-orange" />
-                    <h3>{category.title}</h3>
+                <div key={category.title} className="bg-[#2C2C2C] rounded-lg p-6 border border-[#3E3E3E]">
+                  <div className="flex items-center gap-3 mb-6 border-b border-[#3E3E3E] pb-3">
+                    <Icon className="w-6 h-6 text-[#E95420]" />
+                    <h3 className="font-bold text-lg">{category.title}</h3>
                   </div>
-                  <div className="space-y-4">
+                  <div className="space-y-5">
                     {category.skills.map((skill) => (
                       <div key={skill.name}>
-                        <div className="flex justify-between mb-1">
-                          <span className="text-sm">{skill.name}</span>
-                          <span className="text-sm text-gray-400">{skill.level}%</span>
+                        <div className="flex justify-between mb-2 items-center">
+                          <span className="text-sm font-medium">{skill.name}</span>
+                          <span className="text-xs text-[#AEA79F]">{skill.level}%</span>
                         </div>
-                        <div className="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
+                        <div className="w-full h-2.5 bg-gray-700 rounded-full overflow-hidden border border-[#3E3E3E]">
                           <div
-                            className="h-full ubuntu-orange-bg transition-all duration-500"
+                            className="h-full bg-gradient-to-r from-orange-500 to-purple-600 rounded-full transition-all duration-1000 ease-out"
                             style={{ width: `${skill.level}%` }}
                           />
                         </div>
@@ -127,7 +127,7 @@ export default function SkillsContent() {
                 <div className="mb-1">Senior Frontend Developer</div>
                 <div className="text-sm text-gray-400 mb-2">Tech Corp • 2021 - Present</div>
                 <p className="text-sm text-gray-300">
-                  Leading development of enterprise web applications, mentoring junior developers, 
+                  Leading development of enterprise web applications, mentoring junior developers,
                   and implementing best practices for React and TypeScript projects.
                 </p>
               </div>
@@ -136,7 +136,7 @@ export default function SkillsContent() {
                 <div className="mb-1">Full Stack Developer</div>
                 <div className="text-sm text-gray-400 mb-2">StartupXYZ • 2019 - 2021</div>
                 <p className="text-sm text-gray-300">
-                  Built and maintained multiple web applications using React, Node.js, and MongoDB. 
+                  Built and maintained multiple web applications using React, Node.js, and MongoDB.
                   Collaborated with design team to create intuitive user interfaces.
                 </p>
               </div>
@@ -145,7 +145,7 @@ export default function SkillsContent() {
                 <div className="mb-1">Junior Developer</div>
                 <div className="text-sm text-gray-400 mb-2">WebDev Agency • 2017 - 2019</div>
                 <p className="text-sm text-gray-300">
-                  Developed client websites and web applications using modern JavaScript frameworks. 
+                  Developed client websites and web applications using modern JavaScript frameworks.
                   Gained experience in full development lifecycle.
                 </p>
               </div>
