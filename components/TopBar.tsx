@@ -23,12 +23,13 @@ export default function TopBar() {
       const day = now.getDate();
       const hours = now.getHours().toString().padStart(2, '0');
       const minutes = now.getMinutes().toString().padStart(2, '0');
+      const seconds = now.getSeconds().toString().padStart(2, '0');
 
-      setDateString(`${dayName} ${month} ${day} ${hours}:${minutes}`);
+      setDateString(`${dayName} ${month} ${day} ${hours}:${minutes}:${seconds}`);
     };
 
     updateDate();
-    const interval = setInterval(updateDate, 60000);
+    const interval = setInterval(updateDate, 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -75,7 +76,7 @@ export default function TopBar() {
               transition={{ duration: 0.15 }}
               className="fixed top-8 right-2 z-50"
             >
-              <QuickSettings onClose={() => setShowQuickSettings(false)} />
+              <QuickSettings />
             </motion.div>
           </>
         )}
@@ -96,7 +97,7 @@ export default function TopBar() {
               transition={{ duration: 0.15 }}
               className="fixed top-8 left-1/2 -translate-x-1/2 z-50"
             >
-              <CalendarDropdown onClose={() => setShowCalendar(false)} />
+              <CalendarDropdown />
             </motion.div>
           </>
         )}

@@ -14,7 +14,7 @@ export interface WindowData {
   position: { x: number; y: number };
   size: { width: number; height: number };
   currentPath?: string; // For navigation
-  props?: any; // Data to pass to the component
+  props?: Record<string, unknown>; // Data to pass to the component
 }
 
 interface WindowContextType {
@@ -56,7 +56,7 @@ export function WindowProvider({ children }: { children: ReactNode }) {
       isMaximized: false,
       position: { x: 100 + windows.length * 30, y: 80 + windows.length * 30 },
       size: { width: 800, height: 600 },
-      currentPath: windowData.currentPath || windowData.props?.initialPath || '/', // Default path
+      currentPath: windowData.currentPath || (windowData.props?.initialPath as string) || '/', // Default path
     };
 
     setWindows(prev => [...prev, newWindow]);

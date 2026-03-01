@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Wifi, Volume2, Sun, Power } from 'lucide-react';
 
-export default function QuickSettings({ onClose }: { onClose: () => void }) {
+export default function QuickSettings() {
   const [volume, setVolume] = useState(70);
   const [brightness, setBrightness] = useState(80);
   const [wifiEnabled, setWifiEnabled] = useState(true);

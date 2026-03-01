@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
-export default function CalendarDropdown({ onClose }: { onClose: () => void }) {
+export default function CalendarDropdown() {
   const [currentDate] = useState(new Date());
   
   const getMonthData = () => {

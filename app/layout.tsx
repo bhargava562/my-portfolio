@@ -15,8 +15,8 @@ const ubuntuMono = Ubuntu_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ubuntu 24.04 Portfolio",
-  description: "A portfolio mimicking Ubuntu 24.04",
+  title: "Bhargava A",
+  description: "A portfolio of Bhargava A",
 };
 
 export default function RootLayout({
@@ -25,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${ubuntu.variable} ${ubuntuMono.variable} antialiased select-none`}
         suppressHydrationWarning

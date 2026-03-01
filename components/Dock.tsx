@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, User, Code, Briefcase, Trash2, File, Globe } from 'lucide-react';
+import { Home, Trash2, File, Globe } from 'lucide-react';
 import { useWindows } from './WindowManager';
 
 export default function Dock() {
@@ -8,7 +8,7 @@ export default function Dock() {
 
   interface DockItem {
     id: string;
-    icon: any;
+    icon: React.ElementType;
     label: string;
     isTemp?: boolean;
   }
@@ -33,8 +33,15 @@ export default function Dock() {
 
     if (window.isMinimized) {
       // Restore
-      const { isMinimized, isMaximized, position, size, ...rest } = window;
-      openWindow(rest);
+      openWindow({
+        id: window.id,
+        title: window.title,
+        icon: window.icon,
+        type: window.type,
+        content: window.content,
+        currentPath: window.currentPath,
+        props: window.props,
+      });
     } else if (activeWindowId === app.id) {
       // Minimize if already active
       minimizeWindow(app.id);

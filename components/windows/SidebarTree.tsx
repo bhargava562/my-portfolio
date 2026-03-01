@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronRight, ChevronDown, Folder, File } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronRight, ChevronDown, Folder } from 'lucide-react';
 import { DesktopItem } from '@/types/desktop';
 
 interface SidebarTreeProps {
@@ -13,24 +13,6 @@ interface SidebarTreeProps {
 export default function SidebarTree({ items, currentPath, onNavigate, level = 0, parentPath = '' }: SidebarTreeProps) {
     // State to track expanded folders
     const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-
-    // Auto-expand ancestors of currentPath
-    useEffect(() => {
-        if (currentPath.startsWith(parentPath)) {
-            // If current path is deeper than parent path, we might need to expand relevant children
-            // But actually, we just need to ensure *this* level is expanded if it's a parent of currentPath.
-            // The parent component handles its own expansion state.
-            // Here we need to expand *our* children if they are in the path.
-
-            const relativePath = currentPath.slice(parentPath.length);
-            const parts = relativePath.split('/').filter(p => p);
-
-            if (parts.length > 0) {
-                const nextId = parts[0];
-                setExpanded(prev => ({ ...prev, [nextId]: true }));
-            }
-        }
-    }, [currentPath, parentPath]);
 
     const toggleExpand = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();

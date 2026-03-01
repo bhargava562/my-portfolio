@@ -10,7 +10,7 @@ export interface DesktopItem {
     content?: ReactNode; // For 'file' type (direct open)
     children?: DesktopItem[]; // For 'folder' type
     appUrl?: string; // For 'app' type (e.g., Contact Me)
-    metadata?: any; // Extra data like Prisma ID
+    metadata?: Record<string, unknown>; // Extra data like Prisma ID
 }
 
 export interface WindowState {

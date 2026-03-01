@@ -2,7 +2,7 @@ import React from 'react';
 import WindowLayout from './WindowLayout';
 
 interface DetailViewProps {
-    item: any; // Replace with specific type
+    item: { title: string; description?: string; content?: React.ReactNode; [key: string]: unknown }; // Replace with specific type
 }
 
 export default function DetailView({ item }: DetailViewProps) {

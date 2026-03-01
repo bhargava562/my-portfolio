@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, Suspense } from 'react';
+import React, { useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useWindows } from './WindowManager';
@@ -8,23 +8,8 @@ import { DesktopItem } from '@/types/desktop';
 import { YaruFolderIcon, YaruFileIcon, YaruAppIcon, YaruLinkedinIcon, YaruGithubIcon } from './icons/YaruIcons';
 
 // Dynamic Imports with Loading Fallback
-const FileExplorer = dynamic(() => import('./windows/FileExplorer'), {
-  loading: () => <div className="flex items-center justify-center h-full text-white">Loading Explorer...</div>
-});
-const TextEditor = dynamic(() => import('./windows/TextEditor'), {
-  loading: () => <div className="flex items-center justify-center h-full text-white">Loading Editor...</div>
-});
-const Browser = dynamic(() => import('./windows/Browser'), {
-  loading: () => <div className="flex items-center justify-center h-full text-white">Loading Browser...</div>
-});
-const DetailView = dynamic(() => import('./windows/DetailView'), {
-  loading: () => <div className="flex items-center justify-center h-full text-white">Loading Details...</div>
-});
 const AboutContent = dynamic(() => import('./windows/AboutContent'), {
   loading: () => <div className="flex items-center justify-center h-full text-white">Loading Content...</div>
-});
-const ContactForm = dynamic(() => import('@/components/windows/ContactForm'), {
-  loading: () => <div className="flex items-center justify-center h-full text-white">Loading Contact Form...</div>
 });
 
 export default function Desktop() {
@@ -32,31 +17,51 @@ export default function Desktop() {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const desktopRef = useRef<HTMLDivElement>(null);
 
-  // Mock Data - In a real app, this would come from an API/Prisma
+  // Desktop Items - These define what appears on the desktop and how they open
   const desktopItems: DesktopItem[] = [
-    // Type A: Single-Value Files
+    // About Me - Opens AboutContent
     {
       id: 'about',
       title: 'About Me',
       type: 'file',
-      content: <AboutContent />, // This would be loaded into TextEditor
+      content: <AboutContent />,
     },
+    // Resume - Opens TextEditor
     {
       id: 'resume',
       title: 'Resume.pdf',
       type: 'file',
       content: <div className="p-4">Resume Content Placeholder</div>,
     },
-    // Type B: Multi-Value Folders
+    // Skills - Opens SkillsContent
+    {
+      id: 'skills',
+      title: 'Skills',
+      type: 'folder',
+      children: [],
+    },
+    // Experience - Opens ExperienceContent
     {
       id: 'experience',
       title: 'Experience',
       type: 'folder',
-      children: [
-        { id: 'exp-1', title: 'Ten Brain Research', type: 'file', content: <div>React JS Intern</div> },
-        { id: 'exp-2', title: 'Infosys Springboard', type: 'file', content: <div>Java Developer Intern</div> },
-      ],
+      children: [],
     },
+    // Education - Opens EducationContent
+    {
+      id: 'education',
+      title: 'Education',
+      type: 'folder',
+      children: [],
+    },
+    // Certifications - Opens CertificationsContent
+    {
+      id: 'certifications',
+      title: 'Certifications',
+      type: 'folder',
+      children: [],
+    },
+    // Projects - Opens FileExplorer
     {
       id: 'projects',
       title: 'Projects',
@@ -64,12 +69,6 @@ export default function Desktop() {
       children: [
         { id: 'proj-1', title: 'Project X', type: 'file', content: <div>Project X Details</div> },
       ],
-    },
-    {
-      id: 'skills',
-      title: 'Skills',
-      type: 'folder',
-      children: [],
     },
     // Socials Folder
     {
@@ -81,7 +80,7 @@ export default function Desktop() {
         { id: 'github', title: 'GitHub', type: 'file', appUrl: 'https://github.com', metadata: { icon: 'github' } },
       ],
     },
-    // Type C: Applications
+    // Contact Me - Opens ContactForm
     {
       id: 'contact',
       title: 'Contact Me',
@@ -99,6 +98,18 @@ export default function Desktop() {
     // Check for external link (Socials)
     if (item.appUrl && item.appUrl.startsWith('http')) {
       window.open(item.appUrl, '_blank');
+      return;
+    }
+
+    // Direct PDF Link Intercept
+    if (item.id === 'resume') {
+      const link = document.createElement('a');
+      link.href = '/Bhargava_Resume.pdf';
+      link.download = 'Bhargava_Resume.pdf';
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       return;
     }
 
@@ -166,6 +177,8 @@ export default function Desktop() {
             <div className="w-12 h-12 mb-1 relative flex items-center justify-center">
               {item.metadata?.icon === 'globe' ? (
                 <Image src="/globe.svg" alt="Contact" width={48} height={48} priority />
+              ) : item.id === 'resume' ? (
+                <Image src="/resume.png" alt="Resume" fill className="object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] rounded" />
               ) : (
                 <>
                   {item.type === 'folder' && <YaruFolderIcon className="w-full h-full drop-shadow-md" />}

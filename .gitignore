@@ -71,3 +71,8 @@ next-env.d.ts
 # Vercel
 # ============================
 .vercel/
+
+# ============================
+# Uploads (user-uploaded files)
+# ============================
+public/uploads/
