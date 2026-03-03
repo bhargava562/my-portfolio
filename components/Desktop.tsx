@@ -61,24 +61,40 @@ export default function Desktop() {
       type: 'folder',
       children: [],
     },
+    // Hackathons
+    {
+      id: 'hackathons',
+      title: 'Hackathons',
+      type: 'folder',
+      children: [],
+    },
+    // Awards
+    {
+      id: 'awards',
+      title: 'Awards',
+      type: 'folder',
+      children: [],
+    },
+    // Blogs
+    {
+      id: 'blogs',
+      title: 'Blogs',
+      type: 'folder',
+      children: [],
+    },
     // Projects - Opens FileExplorer
     {
       id: 'projects',
       title: 'Projects',
       type: 'folder',
-      children: [
-        { id: 'proj-1', title: 'Project X', type: 'file', content: <div>Project X Details</div> },
-      ],
+      children: [],
     },
     // Socials Folder
     {
       id: 'socials',
       title: 'Socials',
       type: 'folder',
-      children: [
-        { id: 'linkedin', title: 'LinkedIn', type: 'file', appUrl: 'https://linkedin.com', metadata: { icon: 'linkedin' } },
-        { id: 'github', title: 'GitHub', type: 'file', appUrl: 'https://github.com', metadata: { icon: 'github' } },
-      ],
+      children: [],
     },
     // Contact Me - Opens ContactForm
     {
@@ -101,15 +117,36 @@ export default function Desktop() {
       return;
     }
 
-    // Direct PDF Link Intercept
+    // Direct PDF Link Intercept (with fallback)
     if (item.id === 'resume') {
-      const link = document.createElement('a');
-      link.href = '/Bhargava_Resume.pdf';
-      link.download = 'Bhargava_Resume.pdf';
-      link.target = '_blank';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      import('@/lib/actions').then(async ({ getProfile, getImageUrl }) => {
+        const link = document.createElement('a');
+        link.target = '_blank';
+        link.download = 'Bhargava_resume.pdf';
+        
+        let hasNavigated = false;
+        try {
+          const profile = await getProfile();
+          if (profile?.resume_path) {
+            const url = getImageUrl(profile.resume_path);
+            const res = await fetch(url, { method: 'HEAD' });
+            if (res.ok) {
+              link.href = url;
+              hasNavigated = true;
+            }
+          }
+        } catch {
+          // Silent catch to naturally fall back to local file
+        }
+        
+        if (!hasNavigated) {
+          link.href = '/Bhargava_resume.pdf';
+        }
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
       return;
     }
 

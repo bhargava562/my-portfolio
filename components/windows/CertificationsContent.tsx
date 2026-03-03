@@ -6,9 +6,10 @@ import { getCertifications } from '@/lib/actions';
 
 interface CertNode {
   id: number;
-  name: string;
-  issuer: string;
-  date: Date | null;
+  title: string;
+  issuing_organization: string;
+  issue_date: string | null;
+  credential_url: string | null;
   [key: string]: unknown;
 }
 
@@ -37,9 +38,9 @@ export default function CertificationsContent() {
                         <div className="flex items-start gap-3">
                             <Award className="w-5 h-5 text-orange-400 mt-0.5 flex-shrink-0" />
                             <div>
-                                <h3 className="font-semibold mb-1">{cert.name}</h3>
-                                <p className="text-sm text-gray-400">{cert.issuer}</p>
-                                <p className="text-xs text-gray-500 mt-1">{formatDate(cert.date)}</p>
+                                <h3 className="font-semibold mb-1">{cert.title}</h3>
+                                <p className="text-sm text-gray-400">{cert.issuing_organization}</p>
+                                <p className="text-xs text-gray-500 mt-1">{formatDate(cert.issue_date ? new Date(cert.issue_date) : null)}</p>
                             </div>
                         </div>
                     </div>

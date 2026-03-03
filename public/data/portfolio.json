@@ -205,15 +205,6 @@
   ],
   "hackathons": [
     {
-      "category": "Finalist",
-      "created_at": "2026-03-01T08:50:56.473394",
-      "description": "Developed Tamil Nadu Epic Tourism platform and secured Top 10 position among competing teams.",
-      "id": "7a7eeb6b-3186-47bc-86c4-79d64ad8dcc7",
-      "name": "HackNEXA’26 Hackathon",
-      "organizer": "Google Developer Group (GDG) – R.M.K Engineering College",
-      "position": "Top 10"
-    },
-    {
       "category": "Participation",
       "created_at": "2026-03-01T08:51:38.053341",
       "description": "Participated in Adobe India Hackathon as part of a competitive development team.",
@@ -225,15 +216,27 @@
     {
       "category": "Winner",
       "created_at": "2026-03-01T08:42:24.672044",
-      "description": "Secured 2nd Runner Up position with BlockSafe – Autonomous Cognitive Firewall & Threat Intelligence Engine.",
+      "description": "Secured 2nd Place Prize (₹15,000) at Yet Another Hackathon 2026 for building BlockSafe, an AI-powered Autonomous Cognitive Firewall that detects psychological scam tactics in real time and converts attacks into actionable threat intelligence within 24 hours.",
       "event_end_date": "2026-02-22",
       "event_start_date": "2026-02-21",
       "id": "97fd6079-31e2-4663-bef8-60ed622bdfef",
-      "location": "Tidel Park",
+      "location": "TANSAM Tidel Park",
       "name": "Yet Another Hackathon 2026 (YAH’26)",
       "organizer": "SVCE ACM Student Chapter – TANSAM Center of Excellence",
-      "position": "2nd Runner Up",
+      "position": "2nd Place",
       "prize_amount": 15000
+    },
+    {
+      "category": "Finalist",
+      "created_at": "2026-03-01T08:50:56.473394",
+      "description": "Developed a high-fidelity prototype for TN-Epic, an AI-powered AR tourism platform, and secured a Top 10 Finalist position out of numerous competing teams at HackNexa’26, organized by the Google Developer Group On Campus (GDGOC) - R.M.K. Engineering College.",
+      "event_end_date": "2026-01-08",
+      "event_start_date": "2026-01-08",
+      "id": "7a7eeb6b-3186-47bc-86c4-79d64ad8dcc7",
+      "location": "R.M.K. Engineering College",
+      "name": "HackNEXA’26 Hackathon",
+      "organizer": "Google Developer Groups On Campus (GDGOC) - R.M.K. Engineering College",
+      "position": "Top 10"
     }
   ],
   "profile": {
@@ -265,24 +268,6 @@
   },
   "projects": [
     {
-      "collaborators": [],
-      "created_at": "2026-03-01T05:26:47.145626",
-      "description": "A digital platform built to enhance tourism by showcasing Tamil Nadu’s heritage, iconic destinations, and cultural diversity using technology.",
-      "id": "3fb12127-5c65-4878-ac82-ffe088441f8f",
-      "is_featured": false,
-      "project_type": "Hackathon",
-      "role": "Full Stack Developer",
-      "tagline": "Smart Tourism Platform Showcasing Tamil Nadu Heritage",
-      "team_name": "RCB (RMK Challenging Boys)",
-      "tech_stack": [
-        "Web Development",
-        "Tourism Tech",
-        "Frontend",
-        "Backend"
-      ],
-      "title": "Tamil Nadu Epic Tourism"
-    },
-    {
       "collaborators": [
         {
           "id": "89a2c99c-91c2-42d9-932e-91084f25a572",
@@ -301,8 +286,11 @@
         }
       ],
       "created_at": "2026-03-01T05:26:47.145626",
+      "demo_url": "",
       "description": "BlockSafe is an AI-powered cognitive firewall designed to detect psychological manipulation in scam conversations. It includes a cognitive risk engine, autonomous AI honeypot, and threat intelligence dashboard that converts scam attempts into ML-ready defensive intelligence.",
       "end_date": "2026-02-22",
+      "github_url": "https://github.com/bhargava562/block-safe",
+      "hackathon_id": "97fd6079-31e2-4663-bef8-60ed622bdfef",
       "id": "ad6a02c0-fb14-427e-8331-5cc5c2fb9f4e",
       "is_featured": true,
       "project_type": "Hackathon",

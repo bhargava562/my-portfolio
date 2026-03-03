@@ -6,15 +6,13 @@ import { getExperiences } from '@/lib/actions';
 
 interface ExperienceData {
     id: number;
-    company: string;
+    company_name: string;
     role: string;
-    startDate: Date;
-    endDate: Date | null;
+    start_date: Date | string | null;
+    is_current: boolean;
     description: string | null;
-    projectOverview: string | null;
-    keyContributions: string[] | null;
-    techStack: string | null;
-    type: string;
+    location: string | null;
+    employment_type: string | null;
 }
 
 export default function ExperienceContent() {
@@ -43,35 +41,14 @@ export default function ExperienceContent() {
                         <div className="flex items-center gap-3 mb-1">
                             <Briefcase className="w-4 h-4 text-orange-400" />
                             <span className="font-semibold">{exp.role}</span>
-                            <span className="text-xs px-2 py-0.5 bg-gray-700 rounded">{exp.type}</span>
+                            {exp.employment_type && <span className="text-xs px-2 py-0.5 bg-gray-700 rounded">{exp.employment_type}</span>}
                         </div>
                         <div className="text-sm text-gray-400 mb-2">
-                            {exp.company} • {formatDate(exp.startDate)} - {formatDate(exp.endDate)}
+                            {exp.company_name} • {formatDate(exp.start_date ? new Date(exp.start_date) : null)} - {exp.is_current ? 'Present' : ''}
                         </div>
 
-                        {exp.projectOverview && (
-                            <p className="text-sm text-gray-300 mb-3 italic">{exp.projectOverview}</p>
-                        )}
-
-                        {exp.keyContributions && exp.keyContributions.length > 0 && (
-                            <ul className="text-sm text-gray-300 space-y-1.5 mb-3">
-                                {exp.keyContributions.map((contribution: string, i: number) => (
-                                    <li key={i} className="flex gap-2">
-                                        <span className="text-orange-400 mt-1">•</span>
-                                        <span>{contribution}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-
-                        {exp.description && !exp.keyContributions?.length && (
-                            <p className="text-sm text-gray-300 mb-3">{exp.description}</p>
-                        )}
-
-                        {exp.techStack && (
-                            <div className="text-xs text-gray-400 bg-gray-800 px-3 py-2 rounded inline-block">
-                                <span className="text-orange-400">Tech:</span> {exp.techStack}
-                            </div>
+                        {exp.description && (
+                            <p className="text-sm text-gray-300 mb-3 whitespace-pre-wrap">{exp.description}</p>
                         )}
                     </div>
                 ))}

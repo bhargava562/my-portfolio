@@ -1,0 +1,67 @@
+{
+  "profile": [
+    "about_description",
+    "area_of_interest",
+    "contact_number",
+    "created_at",
+    "email",
+    "full_name",
+    "headline",
+    "id",
+    "location",
+    "preferred_roles",
+    "profile_image_path",
+    "resume_path",
+    "short_intro",
+    "years_of_experience"
+  ],
+  "experience": [
+    "company_name",
+    "created_at",
+    "description",
+    "display_order",
+    "employment_type",
+    "id",
+    "is_current",
+    "location",
+    "role",
+    "start_date"
+  ],
+  "education": [
+    "created_at",
+    "degree",
+    "description",
+    "display_order",
+    "end_year",
+    "field_of_study",
+    "grade",
+    "id",
+    "institution_name",
+    "start_year"
+  ],
+  "projects": [
+    "collaborators",
+    "created_at",
+    "description",
+    "id",
+    "is_featured",
+    "project_type",
+    "role",
+    "tagline",
+    "team_name",
+    "tech_stack",
+    "title"
+  ],
+  "certs": [
+    "created_at",
+    "credential_id",
+    "credential_url",
+    "id",
+    "is_featured",
+    "issue_date",
+    "issuing_organization",
+    "platform",
+    "skills_gained",
+    "title"
+  ]
+}

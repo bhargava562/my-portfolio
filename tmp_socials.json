@@ -1,0 +1,42 @@
+[
+  {
+    "created_at": "2026-02-28T17:39:40.934904",
+    "display_order": 1,
+    "id": "2df02639-577f-4a37-aabd-79ccaf6ecc24",
+    "platform": "LinkedIn",
+    "url": "https://www.linkedin.com/in/bhargavaa1/",
+    "username": "bhargavaa1"
+  },
+  {
+    "created_at": "2026-02-28T17:39:40.934904",
+    "display_order": 2,
+    "id": "752ca474-17fa-426b-a24e-7dbff482e034",
+    "platform": "GitHub",
+    "url": "https://github.com/bhargava562",
+    "username": "bhargava562"
+  },
+  {
+    "created_at": "2026-02-28T17:39:40.934904",
+    "display_order": 3,
+    "id": "75748081-3cc8-40c2-9202-0b0adf99f20b",
+    "platform": "LeetCode",
+    "url": "https://leetcode.com/u/Bhargava2525/",
+    "username": "Bhargava2525"
+  },
+  {
+    "created_at": "2026-02-28T17:39:40.934904",
+    "display_order": 4,
+    "id": "bd6342af-95a5-4671-a6c1-7c7c658a4d3a",
+    "platform": "X",
+    "url": "https://x.com/Bhargava3196511",
+    "username": "Bhargava3196511"
+  },
+  {
+    "created_at": "2026-02-28T17:39:40.934904",
+    "display_order": 5,
+    "id": "92fbda41-d772-4924-bd79-b2170e981a81",
+    "platform": "HackerRank",
+    "url": "https://www.hackerrank.com/profile/Bhargava_A_056/",
+    "username": "Bhargava_A_056"
+  }
+]

@@ -1,48 +1,107 @@
+let cachedData: Record<string, unknown> | null = null;
+let lastCacheTime = 0;
+const CACHE_TTL = 5000; // 5 seconds in-memory fallback cache
+
 // Read static optimized JSON strictly built by Background Sync pipeline via HTTP GET.
-// This prevents Next.js from spawning an implicit POST Server Action on window renders.
 async function getPortfolioData() {
+  const now = Date.now();
+  if (cachedData && (now - lastCacheTime < CACHE_TTL)) {
+      return cachedData;
+  }
+
   try {
     const res = await fetch('/data/portfolio.json', { cache: 'no-store' });
     if (!res.ok) {
       console.error("❌ Failed to read static portfolio JSON: Status", res.status);
-      return null;
+      return cachedData || null;
     }
-    return await res.json();
+    const parsed = await res.json();
+    cachedData = parsed;
+    lastCacheTime = now;
+    return parsed;
   } catch (error) {
     console.error("❌ Failed to fetch static portfolio JSON:", error);
-    return null;
+    // Graceful fallback during a split-second atomic failure or missing file
+    return cachedData || null;
   }
 }
 
+export function getImageUrl(path: string | null): string {
+    if (!path) return '';
+    if (path.startsWith('http') || path.startsWith('/')) return path;
+    const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    // Format is storage/v1/object/public/[bucket_or_path]
+    return `${baseUrl}/storage/v1/object/public/${path}`;
+}
+
 export const getProfile = async () => {
-    const data = await getPortfolioData();
-    return data?.profile || null;
+    try {
+        const data = await getPortfolioData();
+        return data?.profile || null;
+    } catch { return null; }
 };
 
 export const getSkills = async () => {
-    const data = await getPortfolioData();
-    return data?.skills || [];
+    try {
+        const data = await getPortfolioData();
+        return data?.skills || [];
+    } catch { return []; }
 };
 
 export const getExperiences = async () => {
-    const data = await getPortfolioData();
-    // Pre-sorted by start_date desc via syncPortfolio
-    return data?.experience || [];
+    try {
+        const data = await getPortfolioData();
+        return data?.experience || [];
+    } catch { return []; }
 };
 
 export const getEducation = async () => {
-    const data = await getPortfolioData();
-    return data?.education || [];
+    try {
+        const data = await getPortfolioData();
+        return data?.education || [];
+    } catch { return []; }
 };
 
 export const getCertifications = async () => {
-    const data = await getPortfolioData();
-    return data?.certifications || [];
+    try {
+        const data = await getPortfolioData();
+        return data?.certifications || [];
+    } catch { return []; }
+};
+
+export const getProjects = async () => {
+    try {
+        const data = await getPortfolioData();
+        return data?.projects || [];
+    } catch { return []; }
 };
 
 export const getSocialLinks = async () => {
-    const data = await getPortfolioData();
-    return data?.social_profiles || [];
+    try {
+        const data = await getPortfolioData();
+        return data?.social_profiles || [];
+    } catch { return []; }
+};
+
+export const getHackathons = async () => {
+    try {
+        const data = await getPortfolioData();
+        return data?.hackathons || [];
+    } catch { return []; }
+};
+
+export const getAwards = async () => {
+    try {
+        const data = await getPortfolioData();
+        return data?.awards || [];
+    } catch { return []; }
+};
+
+export const getBlogs = async () => {
+    try {
+        const data = await getPortfolioData();
+        return data?.blogs || [];
+    } catch { return []; }
 };
 
 // Get skills grouped by category dynamically from JSON
@@ -56,18 +115,20 @@ interface SkillNode {
 }
 
 export const getSkillsByCategory = async () => {
-    const data = await getPortfolioData();
-    const skills = data?.skills || [];
-    const grouped: Record<string, SkillNode[]> = {};
+    try {
+        const data = await getPortfolioData();
+        const skills = data?.skills || [];
+        const grouped: Record<string, SkillNode[]> = {};
 
-    skills.forEach((skill: SkillNode) => {
-        if (!grouped[skill.category]) {
-            grouped[skill.category] = [];
-        }
-        grouped[skill.category].push(skill);
-    });
+        skills.forEach((skill: SkillNode) => {
+            if (!grouped[skill.category]) {
+                grouped[skill.category] = [];
+            }
+            grouped[skill.category].push(skill);
+        });
 
-    return grouped;
+        return grouped;
+    } catch { return {}; }
 };
 
 // ============= MOCK/DISABLED UPDATE ACTIONS =============

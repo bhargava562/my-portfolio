@@ -11,6 +11,9 @@ const EducationContent = dynamic(() => import('./windows/EducationContent'), { l
 const CertificationsContent = dynamic(() => import('./windows/CertificationsContent'), { loading: () => <div>Loading...</div> });
 const ProjectsContent = dynamic(() => import('./windows/ProjectsContent'), { loading: () => <div>Loading...</div> });
 const SocialsContent = dynamic(() => import('./windows/SocialsContent'), { loading: () => <div>Loading...</div> });
+const HackathonsContent = dynamic(() => import('./windows/HackathonsContent'), { loading: () => <div>Loading...</div> });
+const AwardsContent = dynamic(() => import('./windows/AwardsContent'), { loading: () => <div>Loading...</div> });
+const BlogsContent = dynamic(() => import('./windows/BlogsContent'), { loading: () => <div>Loading...</div> });
 
 export const COMPONENT_REGISTRY: Record<string, React.ElementType> = {
     'about': AboutContent,
@@ -21,6 +24,9 @@ export const COMPONENT_REGISTRY: Record<string, React.ElementType> = {
     'certifications': CertificationsContent,
     'projects': ProjectsContent,
     'socials': SocialsContent,
+    'hackathons': HackathonsContent,
+    'awards': AwardsContent,
+    'blogs': BlogsContent,
     'resume': TextEditor,
 };
 

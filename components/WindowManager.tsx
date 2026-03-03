@@ -50,12 +50,26 @@ export function WindowProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    const vw = typeof window !== 'undefined' ? window.innerWidth : 1024;
+    const vh = typeof window !== 'undefined' ? window.innerHeight : 768;
+    
+    // Constrain window size to screen explicitly
+    const padding = 80;
+    const defaultWidth = Math.min(800, vw - padding);
+    const defaultHeight = Math.min(600, vh - padding);
+    
+    // Prevent windows spawning strictly off-screen
+    const staggeredX = 100 + (windows.length * 30);
+    const staggeredY = 80 + (windows.length * 30);
+    const x = Math.max(10, Math.min(staggeredX, vw - defaultWidth - 10));
+    const y = Math.max(10, Math.min(staggeredY, vh - defaultHeight - 10));
+
     const newWindow: WindowData = {
       ...windowData,
       isMinimized: false,
       isMaximized: false,
-      position: { x: 100 + windows.length * 30, y: 80 + windows.length * 30 },
-      size: { width: 800, height: 600 },
+      position: { x, y },
+      size: { width: defaultWidth, height: defaultHeight },
       currentPath: windowData.currentPath || (windowData.props?.initialPath as string) || '/', // Default path
     };
 

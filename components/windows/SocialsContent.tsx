@@ -78,7 +78,7 @@ export default function SocialsContent() {
                     const style = platformStyles[iconKey] || defaultStyle;
                     return (
                         <a
-                            key={Number(link.id)}
+                            key={String(link.id)}
                             href={url}
                             target="_blank"
                             rel="noopener noreferrer"

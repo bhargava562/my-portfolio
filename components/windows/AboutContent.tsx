@@ -2,23 +2,24 @@
 
 import { useEffect, useState } from 'react';
 import { Mail, MapPin, Phone } from 'lucide-react';
-import { getProfile } from '@/lib/actions';
+import { getProfile, getImageUrl } from '@/lib/actions';
 import Image from 'next/image';
 
 interface ProfileData {
   id: number;
-  name: string;
-  title: string;
-  bio: string;
+  full_name: string;
+  headline: string;
+  about_description: string;
   email: string;
-  phone: string;
+  contact_number: string;
   location: string | null;
-  avatarUrl: string | null;
-  resumeUrl: string | null;
+  profile_image_path: string | null;
+  resume_path: string | null;
 }
 
 export default function AboutContent() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
     getProfile().then(setProfile);
@@ -33,8 +34,14 @@ export default function AboutContent() {
         <Image src="/Banner.png" alt="Banner" width={800} height={200} className="w-full h-auto max-h-48 object-cover object-center border-b border-[#3E3E3E]" priority />
         <div className="absolute -bottom-16 left-8">
           <div className="w-32 h-32 rounded-full border-4 border-[#1E1E1E] overflow-hidden bg-gray-800 shadow-xl relative text-5xl flex items-center justify-center">
-            {profile.avatarUrl ? (
-                <Image src={profile.avatarUrl} alt={profile.name} fill className="object-cover" />
+            {profile.profile_image_path && !imgError ? (
+                <Image 
+                    src={getImageUrl(profile.profile_image_path)} 
+                    alt={profile.full_name} 
+                    fill 
+                    className="object-cover" 
+                    onError={() => setImgError(true)}
+                />
             ) : (
                 <Image src="/Bhargava.png" alt="Bhargava Avatar" fill className="object-cover bg-white" />
             )}
@@ -43,8 +50,8 @@ export default function AboutContent() {
       </div>
       
       <div className="flex-1 overflow-y-auto mt-20 px-8 pb-8 text-white cursor-default">
-        <h1 className="text-3xl font-bold mb-1">{profile.name}</h1>
-        <h3 className="text-orange-500 text-xl font-medium mb-3">{profile.title}</h3>
+        <h1 className="text-3xl font-bold mb-1">{profile.full_name}</h1>
+        <h3 className="text-orange-500 text-xl font-medium mb-3">{profile.headline}</h3>
         
         {profile.location && (
           <div className="flex items-center gap-2 text-gray-400 mb-6 font-medium">
@@ -57,7 +64,7 @@ export default function AboutContent() {
         <section className="mb-8">
           <h2 className="text-xl font-semibold mb-3 pb-2 border-b border-[#3E3E3E] text-gray-200">About</h2>
           <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">
-            {profile.bio}
+            {profile.about_description}
           </p>
         </section>
 
@@ -75,15 +82,15 @@ export default function AboutContent() {
               <span className="font-medium text-gray-200">{profile.email}</span>
             </a>
             
-            {profile.phone && (
+            {profile.contact_number && (
                 <a
-                  href={`tel:${profile.phone}`}
+                  href={`tel:${profile.contact_number}`}
                   className="flex items-center gap-3 p-4 bg-[#2C2C2C] border border-[#3E3E3E] rounded-xl hover:border-orange-500/50 hover:bg-[#353535] transition-colors w-fit min-w-[300px]"
                 >
                   <div className="w-10 h-10 rounded-full bg-orange-500/20 text-orange-400 flex items-center justify-center">
                      <Phone className="w-5 h-5" />
                   </div>
-                  <span className="font-medium text-gray-200">{profile.phone}</span>
+                  <span className="font-medium text-gray-200">{profile.contact_number}</span>
                 </a>
             )}
           </div>
