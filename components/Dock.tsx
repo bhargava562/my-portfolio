@@ -54,7 +54,7 @@ export default function Dock() {
   return (
     <div className="fixed left-0 top-7 bottom-0 w-16 bg-[#2C001E]/90 backdrop-blur-md z-40 flex flex-col items-center py-2 border-r border-white/5">
       {/* App Icons */}
-      <div className="flex-1 flex flex-col gap-2 overflow-y-auto no-scrollbar w-full items-center">
+      <div className="flex-1 flex flex-col gap-2 overflow-y-auto overflow-x-hidden no-scrollbar w-full items-center">
         {dockItems.map((app) => {
           const Icon = app.icon;
           const isOpen = isWindowOpen(app.id);

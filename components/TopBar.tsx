@@ -5,10 +5,13 @@ import { Wifi, Volume2, Battery, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import QuickSettings from './QuickSettings';
 import CalendarDropdown from './CalendarDropdown';
+import { useBoot } from '@/hooks/useBootState';
 
 export default function TopBar() {
   const [showQuickSettings, setShowQuickSettings] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+  
+  const { lockDesktop } = useBoot();
 
   const [dateString, setDateString] = useState<string>('');
 
@@ -76,7 +79,7 @@ export default function TopBar() {
               transition={{ duration: 0.15 }}
               className="fixed top-8 right-2 z-50"
             >
-              <QuickSettings />
+              <QuickSettings onLogout={lockDesktop} />
             </motion.div>
           </>
         )}

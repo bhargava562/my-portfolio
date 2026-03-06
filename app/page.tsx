@@ -5,10 +5,11 @@ import Dock from "@/components/Dock";
 import Desktop from "@/components/Desktop";
 import WindowContainer from "@/components/WindowContainer";
 import BootOverlay from "@/components/BootOverlay";
+import { BootProvider } from "@/hooks/useBootState";
 
 export default function Home() {
   return (
-    <>
+    <BootProvider>
       <WindowProvider>
         <div className="relative h-screen w-screen overflow-hidden">
         <Image
@@ -35,6 +36,6 @@ export default function Home() {
       </div>
       </WindowProvider>
       <BootOverlay />
-    </>
+    </BootProvider>
   );
 }

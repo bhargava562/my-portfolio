@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useBootState } from '@/hooks/useBootState';
+import { useBoot } from '@/hooks/useBootState';
 import BootLoader from './BootLoader';
 import LockScreen from './LockScreen';
 
 export default function BootOverlay() {
-  const { state, skipBoot, unlockDesktop } = useBootState();
+  const { state, skipBoot, unlockDesktop } = useBoot();
   
   // Track mount states to enable css fade-out transitions before unmounting
   const [showBoot, setShowBoot] = useState(state === 'booting');
@@ -30,8 +30,12 @@ export default function BootOverlay() {
   // Manage unmounting delays for smooth opacity transitions
   useEffect(() => {
     if (state === 'locked') {
+      const lockTimer = setTimeout(() => setShowLock(true), 0);
       const timer = setTimeout(() => setShowBoot(false), 400); // Wait for fade-out
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(lockTimer);
+        clearTimeout(timer);
+      };
     }
     if (state === 'desktop') {
       const timer = setTimeout(() => setShowLock(false), 600); // Wait for blur/fade-out

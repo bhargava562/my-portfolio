@@ -17,6 +17,11 @@ const platformStyles: Record<string, { color: string; bgColor: string; icon: Rea
         bgColor: 'rgba(255, 255, 255, 0.1)',
         icon: <Image src="/github.png" alt="GitHub" width={28} height={28} className="object-contain" />,
     },
+    x: {
+        color: '#fff',
+        bgColor: 'rgba(0, 0, 0, 0.8)',
+        icon: <Image src="/x.png" alt="Twitter/X" width={28} height={28} className="object-contain" />,
+    },
     twitter: {
         color: '#fff',
         bgColor: 'rgba(0, 0, 0, 0.8)',
@@ -70,15 +75,15 @@ export default function SocialsContent() {
         <div className="flex flex-col h-full w-full p-8 overflow-y-auto text-white bg-[#1E1E1E]">
             <h1 className="text-2xl font-bold mb-8 flex-shrink-0">Connect With Me</h1>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-max">
-                {socialLinks.map((link) => {
-                    const iconKey = String(link.iconKey);
-                    const url = String(link.url);
-                    const platformName = String(link.platformName);
+                {socialLinks.map((link, index) => {
+                    const platformName = String(link.platform || link.platformName || "Unknown");
+                    const iconKey = platformName.toLowerCase();
+                    const url = String(link.url || "");
                     
                     const style = platformStyles[iconKey] || defaultStyle;
                     return (
                         <a
-                            key={String(link.id)}
+                            key={link.id ? String(link.id) : `social-link-${index}`}
                             href={url}
                             target="_blank"
                             rel="noopener noreferrer"

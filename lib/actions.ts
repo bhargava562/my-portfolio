@@ -2,6 +2,28 @@ let cachedData: Record<string, unknown> | null = null;
 let lastCacheTime = 0;
 const CACHE_TTL = 5000; // 5 seconds in-memory fallback cache
 
+// Resilient fetch wrapper with timeout and exponential backoff
+async function fetchWithRetry(url: string, retries = 3, timeoutMs = 5000): Promise<Response> {
+  for (let i = 0; i < retries; i++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (res.ok) return res;
+      throw new Error(`HTTP ${res.status}`);
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (i === retries - 1) throw error;
+      
+      // Exponential backoff: 1s, 2s, 4s
+      await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, i)));
+    }
+  }
+  throw new Error("Unreachable");
+}
+
 // Read static optimized JSON strictly built by Background Sync pipeline via HTTP GET.
 async function getPortfolioData() {
   const now = Date.now();
@@ -10,17 +32,13 @@ async function getPortfolioData() {
   }
 
   try {
-    const res = await fetch('/data/portfolio.json', { cache: 'no-store' });
-    if (!res.ok) {
-      console.error("❌ Failed to read static portfolio JSON: Status", res.status);
-      return cachedData || null;
-    }
+    const res = await fetchWithRetry('/data/portfolio.json');
     const parsed = await res.json();
     cachedData = parsed;
     lastCacheTime = now;
     return parsed;
   } catch (error) {
-    console.error("❌ Failed to fetch static portfolio JSON:", error);
+    console.error("❌ Failed to fetch static portfolio JSON (all retries failed):", error);
     // Graceful fallback during a split-second atomic failure or missing file
     return cachedData || null;
   }

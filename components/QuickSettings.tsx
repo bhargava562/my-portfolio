@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { Wifi, Volume2, Sun, Power } from 'lucide-react';
 
-export default function QuickSettings() {
+interface QuickSettingsProps {
+  onLogout: () => void;
+}
+
+export default function QuickSettings({ onLogout }: QuickSettingsProps) {
   const [volume, setVolume] = useState(70);
   const [brightness, setBrightness] = useState(80);
   const [wifiEnabled, setWifiEnabled] = useState(true);
@@ -61,7 +65,7 @@ export default function QuickSettings() {
 
       {/* Power Button */}
       <button 
-        onClick={() => window.location.reload()}
+        onClick={onLogout}
         className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-700 transition-colors"
       >
         <Power className="w-5 h-5" />
