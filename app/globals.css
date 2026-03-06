@@ -2,11 +2,11 @@
 
 :root {
   /* Yaru Theme Colors */
-  --ubuntu-orange: #E95420;
-  --jet-black: #1E1E1E;
-  --aubergine: #2C001E;
-  --dark-grey: #3E3E3E;
-  --warm-grey: #AEA79F;
+  --ubuntu-orange: #e95420;
+  --jet-black: #1e1e1e;
+  --aubergine: #2c001e;
+  --dark-grey: #3e3e3e;
+  --warm-grey: #aea79f;
   --selection-orange: rgba(233, 84, 32, 0.4);
 
   --background: var(--jet-black);
@@ -26,6 +26,35 @@
 
   --font-ubuntu: "Ubuntu", sans-serif;
   --font-ubuntu-mono: "Ubuntu Mono", monospace;
+
+  --animate-progress: progress 4s ease-out forwards;
+}
+
+@keyframes progress {
+  0% {
+    width: 0%;
+  }
+  20% {
+    width: 15%;
+  }
+  40% {
+    width: 45%;
+  }
+  60% {
+    width: 60%;
+  }
+  80% {
+    width: 90%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
 }
 
 body {

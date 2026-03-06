@@ -26,6 +26,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="preload" as="image" href="/Bhargava.png" fetchPriority="high" />
+      </head>
       <body
         className={`${ubuntu.variable} ${ubuntuMono.variable} antialiased select-none`}
         suppressHydrationWarning

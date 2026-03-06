@@ -215,7 +215,7 @@ export default function Desktop() {
               {item.metadata?.icon === 'globe' ? (
                 <Image src="/globe.svg" alt="Contact" width={48} height={48} priority />
               ) : item.id === 'resume' ? (
-                <Image src="/resume.png" alt="Resume" fill className="object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] rounded" />
+                <Image src="/resume.png" alt="Resume" fill sizes="48px" className="object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] rounded" />
               ) : (
                 <>
                   {item.type === 'folder' && <YaruFolderIcon className="w-full h-full drop-shadow-md" />}

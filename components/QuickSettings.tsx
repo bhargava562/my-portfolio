@@ -7,7 +7,7 @@ export default function QuickSettings() {
   const [wifiEnabled, setWifiEnabled] = useState(true);
 
   return (
-    <div className="w-80 ubuntu-window-bg rounded-xl shadow-2xl p-4 text-white">
+    <div className="w-80 bg-[#1c1c1c] border border-white/10 rounded-xl shadow-2xl p-4 text-white">
       {/* WiFi Toggle */}
       <button 
         onClick={() => setWifiEnabled(!wifiEnabled)}
@@ -60,7 +60,10 @@ export default function QuickSettings() {
       <div className="border-t border-gray-600 my-3" />
 
       {/* Power Button */}
-      <button className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-700 transition-colors">
+      <button 
+        onClick={() => window.location.reload()}
+        className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-700 transition-colors"
+      >
         <Power className="w-5 h-5" />
         <span>Power Off / Log Out</span>
       </button>
