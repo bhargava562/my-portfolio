@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { Folder } from 'lucide-react';
 import { getProjects } from '@/lib/actions';
+import { ImageWithFallback } from '@/components/common/ImageWithFallback';
+import { resolveImagePath } from '@/lib/image-field';
+import { IMAGE_SIZES } from '@/lib/image-sizes';
 
 interface ProjectNode {
     id: number;
@@ -41,8 +43,16 @@ export default function ProjectsContent() {
               className="bg-[#2C2C2C] rounded-lg p-6 border border-[#3E3E3E] hover:border-orange-500/30 transition-colors"
             >
               <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <Folder className="w-6 h-6 text-orange-400" />
+                <div className="flex items-center gap-4">
+                  <div className="relative w-12 h-12 rounded overflow-hidden shrink-0 bg-black/20">
+                       <ImageWithFallback
+                         imagePath={resolveImagePath("projects", project as unknown as Record<string, unknown>) || ""}
+                         alt={project.title}
+                         width={IMAGE_SIZES.project.width}
+                         height={IMAGE_SIZES.project.height}
+                         className="w-full h-full"
+                      />
+                  </div>
                   <div>
                     <h3 className="font-bold text-lg">{project.title}</h3>
                     {project.tagline && <p className="text-sm text-gray-400 italic mb-1">{project.tagline}</p>}

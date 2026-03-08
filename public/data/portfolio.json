@@ -205,15 +205,6 @@
   ],
   "hackathons": [
     {
-      "category": "Participation",
-      "created_at": "2026-03-01T08:51:38.053341",
-      "description": "Participated in Adobe India Hackathon as part of a competitive development team.",
-      "id": "b2e2683d-9022-4251-ac67-eda9b657c6dd",
-      "name": "Adobe India Hackathon",
-      "organizer": "Adobe India",
-      "position": "Participant"
-    },
-    {
       "category": "Winner",
       "created_at": "2026-03-01T08:42:24.672044",
       "description": "Secured 2nd Place Prize (₹15,000) at Yet Another Hackathon 2026 for building BlockSafe, an AI-powered Autonomous Cognitive Firewall that detects psychological scam tactics in real time and converts attacks into actionable threat intelligence within 24 hours.",
@@ -248,6 +239,7 @@
       "Backend Engineering",
       "Generative AI"
     ],
+    "banner_path": "profile/banner.webp",
     "contact_number": "+91 8248724651",
     "created_at": "2026-02-28T17:37:03.961619",
     "email": "bhargavaanand2006@gmail.com",
@@ -522,6 +514,7 @@
     {
       "created_at": "2026-02-28T17:39:40.934904",
       "display_order": 1,
+      "icon_path": "social_profiles/LinkedIn_icon.webp",
       "id": "2df02639-577f-4a37-aabd-79ccaf6ecc24",
       "platform": "LinkedIn",
       "url": "https://www.linkedin.com/in/bhargavaa1/",
@@ -530,6 +523,7 @@
     {
       "created_at": "2026-02-28T17:39:40.934904",
       "display_order": 2,
+      "icon_path": "social_profiles/github.webp",
       "id": "752ca474-17fa-426b-a24e-7dbff482e034",
       "platform": "GitHub",
       "url": "https://github.com/bhargava562",
@@ -538,6 +532,7 @@
     {
       "created_at": "2026-02-28T17:39:40.934904",
       "display_order": 3,
+      "icon_path": "social_profiles/leetcode.webp",
       "id": "75748081-3cc8-40c2-9202-0b0adf99f20b",
       "platform": "LeetCode",
       "url": "https://leetcode.com/u/Bhargava2525/",
@@ -546,6 +541,7 @@
     {
       "created_at": "2026-02-28T17:39:40.934904",
       "display_order": 4,
+      "icon_path": "social_profiles/x.webp",
       "id": "bd6342af-95a5-4671-a6c1-7c7c658a4d3a",
       "platform": "X",
       "url": "https://x.com/Bhargava3196511",
@@ -554,10 +550,29 @@
     {
       "created_at": "2026-02-28T17:39:40.934904",
       "display_order": 5,
+      "icon_path": "social_profiles/hackerrank.webp",
       "id": "92fbda41-d772-4924-bd79-b2170e981a81",
       "platform": "HackerRank",
       "url": "https://www.hackerrank.com/profile/Bhargava_A_056/",
       "username": "Bhargava_A_056"
+    },
+    {
+      "created_at": "2026-03-08T15:45:00.867966",
+      "display_order": 6,
+      "icon_path": "social_profiles/skillrack.webp",
+      "id": "44ea2211-47ed-445c-8ace-ecb94868b017",
+      "platform": "Skillrack",
+      "url": "https://www.skillrack.com/faces/resume.xhtml?id=507200&key=1f79196105a35b2809b0f790e06739cb1dd343d3",
+      "username": "BHARGAVA A"
+    },
+    {
+      "created_at": "2026-03-08T15:45:00.867966",
+      "display_order": 7,
+      "icon_path": "social_profiles/stackoverflow.webp",
+      "id": "41bfcebe-4ac5-4fb5-85bf-cff1664bc9e4",
+      "platform": "StackOverflow",
+      "url": "https://stackoverflow.com/users/31757615/bhargava",
+      "username": "Bhargava"
     }
   ]
 }

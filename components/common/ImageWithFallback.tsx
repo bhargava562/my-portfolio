@@ -1,29 +1,59 @@
 "use client";
 
-import React, { useState } from 'react';
-import Image, { ImageProps } from 'next/image';
+import Image from "next/image"
+import { useState } from "react"
+import { buildSupabaseImageUrl } from "@/lib/image-utils"
 
-const ERROR_IMG_SRC =
-  'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODgiIGhlaWdodD0iODgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjMDAwIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBvcGFjaXR5PSIuMyIgZmlsbD0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIzLjciPjxyZWN0IHg9IjE2IiB5PSIxNiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2IiByeD0iNiIvPjxwYXRoIGQ9Im0xNiA1OCAxNi0xOCAzMiAzMiIvPjxjaXJjbGUgY3g9IjUzIiBjeT0iMzUiIHI9IjciLz48L3N2Zz4KCg==';
-
-interface ImageWithFallbackProps extends Omit<ImageProps, 'onError'> {
-  fallbackSrc?: string;
+interface Props {
+  imagePath: string
+  alt: string
+  width: number
+  height: number
+  className?: string
+  priority?: boolean
 }
 
 export function ImageWithFallback({
-  src,
+  imagePath,
   alt,
-  fallbackSrc = ERROR_IMG_SRC,
-  ...props
-}: ImageWithFallbackProps) {
-  const [error, setError] = useState(false);
+  width,
+  height,
+  className,
+  priority = false
+}: Props) {
+
+  // Resolve base urls
+  const supabaseUrl = buildSupabaseImageUrl(imagePath, width)
+  
+  // Universal fallback to placeholder, ignoring old fallback structures
+  const fallbackUrl = '/linux-placeholder.webp';
+
+  const initialSrc = supabaseUrl || fallbackUrl;
+  const [src, setSrc] = useState(initialSrc);
+  
+  // React to prop changes directly in render to avoid effect lag parsing
+  if (src !== initialSrc && src !== fallbackUrl) {
+    setSrc(initialSrc);
+  }
+
+  const handleError = () => {
+    if (src !== fallbackUrl) {
+      setSrc(fallbackUrl)
+    }
+  }
 
   return (
     <Image
+      src={src}
       alt={alt}
-      src={error ? fallbackSrc : src}
-      onError={() => setError(true)}
-      {...props}
+      width={width}
+      height={height}
+      className={`object-contain bg-[#1E1E1E] ${className || ''}`}
+      sizes="(max-width: 768px) 100vw,
+             (max-width: 1200px) 50vw,
+             33vw"
+      onError={handleError}
+      priority={priority}
     />
-  );
+  )
 }

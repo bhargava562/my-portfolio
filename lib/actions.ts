@@ -52,6 +52,45 @@ export function getImageUrl(path: string | null): string {
     return `${baseUrl}/storage/v1/object/public/${path}`;
 }
 
+export interface ImageConfig {
+    imageField: string;
+    fallback?: string;
+}
+
+export const getImageConfig = async (dataset: string): Promise<ImageConfig | null> => {
+    try {
+        const data = await getPortfolioData();
+        return data?.imageConfig?.[dataset] || null;
+    } catch { return null; }
+};
+
+export const resolveImagePath = async (dataset: string, record: Record<string, unknown>) => {
+    const config = await getImageConfig(dataset);
+    
+    // Default fallback if not defined in config
+    const defaultFallback = `/${dataset}/default.webp`;
+    const fallbackUrl = config?.fallback || defaultFallback;
+    
+    if (!config || !record || !record[config.imageField]) {
+        return { primaryUrl: null, fallbackUrl };
+    }
+    
+    const path = record[config.imageField] as string;
+    let primaryUrl = null;
+    
+    if (path.startsWith('http') || path.startsWith('/')) {
+        primaryUrl = path;
+    } else {
+        const storageUrl = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL || `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/`;
+        // Ensure we don't double slash if storageUrl has a trailing slash and path doesn't need it, or vice versa
+        const base = storageUrl.endsWith('/') ? storageUrl : `${storageUrl}/`;
+        const normalizedPath = path.startsWith('/') ? path.substring(1) : path;
+        primaryUrl = `${base}${normalizedPath}`;
+    }
+    
+    return { primaryUrl, fallbackUrl };
+};
+
 export const getProfile = async () => {
     try {
         const data = await getPortfolioData();

@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import { getSocialLinks } from '@/lib/actions';
 import { ExternalLink } from 'lucide-react';
 import Image from 'next/image';
+import { ImageWithFallback } from '@/components/common/ImageWithFallback';
+import { resolveImagePath } from '@/lib/image-field';
+import { IMAGE_SIZES } from '@/lib/image-sizes';
 
 // Platform-specific colors and SVG icons
 const platformStyles: Record<string, { color: string; bgColor: string; icon: React.ReactNode }> = {
@@ -81,6 +84,11 @@ export default function SocialsContent() {
                     const url = String(link.url || "");
                     
                     const style = platformStyles[iconKey] || defaultStyle;
+                    
+                    const imgPath = resolveImagePath("social_profiles", link as unknown as Record<string, unknown>);
+                    const styleIconSrc = style.icon && (style.icon as React.ReactElement<{src?: string}>).props?.src;
+                    const hasIconImg = imgPath || styleIconSrc;
+                    
                     return (
                         <a
                             key={link.id ? String(link.id) : `social-link-${index}`}
@@ -91,10 +99,20 @@ export default function SocialsContent() {
                             style={{ backgroundColor: style.bgColor }}
                         >
                             <div
-                                className="w-14 h-14 rounded-full flex items-center justify-center transition-transform group-hover:scale-110 mb-2"
+                                className={`w-14 h-14 rounded-full flex items-center justify-center transition-transform group-hover:scale-110 mb-2 ${hasIconImg ? 'relative overflow-hidden' : ''}`}
                                 style={{ color: style.color }}
                             >
-                                {style.icon}
+                                {hasIconImg ? (
+                                    <ImageWithFallback
+                                        imagePath={imgPath || ""}
+                                        alt={platformName}
+                                        width={IMAGE_SIZES.icon.width}
+                                        height={IMAGE_SIZES.icon.height}
+                                        className="w-full h-full"
+                                    />
+                                ) : (
+                                    style.icon
+                                )}
                             </div>
                             <span className="font-medium text-center text-sm">{platformName}</span>
                             <span

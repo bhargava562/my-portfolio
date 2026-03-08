@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { Mail, MapPin, Phone } from 'lucide-react';
-import { getProfile, getImageUrl } from '@/lib/actions';
+import { getProfile } from '@/lib/actions';
 import Image from 'next/image';
+import { ImageWithFallback } from '@/components/common/ImageWithFallback';
+import { resolveImagePath } from '@/lib/image-field';
+import { IMAGE_SIZES } from '@/lib/image-sizes';
 
 interface ProfileData {
   id: number;
@@ -19,7 +22,6 @@ interface ProfileData {
 
 export default function AboutContent() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
     getProfile().then(setProfile);
@@ -34,16 +36,16 @@ export default function AboutContent() {
         <Image src="/Banner.png" alt="Banner" width={800} height={200} className="w-full h-auto max-h-48 object-cover object-center border-b border-[#3E3E3E]" priority />
         <div className="absolute -bottom-16 left-8">
           <div className="w-32 h-32 rounded-full border-4 border-[#1E1E1E] overflow-hidden bg-gray-800 shadow-xl relative text-5xl flex items-center justify-center">
-            {profile.profile_image_path && !imgError ? (
-                <Image 
-                    src={getImageUrl(profile.profile_image_path)} 
+            {profile ? (
+                <ImageWithFallback 
+                    imagePath={resolveImagePath("profile", profile as unknown as Record<string, unknown>) || ""}
                     alt={profile.full_name} 
-                    fill 
-                    className="object-cover" 
-                    onError={() => setImgError(true)}
+                    width={IMAGE_SIZES.avatar.width}
+                    height={IMAGE_SIZES.avatar.height}
+                    className="w-full h-full" 
                 />
             ) : (
-                <Image src="/Bhargava.png" alt="Bhargava Avatar" fill className="object-cover bg-white" />
+                <Image src="/linux-placeholder.webp" alt="Avatar Fallback" fill className="object-contain bg-[#1E1E1E]" />
             )}
           </div>
         </div>
