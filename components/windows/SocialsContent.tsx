@@ -13,47 +13,47 @@ const platformStyles: Record<string, { color: string; bgColor: string; icon: Rea
     linkedin: {
         color: '#0A66C2',
         bgColor: 'rgba(10, 102, 194, 0.15)',
-        icon: <Image src="/LinkedIn_icon.png" alt="LinkedIn" width={28} height={28} className="object-contain" />,
+        icon: <Image src="/linux-placeholder.webp" alt="LinkedIn" width={28} height={28} className="object-contain" />,
     },
     github: {
         color: '#fff',
         bgColor: 'rgba(255, 255, 255, 0.1)',
-        icon: <Image src="/github.png" alt="GitHub" width={28} height={28} className="object-contain" />,
+        icon: <Image src="/linux-placeholder.webp" alt="GitHub" width={28} height={28} className="object-contain" />,
     },
     x: {
         color: '#fff',
         bgColor: 'rgba(0, 0, 0, 0.8)',
-        icon: <Image src="/x.png" alt="Twitter/X" width={28} height={28} className="object-contain" />,
+        icon: <Image src="/linux-placeholder.webp" alt="Twitter/X" width={28} height={28} className="object-contain" />,
     },
     twitter: {
         color: '#fff',
         bgColor: 'rgba(0, 0, 0, 0.8)',
-        icon: <Image src="/x.png" alt="Twitter/X" width={28} height={28} className="object-contain" />,
+        icon: <Image src="/linux-placeholder.webp" alt="Twitter/X" width={28} height={28} className="object-contain" />,
     },
     stackoverflow: {
         color: '#F58025',
         bgColor: 'rgba(245, 128, 37, 0.15)',
-        icon: <Image src="/stackoverflow.png" alt="StackOverflow" width={28} height={28} className="object-contain" />,
+        icon: <Image src="/linux-placeholder.webp" alt="StackOverflow" width={28} height={28} className="object-contain" />,
     },
     leetcode: {
         color: '#FFA116',
         bgColor: 'rgba(255, 161, 22, 0.15)',
-        icon: <Image src="/leetcode.png" alt="LeetCode" width={28} height={28} className="object-contain" />,
+        icon: <Image src="/linux-placeholder.webp" alt="LeetCode" width={28} height={28} className="object-contain" />,
     },
     hackerrank: {
         color: '#00EA64',
         bgColor: 'rgba(0, 234, 100, 0.15)',
-        icon: <Image src="/hackerrank.png" alt="HackerRank" width={28} height={28} className="object-contain" />,
+        icon: <Image src="/linux-placeholder.webp" alt="HackerRank" width={28} height={28} className="object-contain" />,
     },
     skillrack: {
         color: '#4285F4',
         bgColor: 'rgba(66, 133, 244, 0.15)',
-        icon: <Image src="/skillrack.png" alt="SkillRack" width={28} height={28} className="object-contain" />,
+        icon: <Image src="/linux-placeholder.webp" alt="SkillRack" width={28} height={28} className="object-contain" />,
     },
     unstop: {
         color: '#1C4980',
         bgColor: 'rgba(28, 73, 128, 0.15)',
-        icon: <Image src="/Unstop-Logo.png" alt="Unstop" width={28} height={28} className="object-contain" />,
+        icon: <Image src="/linux-placeholder.webp" alt="Unstop" width={28} height={28} className="object-contain" />,
     }
 };
 

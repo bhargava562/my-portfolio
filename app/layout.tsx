@@ -36,7 +36,7 @@ export default function RootLayout({
           }
         ` }} />
         <link rel="manifest" href="/manifest.json" />
-        <link rel="preload" as="image" href="/Bhargava.png" fetchPriority="high" />
+        <link rel="preload" as="image" href="/linux-placeholder.webp" fetchPriority="high" />
       </head>
       <body
         className={`${ubuntu.variable} ${ubuntuMono.variable} antialiased select-none`}

@@ -33,7 +33,7 @@ export default function AboutContent() {
     <div className="flex-1 flex flex-col h-full bg-[#1E1E1E]">
       {/* Banner */}
       <div className="w-full relative shrink-0 block">
-        <Image src="/Banner.png" alt="Banner" width={800} height={200} className="w-full h-auto max-h-48 object-cover object-center border-b border-[#3E3E3E]" priority />
+        <ImageWithFallback imagePath={((profile as unknown as Record<string, unknown>)?.banner_path as string) || "profile/banner.webp"} alt="Banner" width={800} height={200} className="w-full h-auto max-h-48 object-cover object-center border-b border-[#3E3E3E]" priority />
         <div className="absolute -bottom-16 left-8">
           <div className="w-32 h-32 rounded-full border-4 border-[#1E1E1E] overflow-hidden bg-gray-800 shadow-xl relative text-5xl flex items-center justify-center">
             {profile ? (

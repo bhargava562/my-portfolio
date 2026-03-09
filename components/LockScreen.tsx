@@ -14,15 +14,13 @@ export default function LockScreen({ onUnlock }: LockScreenProps) {
       <div className="absolute inset-0 bg-black/30" />
 
       <div className="z-10 flex flex-col items-center animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
-        {/* User Avatar */}
-        <div className="w-32 h-32 rounded-full border-[3px] border-white/30 overflow-hidden shadow-[0_0_30px_rgba(0,0,0,0.5)] mb-6 relative bg-white transition-transform hover:scale-105 duration-300">
-          <Image 
-            src="/Bhargava.png" 
-            alt="Bhargava A" 
-            fill 
+        <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden border-4 border-[#1E1E1E] shadow-2xl relative mb-4 sm:mb-6">
+          <Image
+            src={process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL ? `${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL.endsWith('/') ? '' : '/'}profile/profile.webp` : "/linux-placeholder.webp"}
+            alt="Bhargava"
+            fill
             className="object-cover"
             priority
-            unoptimized
           />
         </div>
 
