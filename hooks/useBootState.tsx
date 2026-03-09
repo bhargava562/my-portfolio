@@ -14,9 +14,20 @@ interface BootContextType {
 const BootContext = createContext<BootContextType | undefined>(undefined);
 
 export const BootProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [state, setState] = useState<BootState>('booting');
+  // Synchronously determine initial boot state from sessionStorage
+  // This prevents the 'booting' flash on re-renders and navigations
+  const [state, setState] = useState<BootState>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        if (sessionStorage.getItem('bootCompleted') === 'true') {
+          return 'locked';
+        }
+      } catch {}
+    }
+    return 'booting';
+  });
   const [hydrated, setHydrated] = useState(false);
-  const bootCompletedRef = useRef(false);
+  const bootCompletedRef = useRef(state !== 'booting');
 
   useEffect(() => {
     // Avoid synchronous cascading render during initial paint
@@ -43,25 +54,18 @@ export const BootProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Block logical execution entirely until React has hydrated listeners
     if (!hydrated) return;
 
-    // Check session storage first to see if user already booted this session
-    try {
-      if (sessionStorage.getItem('bootCompleted') === 'true') {
-        bootCompletedRef.current = true;
-        // Wrapping in setTimeout prevents React's synchronous cascading render warning
-        setTimeout(() => setState('locked'), 0);
-        
-        // Background prefetch even on immediate lock return
-        import('@/lib/actions').then(({ getPortfolioData, getUiConfigData }) => {
-            getPortfolioData();
-            getUiConfigData();
-        });
-        return;
-      }
-    } catch {
-      // Ignored
+    // If we are already past booting (e.g. sessionStorage said 'locked'), 
+    // just fire background prefetch and exit. Do NOT re-run boot sequence.
+    if (state !== 'booting') {
+      // Background prefetch even on immediate lock return
+      import('@/lib/actions').then(({ getPortfolioData, getUiConfigData }) => {
+          getPortfolioData();
+          getUiConfigData();
+      });
+      return;
     }
 
-    // Dynamic Data Prime Sequence
+    // Dynamic Data Prime Sequence (only runs on fresh boot)
     import('@/lib/actions').then(({ getPortfolioData, getUiConfigData, getImageUrl }) => {
        const dataPromise = getPortfolioData();
        const uiPromise = getUiConfigData();
@@ -96,6 +100,7 @@ export const BootProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => {
       clearTimeout(failsafe);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, completeBoot]);
 
   const skipBoot = () => {
