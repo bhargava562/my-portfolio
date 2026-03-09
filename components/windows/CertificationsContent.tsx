@@ -17,7 +17,7 @@ export default function CertificationsContent() {
     const [certifications, setCertifications] = useState<CertNode[]>([]);
 
     useEffect(() => {
-        getCertifications().then(setCertifications);
+        getCertifications().then(c => setCertifications(c as unknown as CertNode[]));
     }, []);
 
     const formatDate = (date: Date | null) => {

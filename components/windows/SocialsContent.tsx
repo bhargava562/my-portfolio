@@ -1,78 +1,35 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { getSocialLinks } from '@/lib/actions';
+import { getSocialLinks, getUiConfigData } from '@/lib/actions';
 import { ExternalLink } from 'lucide-react';
 import Image from 'next/image';
 import { ImageWithFallback } from '@/components/common/ImageWithFallback';
 import { resolveImagePath } from '@/lib/image-field';
 import { IMAGE_SIZES } from '@/lib/image-sizes';
 
-// Platform-specific colors and SVG icons
-const platformStyles: Record<string, { color: string; bgColor: string; icon: React.ReactNode }> = {
-    linkedin: {
-        color: '#0A66C2',
-        bgColor: 'rgba(10, 102, 194, 0.15)',
-        icon: <Image src="/linux-placeholder.webp" alt="LinkedIn" width={28} height={28} className="object-contain" />,
-    },
-    github: {
-        color: '#fff',
-        bgColor: 'rgba(255, 255, 255, 0.1)',
-        icon: <Image src="/linux-placeholder.webp" alt="GitHub" width={28} height={28} className="object-contain" />,
-    },
-    x: {
-        color: '#fff',
-        bgColor: 'rgba(0, 0, 0, 0.8)',
-        icon: <Image src="/linux-placeholder.webp" alt="Twitter/X" width={28} height={28} className="object-contain" />,
-    },
-    twitter: {
-        color: '#fff',
-        bgColor: 'rgba(0, 0, 0, 0.8)',
-        icon: <Image src="/linux-placeholder.webp" alt="Twitter/X" width={28} height={28} className="object-contain" />,
-    },
-    stackoverflow: {
-        color: '#F58025',
-        bgColor: 'rgba(245, 128, 37, 0.15)',
-        icon: <Image src="/linux-placeholder.webp" alt="StackOverflow" width={28} height={28} className="object-contain" />,
-    },
-    leetcode: {
-        color: '#FFA116',
-        bgColor: 'rgba(255, 161, 22, 0.15)',
-        icon: <Image src="/linux-placeholder.webp" alt="LeetCode" width={28} height={28} className="object-contain" />,
-    },
-    hackerrank: {
-        color: '#00EA64',
-        bgColor: 'rgba(0, 234, 100, 0.15)',
-        icon: <Image src="/linux-placeholder.webp" alt="HackerRank" width={28} height={28} className="object-contain" />,
-    },
-    skillrack: {
-        color: '#4285F4',
-        bgColor: 'rgba(66, 133, 244, 0.15)',
-        icon: <Image src="/linux-placeholder.webp" alt="SkillRack" width={28} height={28} className="object-contain" />,
-    },
-    unstop: {
-        color: '#1C4980',
-        bgColor: 'rgba(28, 73, 128, 0.15)',
-        icon: <Image src="/linux-placeholder.webp" alt="Unstop" width={28} height={28} className="object-contain" />,
-    }
-};
-
-const defaultStyle = {
-    color: '#E95420',
-    bgColor: 'rgba(233, 84, 32, 0.15)',
-    icon: <ExternalLink className="w-6 h-6" />,
-};
-
 export default function SocialsContent() {
-    const [socialLinks, setSocialLinks] = useState<Record<string, string | number>[]>([]);
+    const [socialLinks, setSocialLinks] = useState<Record<string, unknown>[]>([]);
+    const [uiConfig, setUiConfig] = useState<Record<string, unknown>>({});
 
     useEffect(() => {
         getSocialLinks().then(setSocialLinks);
+        getUiConfigData().then(setUiConfig);
     }, []);
 
     if (socialLinks.length === 0) {
         return <div className="p-8 text-white bg-[#1E1E1E]">Loading social links...</div>;
     }
+
+    const socialsConfig = (uiConfig?.socials as Record<string, unknown>) || {};
+    const platformStyles = (socialsConfig.platformStyles as Record<string, Record<string, string | null>>) || {};
+    const defaultStyleStr = (socialsConfig.defaultStyle as Record<string, string | null>) || {};
+
+    const defaultStyle = {
+        color: defaultStyleStr.color || '#E95420',
+        bgColor: defaultStyleStr.bgColor || 'rgba(233, 84, 32, 0.15)',
+        icon: <ExternalLink className="w-6 h-6" />,
+    };
 
     return (
         <div className="flex flex-col h-full w-full p-8 overflow-y-auto text-white bg-[#1E1E1E]">
@@ -83,7 +40,12 @@ export default function SocialsContent() {
                     const iconKey = platformName.toLowerCase();
                     const url = String(link.url || "");
                     
-                    const style = platformStyles[iconKey] || defaultStyle;
+                    const configStyle = platformStyles[iconKey];
+                    const style = configStyle ? {
+                        color: configStyle.color || defaultStyle.color,
+                        bgColor: configStyle.bgColor || defaultStyle.bgColor,
+                        icon: configStyle.iconIdentifier ? <Image src="/linux-placeholder.webp" alt={platformName} width={28} height={28} className="object-contain" /> : defaultStyle.icon,
+                    } : defaultStyle;
                     
                     const imgPath = resolveImagePath("social_profiles", link as unknown as Record<string, unknown>);
                     const styleIconSrc = style.icon && (style.icon as React.ReactElement<{src?: string}>).props?.src;

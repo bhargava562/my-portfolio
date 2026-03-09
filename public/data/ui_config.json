@@ -1,0 +1,79 @@
+{
+  "skills": {
+    "categoryIcons": {
+      "Languages": "Code2",
+      "Frameworks": "Layout",
+      "Databases": "Database",
+      "DevOps": "Server",
+      "Tools": "Wrench",
+      "Security": "Shield",
+      "Architecture": "Boxes",
+      "Soft Skills": "Users"
+    },
+    "defaultIcon": "Code2"
+  },
+  "socials": {
+    "platformStyles": {
+      "linkedin": {
+        "color": "#0A66C2",
+        "bgColor": "rgba(10, 102, 194, 0.15)",
+        "iconType": "image",
+        "iconIdentifier": "linkedin"
+      },
+      "github": {
+        "color": "#ffffff",
+        "bgColor": "rgba(255, 255, 255, 0.1)",
+        "iconType": "image",
+        "iconIdentifier": "github"
+      },
+      "x": {
+        "color": "#ffffff",
+        "bgColor": "rgba(0, 0, 0, 0.8)",
+        "iconType": "image",
+        "iconIdentifier": "twitter"
+      },
+      "twitter": {
+        "color": "#ffffff",
+        "bgColor": "rgba(0, 0, 0, 0.8)",
+        "iconType": "image",
+        "iconIdentifier": "twitter"
+      },
+      "stackoverflow": {
+        "color": "#F58025",
+        "bgColor": "rgba(245, 128, 37, 0.15)",
+        "iconType": "image",
+        "iconIdentifier": "stackoverflow"
+      },
+      "leetcode": {
+        "color": "#FFA116",
+        "bgColor": "rgba(255, 161, 22, 0.15)",
+        "iconType": "image",
+        "iconIdentifier": "leetcode"
+      },
+      "hackerrank": {
+        "color": "#00EA64",
+        "bgColor": "rgba(0, 234, 100, 0.15)",
+        "iconType": "image",
+        "iconIdentifier": "hackerrank"
+      },
+      "skillrack": {
+        "color": "#4285F4",
+        "bgColor": "rgba(66, 133, 244, 0.15)",
+        "iconType": "image",
+        "iconIdentifier": "skillrack"
+      },
+      "unstop": {
+        "color": "#1C4980",
+        "bgColor": "rgba(28, 73, 128, 0.15)",
+        "iconType": "image",
+        "iconIdentifier": "unstop"
+      }
+    },
+    "defaultStyle": {
+      "color": "#E95420",
+      "bgColor": "rgba(233, 84, 32, 0.15)",
+      "iconType": "lucide",
+      "iconIdentifier": "ExternalLink"
+    }
+  }
+}

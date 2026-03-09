@@ -19,7 +19,7 @@ export default function ExperienceContent() {
     const [experiences, setExperiences] = useState<ExperienceData[]>([]);
 
     useEffect(() => {
-        getExperiences().then(setExperiences);
+        getExperiences().then(e => setExperiences(e as unknown as ExperienceData[]));
     }, []);
 
     const formatDate = (date: Date | null) => {

@@ -117,35 +117,46 @@ export default function Desktop() {
       return;
     }
 
-    // Direct PDF Link Intercept (with fallback)
+    // Direct PDF Link Intercept (with explicit ObjectURL blob forcing to prevent browser preview overrides)
     if (item.id === 'resume') {
       import('@/lib/actions').then(async ({ getProfile, getImageUrl }) => {
-        const link = document.createElement('a');
-        link.target = '_blank';
-        link.download = 'Bhargava_resume.pdf';
+        let resumeUrl = '/Bhargava_resume.pdf'; // default fallback
         
-        let hasNavigated = false;
         try {
           const profile = await getProfile();
           if (profile?.resume_path) {
-            const url = getImageUrl(profile.resume_path);
-            const res = await fetch(url, { method: 'HEAD' });
-            if (res.ok) {
-              link.href = url;
-              hasNavigated = true;
-            }
+            resumeUrl = getImageUrl(profile.resume_path as string);
           }
-        } catch {
-          // Silent catch to naturally fall back to local file
-        }
-        
-        if (!hasNavigated) {
-          link.href = '/Bhargava_resume.pdf';
-        }
+        } catch {}
 
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        try {
+          // Force download via Blob to prevent browser preview hijacking on native CDN URLs
+          const response = await fetch(resumeUrl, { mode: "cors" });
+          if (!response.ok) throw new Error("Network response was not ok");
+          
+          const blob = await response.blob();
+          const objectUrl = window.URL.createObjectURL(blob);
+          
+          const link = document.createElement("a");
+          link.href = objectUrl;
+          link.download = "Bhargava_Resume.pdf";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          
+          // Cleanup memory
+          setTimeout(() => window.URL.revokeObjectURL(objectUrl), 1000);
+        } catch (error) {
+          console.error("Failed to download resume securely via Blob:", error);
+          // Hard fallback directly to the <a> tag natively if CORS or network policies arbitrarily block the programmatic fetch
+          const fallbackLink = document.createElement('a');
+          fallbackLink.target = '_blank';
+          fallbackLink.download = 'Bhargava_Resume.pdf';
+          fallbackLink.href = resumeUrl;
+          document.body.appendChild(fallbackLink);
+          fallbackLink.click();
+          fallbackLink.remove();
+        }
       });
       return;
     }

@@ -1,6 +1,6 @@
-let cachedData: Record<string, unknown> | null = null;
-let lastCacheTime = 0;
-const CACHE_TTL = 5000; // 5 seconds in-memory fallback cache
+// Session-scoped Promise caches for deduplication
+let portfolioPromise: Promise<Record<string, unknown>> | null = null;
+let uiConfigPromise: Promise<Record<string, unknown>> | null = null;
 
 // Resilient fetch wrapper with timeout and exponential backoff
 async function fetchWithRetry(url: string, retries = 3, timeoutMs = 5000): Promise<Response> {
@@ -25,23 +25,31 @@ async function fetchWithRetry(url: string, retries = 3, timeoutMs = 5000): Promi
 }
 
 // Read static optimized JSON strictly built by Background Sync pipeline via HTTP GET.
-async function getPortfolioData() {
-  const now = Date.now();
-  if (cachedData && (now - lastCacheTime < CACHE_TTL)) {
-      return cachedData;
+export function getPortfolioData(): Promise<Record<string, unknown>> {
+  if (!portfolioPromise) {
+    portfolioPromise = fetchWithRetry('/data/portfolio.json')
+      .then(res => res.json())
+      .catch(error => {
+        console.error("❌ Failed to fetch static portfolio JSON:", error);
+        portfolioPromise = null;
+        return {};
+      });
   }
+  return portfolioPromise;
+}
 
-  try {
-    const res = await fetchWithRetry('/data/portfolio.json');
-    const parsed = await res.json();
-    cachedData = parsed;
-    lastCacheTime = now;
-    return parsed;
-  } catch (error) {
-    console.error("❌ Failed to fetch static portfolio JSON (all retries failed):", error);
-    // Graceful fallback during a split-second atomic failure or missing file
-    return cachedData || null;
+// Load presentation rules dynamically
+export function getUiConfigData(): Promise<Record<string, unknown>> {
+  if (!uiConfigPromise) {
+    uiConfigPromise = fetchWithRetry('/data/ui_config.json')
+      .then(res => res.json())
+      .catch(error => {
+        console.error("❌ Failed to fetch ui_config.json:", error);
+        uiConfigPromise = null;
+        return {};
+      });
   }
+  return uiConfigPromise;
 }
 
 export function getImageUrl(path: string | null): string {
@@ -60,7 +68,7 @@ export interface ImageConfig {
 export const getImageConfig = async (dataset: string): Promise<ImageConfig | null> => {
     try {
         const data = await getPortfolioData();
-        return data?.imageConfig?.[dataset] || null;
+        return (data?.imageConfig as Record<string, ImageConfig> | undefined)?.[dataset] || null;
     } catch { return null; }
 };
 
@@ -94,70 +102,70 @@ export const resolveImagePath = async (dataset: string, record: Record<string, u
 export const getProfile = async () => {
     try {
         const data = await getPortfolioData();
-        return data?.profile || null;
+        return (data?.profile as Record<string, unknown>) || null;
     } catch { return null; }
 };
 
 export const getSkills = async () => {
     try {
         const data = await getPortfolioData();
-        return data?.skills || [];
+        return (data?.skills as Record<string, unknown>[]) || [];
     } catch { return []; }
 };
 
 export const getExperiences = async () => {
     try {
         const data = await getPortfolioData();
-        return data?.experience || [];
+        return (data?.experience as Record<string, unknown>[]) || [];
     } catch { return []; }
 };
 
 export const getEducation = async () => {
     try {
         const data = await getPortfolioData();
-        return data?.education || [];
+        return (data?.education as Record<string, unknown>[]) || [];
     } catch { return []; }
 };
 
 export const getCertifications = async () => {
     try {
         const data = await getPortfolioData();
-        return data?.certifications || [];
+        return (data?.certifications as Record<string, unknown>[]) || [];
     } catch { return []; }
 };
 
 export const getProjects = async () => {
     try {
         const data = await getPortfolioData();
-        return data?.projects || [];
+        return (data?.projects as Record<string, unknown>[]) || [];
     } catch { return []; }
 };
 
 export const getSocialLinks = async () => {
     try {
         const data = await getPortfolioData();
-        return data?.social_profiles || [];
+        return (data?.social_profiles as Record<string, unknown>[]) || [];
     } catch { return []; }
 };
 
 export const getHackathons = async () => {
     try {
         const data = await getPortfolioData();
-        return data?.hackathons || [];
+        return (data?.hackathons as Record<string, unknown>[]) || [];
     } catch { return []; }
 };
 
 export const getAwards = async () => {
     try {
         const data = await getPortfolioData();
-        return data?.awards || [];
+        return (data?.awards as Record<string, unknown>[]) || [];
     } catch { return []; }
 };
 
 export const getBlogs = async () => {
     try {
         const data = await getPortfolioData();
-        return data?.blogs || [];
+        return (data?.blogs as Record<string, unknown>[]) || [];
     } catch { return []; }
 };
 
@@ -174,7 +182,7 @@ interface SkillNode {
 export const getSkillsByCategory = async () => {
     try {
         const data = await getPortfolioData();
-        const skills = data?.skills || [];
+        const skills = (data?.skills as SkillNode[]) || [];
         const grouped: Record<string, SkillNode[]> = {};
 
         skills.forEach((skill: SkillNode) => {

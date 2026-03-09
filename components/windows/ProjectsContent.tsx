@@ -23,7 +23,7 @@ export default function ProjectsContent() {
   const [projects, setProjects] = useState<ProjectNode[]>([]);
 
   useEffect(() => {
-      getProjects().then(setProjects);
+      getProjects().then(p => setProjects(p as unknown as ProjectNode[]));
   }, []);
 
   if (projects.length === 0) {

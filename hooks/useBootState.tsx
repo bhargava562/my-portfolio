@@ -49,16 +49,44 @@ export const BootProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         bootCompletedRef.current = true;
         // Wrapping in setTimeout prevents React's synchronous cascading render warning
         setTimeout(() => setState('locked'), 0);
+        
+        // Background prefetch even on immediate lock return
+        import('@/lib/actions').then(({ getPortfolioData, getUiConfigData }) => {
+            getPortfolioData();
+            getUiConfigData();
+        });
         return;
       }
     } catch {
       // Ignored
     }
 
-    // Deterministic timeout tracking explicit boot duration
-    const bootTimer = setTimeout(() => {
-      completeBoot();
-    }, 4000);
+    // Dynamic Data Prime Sequence
+    import('@/lib/actions').then(({ getPortfolioData, getUiConfigData, getImageUrl }) => {
+       const dataPromise = getPortfolioData();
+       const uiPromise = getUiConfigData();
+       
+       Promise.all([dataPromise, uiPromise]).then(([portfolioData]) => {
+          // Preload critical images in the background (non-blocking)
+          const profile = portfolioData?.profile as Record<string, string> | undefined;
+          if (profile?.profile_image_path) {
+              const img = new window.Image();
+              img.src = getImageUrl(profile.profile_image_path);
+          }
+          if (profile?.banner_path) {
+              const img = new window.Image();
+              img.src = getImageUrl(profile.banner_path);
+          }
+          
+          // Proceed to desktop immediately after data is ready 
+          // (Adding a tiny 1500ms guaranteed minimum so the GRUB boot animation doesn't visually glitch completely instantly)
+          setTimeout(() => {
+             completeBoot();
+          }, 1500);
+       }).catch(() => {
+          setTimeout(() => completeBoot(), 1500);
+       });
+    });
 
     // Fail-safe maximum timeout of 8 seconds preventing infinite loading bounds
     const failsafe = setTimeout(() => {
@@ -66,7 +94,6 @@ export const BootProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, 8000);
 
     return () => {
-      clearTimeout(bootTimer);
       clearTimeout(failsafe);
     };
   }, [hydrated, completeBoot]);

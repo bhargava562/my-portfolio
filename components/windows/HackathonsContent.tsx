@@ -18,7 +18,7 @@ export default function HackathonsContent() {
     const [hackathons, setHackathons] = useState<HackathonData[]>([]);
 
     useEffect(() => {
-        getHackathons().then(setHackathons);
+        getHackathons().then(h => setHackathons(h as unknown as HackathonData[]));
     }, []);
 
     const formatDate = (date: Date | null) => {

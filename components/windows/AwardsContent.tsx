@@ -16,7 +16,7 @@ export default function AwardsContent() {
     const [awards, setAwards] = useState<AwardData[]>([]);
 
     useEffect(() => {
-        getAwards().then(setAwards);
+        getAwards().then(a => setAwards(a as unknown as AwardData[]));
     }, []);
 
     const formatDate = (date: Date | null) => {

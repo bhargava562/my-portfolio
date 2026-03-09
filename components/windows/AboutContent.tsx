@@ -24,7 +24,7 @@ export default function AboutContent() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
 
   useEffect(() => {
-    getProfile().then(setProfile);
+    getProfile().then(p => setProfile(p as unknown as ProfileData));
   }, []);
 
   if (!profile) return <div className="p-8 text-white bg-[#1E1E1E] h-full">Loading profile...</div>;

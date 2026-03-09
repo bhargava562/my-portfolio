@@ -20,7 +20,7 @@ export default function BlogsContent() {
     const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
 
     useEffect(() => {
-        getBlogs().then(setBlogs);
+        getBlogs().then(b => setBlogs(b as unknown as BlogData[]));
     }, []);
 
     const formatDate = (date: Date | null) => {

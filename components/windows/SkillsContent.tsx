@@ -1,38 +1,37 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { Code2, Database, Layout, Server, Wrench, Users, Shield, Boxes } from 'lucide-react';
-import { getSkillsByCategory } from '@/lib/actions';
-
-// Icon mapping for categories
-const categoryIcons: Record<string, React.ElementType> = {
-  'Languages': Code2,
-  'Frameworks': Layout,
-  'Databases': Database,
-  'DevOps': Server,
-  'Tools': Wrench,
-  'Security': Shield,
-  'Architecture': Boxes,
-  'Soft Skills': Users,
-};
+import * as LucideIcons from 'lucide-react';
+import { getSkillsByCategory, getUiConfigData } from '@/lib/actions';
 
 export default function SkillsContent() {
   const [skillsByCategory, setSkillsByCategory] = useState<Record<string, { id: number; name: string; category: string; icon: string | null; level: number; }[]>>({});
+  const [uiConfig, setUiConfig] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
     getSkillsByCategory().then(setSkillsByCategory);
+    getUiConfigData().then(setUiConfig);
   }, []);
 
   if (Object.keys(skillsByCategory).length === 0) {
     return <div className="p-8 text-white bg-[#1E1E1E]">Loading skills...</div>;
   }
 
+  // Safely extract the presentation config mapping
+  const skillsConfig = (uiConfig?.skills as Record<string, unknown>) || {};
+  const categoryIconsMap = (skillsConfig.categoryIcons as Record<string, string>) || {};
+  const defaultIconStr = (skillsConfig.defaultIcon as string) || 'Code2';
+
   return (
     <div className="flex-1 p-8 overflow-auto text-white bg-[#1E1E1E]">
       <h1 className="text-2xl font-bold mb-8">Technical Skills & Expertise</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {Object.entries(skillsByCategory).map(([category, skills]) => {
-          const Icon = categoryIcons[category] || Code2;
+          // Dynamic icon resolution
+          const iconName = categoryIconsMap[category] || defaultIconStr;
+          // @ts-expect-error - Dynamic lucide indexing
+          const Icon = LucideIcons[iconName] || LucideIcons.Code2;
+          
           return (
             <div key={category} className="bg-[#2C2C2C] rounded-lg p-6 border border-[#3E3E3E]">
               <div className="flex items-center gap-3 mb-4 border-b border-[#3E3E3E] pb-3">

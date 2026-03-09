@@ -19,7 +19,7 @@ export default function EducationContent() {
     const [education, setEducation] = useState<EducationData[]>([]);
 
     useEffect(() => {
-        getEducation().then(setEducation);
+        getEducation().then(e => setEducation(e as unknown as EducationData[]));
     }, []);
 
     if (education.length === 0) {
