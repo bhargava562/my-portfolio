@@ -5,13 +5,10 @@
  */
 
 import { parseCommand } from './commandParser';
-import { COMMAND_REGISTRY, CommandResult, InteractivePrompt } from './commandRegistry';
+import { COMMAND_REGISTRY } from './commandRegistry';
+import type { CommandResult, InteractivePrompt, OutputLine } from './types';
 
-export interface OutputLine {
-  id: number;
-  text: string;
-  type: 'output' | 'prompt' | 'error' | 'system' | 'ascii';
-}
+export type { OutputLine } from './types';
 
 const MAX_BUFFER_SIZE = 120;
 

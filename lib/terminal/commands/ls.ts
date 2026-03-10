@@ -4,9 +4,7 @@
  * Supports sections, column extraction, column filtering, date ranges, and limits.
  */
 
-import { ParsedCommand } from '../commandParser';
-import { CommandResult } from '../commandRegistry';
-import type { TerminalEngine } from '../terminalEngine';
+import type { ParsedCommand, CommandResult, ITerminalEngine } from '../types';
 
 // Date-like field names to detect dynamically
 const DATE_FIELD_PATTERNS = ['date', 'start_date', 'end_date', 'issue_date', 'created_at', 'year'];
@@ -28,7 +26,7 @@ async function fetchPortfolioData(): Promise<Record<string, unknown>> {
   return (await getPortfolioData()) as Record<string, unknown>;
 }
 
-export async function lsCommand(cmd: ParsedCommand, engine: TerminalEngine): Promise<CommandResult> {
+export async function lsCommand(cmd: ParsedCommand, engine: ITerminalEngine): Promise<CommandResult> {
   const data = await fetchPortfolioData();
 
   // Exclude 'profile' from browsable sections
@@ -143,7 +141,7 @@ function handleDateFilter(
   data: Record<string, unknown>,
   sections: string[],
   cmd: ParsedCommand,
-  engine: TerminalEngine
+  engine: ITerminalEngine
 ): CommandResult {
   const startDate = cmd.startDate ? new Date(cmd.startDate) : null;
   const endDate = cmd.endDate ? new Date(cmd.endDate) : null;

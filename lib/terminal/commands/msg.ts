@@ -4,9 +4,9 @@
  * Reuses the same env vars as ContactForm.tsx.
  */
 
-import { ParsedCommand } from '../commandParser';
-import { CommandResult, InteractivePrompt } from '../commandRegistry';
-import type { TerminalEngine } from '../terminalEngine';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
+import type { ParsedCommand, CommandResult, InteractivePrompt, ITerminalEngine } from '../types';
 
 async function sendEmail(name: string, email: string, message: string): Promise<string[]> {
   const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID;
@@ -51,7 +51,7 @@ async function sendEmail(name: string, email: string, message: string): Promise<
   }
 }
 
-export async function msgCommand(cmd: ParsedCommand, _engine: TerminalEngine): Promise<CommandResult> {
+export async function msgCommand(cmd: ParsedCommand, _engine: ITerminalEngine): Promise<CommandResult> {
   if (!cmd.flags['user']) {
     return {
       output: [

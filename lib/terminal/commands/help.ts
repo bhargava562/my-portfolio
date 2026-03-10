@@ -2,11 +2,11 @@
  * B Terminal — help command
  */
 
-import { ParsedCommand } from '../commandParser';
-import { CommandResult } from '../commandRegistry';
-import type { TerminalEngine } from '../terminalEngine';
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
-export async function helpCommand(_cmd: ParsedCommand, _engine: TerminalEngine): Promise<CommandResult> {
+import type { ParsedCommand, CommandResult, ITerminalEngine } from '../types';
+
+export async function helpCommand(_cmd: ParsedCommand, _engine: ITerminalEngine): Promise<CommandResult> {
   return {
     output: [
       '╔══════════════════════════════════════════════════════════╗',

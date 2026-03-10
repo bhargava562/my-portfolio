@@ -3,17 +3,17 @@
  * pwd, date, time, whoareyou, clear, history, version, hireme
  */
 
-import { ParsedCommand } from '../commandParser';
-import { CommandResult } from '../commandRegistry';
-import type { TerminalEngine } from '../terminalEngine';
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
-export async function pwdCommand(_cmd: ParsedCommand, _engine: TerminalEngine): Promise<CommandResult> {
+import type { ParsedCommand, CommandResult, ITerminalEngine } from '../types';
+
+export async function pwdCommand(_cmd: ParsedCommand, _engine: ITerminalEngine): Promise<CommandResult> {
   return {
     output: ['/home/bhargava/portfolio'],
   };
 }
 
-export async function dateCommand(_cmd: ParsedCommand, _engine: TerminalEngine): Promise<CommandResult> {
+export async function dateCommand(_cmd: ParsedCommand, _engine: ITerminalEngine): Promise<CommandResult> {
   const now = new Date();
   return {
     output: [now.toLocaleDateString('en-US', {
@@ -25,7 +25,7 @@ export async function dateCommand(_cmd: ParsedCommand, _engine: TerminalEngine):
   };
 }
 
-export async function timeCommand(_cmd: ParsedCommand, _engine: TerminalEngine): Promise<CommandResult> {
+export async function timeCommand(_cmd: ParsedCommand, _engine: ITerminalEngine): Promise<CommandResult> {
   const now = new Date();
   return {
     output: [now.toLocaleTimeString('en-US', {
@@ -37,7 +37,7 @@ export async function timeCommand(_cmd: ParsedCommand, _engine: TerminalEngine):
   };
 }
 
-export async function whoareyouCommand(_cmd: ParsedCommand, _engine: TerminalEngine): Promise<CommandResult> {
+export async function whoareyouCommand(_cmd: ParsedCommand, _engine: ITerminalEngine): Promise<CommandResult> {
   return {
     output: [
       '',
@@ -54,14 +54,14 @@ export async function whoareyouCommand(_cmd: ParsedCommand, _engine: TerminalEng
   };
 }
 
-export async function clearCommand(_cmd: ParsedCommand, _engine: TerminalEngine): Promise<CommandResult> {
+export async function clearCommand(_cmd: ParsedCommand, _engine: ITerminalEngine): Promise<CommandResult> {
   return {
     output: [],
     clearScreen: true,
   };
 }
 
-export async function historyCommand(_cmd: ParsedCommand, engine: TerminalEngine): Promise<CommandResult> {
+export async function historyCommand(_cmd: ParsedCommand, engine: ITerminalEngine): Promise<CommandResult> {
   if (engine.commandHistory.length === 0) {
     return { output: ['No commands in history.'] };
   }
@@ -75,7 +75,7 @@ export async function historyCommand(_cmd: ParsedCommand, engine: TerminalEngine
   };
 }
 
-export async function versionCommand(_cmd: ParsedCommand, _engine: TerminalEngine): Promise<CommandResult> {
+export async function versionCommand(_cmd: ParsedCommand, _engine: ITerminalEngine): Promise<CommandResult> {
   return {
     output: [
       '',
@@ -87,7 +87,7 @@ export async function versionCommand(_cmd: ParsedCommand, _engine: TerminalEngin
   };
 }
 
-export async function hiremeCommand(_cmd: ParsedCommand, _engine: TerminalEngine): Promise<CommandResult> {
+export async function hiremeCommand(_cmd: ParsedCommand, _engine: ITerminalEngine): Promise<CommandResult> {
   return {
     output: [
       '',

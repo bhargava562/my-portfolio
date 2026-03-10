@@ -1,6 +1,7 @@
 "use client";
 
 import { Home, Trash2, File, Globe } from 'lucide-react';
+import Image from 'next/image';
 import { useWindows } from './WindowManager';
 
 export default function Dock() {
@@ -17,7 +18,7 @@ export default function Dock() {
   const dockItems: DockItem[] = windows.map(w => {
     let Icon = File;
     if (w.type === 'folder') Icon = Home;
-    if (w.type === 'app') Icon = Globe;
+    if (w.type === 'app' && w.id !== 'terminal') Icon = Globe;
 
     return {
       id: w.id,
@@ -74,7 +75,11 @@ export default function Dock() {
               {/* Icon */}
               <div className={`w-12 h-12 flex items-center justify-center rounded-lg transition-all ${isActive ? 'bg-white/20' : (isOpen ? 'bg-white/5' : 'hover:bg-white/10')
                 }`}>
-                <Icon className="w-6 h-6 text-white" />
+                {app.id === 'terminal' ? (
+                  <Image src="/terminal.webp" alt="Terminal" width={24} height={24} />
+                ) : (
+                  <Icon className="w-6 h-6 text-white" />
+                )}
               </div>
 
               {/* Tooltip */}

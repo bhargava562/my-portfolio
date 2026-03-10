@@ -14,27 +14,27 @@ interface BootContextType {
 const BootContext = createContext<BootContextType | undefined>(undefined);
 
 export const BootProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Synchronously determine initial boot state from sessionStorage
-  // This prevents the 'booting' flash on re-renders and navigations
-  const [state, setState] = useState<BootState>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        if (sessionStorage.getItem('bootCompleted') === 'true') {
-          return 'locked';
-        }
-      } catch {}
-    }
-    return 'booting';
-  });
+  // Always start as 'booting' for SSR consistency (prevents hydration mismatch)
+  const [state, setState] = useState<BootState>('booting');
   const [hydrated, setHydrated] = useState(false);
-  const bootCompletedRef = useRef(state !== 'booting');
+  const bootCompletedRef = useRef(false);
 
+  // Hydration effect: runs once on client mount, before boot sequence
   useEffect(() => {
-    // Avoid synchronous cascading render during initial paint
-    setTimeout(() => setHydrated(true), 0);
-    // Explicitly unhook the 0ms CSS fallback payload now that React has hydrated
+    // Check sessionStorage to skip boot on refresh
+    try {
+      if (sessionStorage.getItem('bootCompleted') === 'true') {
+        setState('locked');
+        bootCompletedRef.current = true;
+      }
+    } catch {}
+
+    // Remove the static fallback element
     const fallback = document.getElementById('boot-fallback');
     if (fallback) fallback.remove();
+
+    // Signal hydration complete (triggers boot sequence effect)
+    setHydrated(true);
   }, []);
 
   const completeBoot = useCallback(() => {

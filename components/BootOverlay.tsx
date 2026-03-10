@@ -53,9 +53,9 @@ export default function BootOverlay() {
       {/* Lock Screen Layer */}
       {showLock && (
         <div 
+          suppressHydrationWarning
           className={`fixed inset-0 z-[9998] transition-opacity duration-500 ease-in-out
-            ${state === 'locked' ? 'opacity-100' : 'opacity-0 pointer-events-none'}
-            ${state === 'booting' ? 'opacity-100' : ''} // Keep 100% opacity underneath boot loader
+            ${state === 'locked' || state === 'booting' ? 'opacity-100' : 'opacity-0 pointer-events-none'}
           `}
         >
           <LockScreen onUnlock={unlockDesktop} />

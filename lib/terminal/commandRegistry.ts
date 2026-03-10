@@ -3,26 +3,10 @@
  * Maps command names to async handler functions with constant-time lookup.
  */
 
-import { ParsedCommand } from './commandParser';
-import type { TerminalEngine } from './terminalEngine';
+import type { CommandHandler } from './types';
 
-export interface CommandResult {
-  output: string[];
-  clearScreen?: boolean;
-  interactiveMode?: InteractivePrompt | null;
-}
-
-export interface InteractivePrompt {
-  prompts: string[];
-  currentIndex: number;
-  answers: Record<string, string>;
-  onComplete: (answers: Record<string, string>, engine: TerminalEngine) => Promise<string[]>;
-}
-
-export type CommandHandler = (
-  cmd: ParsedCommand,
-  engine: TerminalEngine
-) => Promise<CommandResult>;
+// Re-export types for convenience
+export type { CommandResult, InteractivePrompt, CommandHandler, ITerminalEngine, OutputLine } from './types';
 
 // Import individual command handlers
 import { helpCommand } from './commands/help';
@@ -55,3 +39,4 @@ export const COMMAND_REGISTRY: Record<string, CommandHandler> = {
   version: versionCommand,
   hireme: hiremeCommand,
 };
+
