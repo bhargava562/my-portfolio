@@ -28,17 +28,23 @@ export interface ITerminalEngine {
   commandHistory: string[];
   historyIndex: number;
   isStreaming: boolean;
+  isExecuting: boolean;
   interactiveMode: InteractivePrompt | null;
   abortController: AbortController | null;
   pushOutput(lines: string[], type?: OutputLine['type']): void;
   pushToStreamQueue(lines: string[], type?: OutputLine['type']): Promise<void>;
   escapeHtml(str: string): string;
+  updateActivePrompt(text: string): void;
+  appendPrompt(prefix?: string): void;
+  handleInteractiveInput(): Promise<void>;
+  executeCommand(): Promise<void>;
 }
 
 export interface OutputLine {
   id: number;
   text: string;
-  type: 'output' | 'prompt' | 'error' | 'system' | 'ascii';
+  type: 'output' | 'prompt' | 'error' | 'system' | 'ascii' | 'input';
+  prefix?: string;
 }
 
 export type CommandHandler = (

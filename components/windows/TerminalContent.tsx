@@ -1,15 +1,15 @@
 "use client";
 
 /**
- * B Terminal — Terminal Content Component
- * Renders inside a Window frame via ComponentRegistry.
- * Each mount creates an isolated TerminalEngine instance.
+ * B Terminal — Stream Buffer Renderer
+ * Renders the terminal from a single linear buffer.
+ * The prompt is the LAST LINE in the buffer (type 'input'), not a separate component.
  */
 
 import React, { useEffect, useRef, useState, useCallback, memo } from 'react';
 import { TerminalEngine, OutputLine } from '@/lib/terminal/terminalEngine';
 
-// Memoized output line for React diffing performance
+// Memoized output line (read-only lines)
 const TerminalLine = memo(function TerminalLine({ line }: { line: OutputLine }) {
   const colorClass = (() => {
     switch (line.type) {
@@ -28,38 +28,76 @@ const TerminalLine = memo(function TerminalLine({ line }: { line: OutputLine }) 
   );
 });
 
+// Active prompt line (editable, always last in buffer)
+function ActivePromptLine({
+  line,
+  cursorVisible,
+  isStreaming,
+  onKeyDown,
+  inputRef,
+}: {
+  line: OutputLine;
+  cursorVisible: boolean;
+  isStreaming: boolean;
+  onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+}) {
+  const prefix = line.prefix || '>_B $';
+
+  return (
+    <div className="flex items-center font-mono text-sm leading-relaxed whitespace-pre-wrap">
+      <span className="text-violet-400 font-bold whitespace-nowrap mr-1">
+        {prefix}
+      </span>
+      <div className="relative flex-1 min-w-0">
+        <input
+          ref={inputRef}
+          type="text"
+          value={line.text}
+          onChange={() => {}} // Controlled by engine via onKeyDown
+          onKeyDown={onKeyDown}
+          className="w-full bg-transparent text-violet-300 outline-none border-none font-mono text-sm caret-transparent p-0 m-0"
+          autoFocus
+          spellCheck={false}
+          autoComplete="off"
+          disabled={isStreaming}
+        />
+        {/* Blinking block cursor */}
+        <span
+          className="absolute top-0 text-violet-400 pointer-events-none font-mono text-sm"
+          style={{ left: `${line.text.length * 0.602}em` }}
+        >
+          {cursorVisible && !isStreaming ? '█' : '\u00A0'}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export default function TerminalContent() {
   const [lines, setLines] = useState<OutputLine[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
-  const [isInteractive, setIsInteractive] = useState(false);
-  const [input, setInput] = useState('');
   const [cursorVisible, setCursorVisible] = useState(true);
-  const [booted, setBooted] = useState(false);
 
   const engineRef = useRef<TerminalEngine | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const cursorTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const userScrolledUpRef = useRef(false);
 
-  // Sync engine state to React state (called by engine on every update)
+  // Sync engine state → React state
   const syncState = useCallback(() => {
     const engine = engineRef.current;
     if (!engine) return;
     setLines([...engine.outputBuffer]);
     setIsStreaming(engine.isStreaming);
-    setIsInteractive(!!engine.interactiveMode);
   }, []);
 
-  // Initialize engine on mount
+  // Initialize engine
   useEffect(() => {
     const engine = new TerminalEngine(syncState);
     engineRef.current = engine;
-
-    // Boot sequence
-    engine.loadBootSequence().then(() => {
-      setBooted(true);
-      syncState();
-    });
+    engine.loadBootSequence().then(() => syncState());
 
     return () => {
       engine.destroy();
@@ -67,32 +105,38 @@ export default function TerminalContent() {
     };
   }, [syncState]);
 
-  // Blinking cursor at 500ms
+  // Blinking cursor 500ms
   useEffect(() => {
-    cursorTimerRef.current = setInterval(() => {
-      setCursorVisible(v => !v);
-    }, 500);
-
+    cursorTimerRef.current = setInterval(() => setCursorVisible(v => !v), 500);
     return () => {
-      if (cursorTimerRef.current) {
-        clearInterval(cursorTimerRef.current);
-      }
+      if (cursorTimerRef.current) clearInterval(cursorTimerRef.current);
     };
   }, []);
 
-  // Auto-scroll to bottom on output change
+  // Smart auto-scroll: only scroll if user is at bottom
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    const el = scrollRef.current;
+    if (!el) return;
+    if (!userScrolledUpRef.current) {
+      el.scrollTop = el.scrollHeight;
     }
   }, [lines]);
 
-  // Focus input on any click inside the terminal
+  // Track user scroll position
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+    userScrolledUpRef.current = !atBottom;
+  }, []);
+
+  // Focus hidden input on terminal click
   const handleTerminalClick = useCallback(() => {
     inputRef.current?.focus();
   }, []);
 
-  const handleKeyDown = useCallback(async (e: React.KeyboardEvent<HTMLInputElement>) => {
+  // All keyboard handling — updates engine directly
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     const engine = engineRef.current;
     if (!engine) return;
 
@@ -100,85 +144,79 @@ export default function TerminalContent() {
     if (e.ctrlKey && e.key === 'c') {
       e.preventDefault();
       engine.abort();
-      setInput('');
+      return;
+    }
+
+    // Block input during streaming/execution
+    if (engine.isStreaming || engine.isExecuting) {
+      e.preventDefault();
       return;
     }
 
     // Enter — execute
     if (e.key === 'Enter') {
       e.preventDefault();
-      const cmd = input;
-      setInput('');
-
+      userScrolledUpRef.current = false; // Force scroll to bottom on execute
       if (engine.interactiveMode) {
-        await engine.handleInteractiveInput(cmd);
+        engine.handleInteractiveInput();
       } else {
-        await engine.executeCommand(cmd);
+        engine.executeCommand();
       }
       return;
     }
 
-    // Arrow Up — history navigate
+    // Arrow Up/Down — history
     if (e.key === 'ArrowUp') {
       e.preventDefault();
-      const prev = engine.navigateHistory('up');
-      setInput(prev);
+      engine.navigateHistory('up');
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      engine.navigateHistory('down');
       return;
     }
 
-    // Arrow Down — history navigate
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      const next = engine.navigateHistory('down');
-      setInput(next);
-      return;
-    }
-  }, [input]);
+    // Normal typing — let the native input handle it, then sync
+    // Use a microtask to read the value after the browser processes the keystroke
+    const input = e.currentTarget;
+    setTimeout(() => {
+      engine.updateActivePrompt(input.value);
+    }, 0);
+  }, []);
+
+  // Separate the active prompt (last line if type 'input') from read-only lines
+  const lastLine = lines[lines.length - 1];
+  const isLastLineInput = lastLine?.type === 'input';
+  const readOnlyLines = isLastLineInput ? lines.slice(0, -1) : lines;
+  const activePrompt = isLastLineInput ? lastLine : null;
 
   return (
     <div
       className="flex flex-col h-full w-full bg-black font-mono text-sm select-text cursor-text"
       onClick={handleTerminalClick}
     >
-      {/* Output area */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-4 pb-0"
+        className="flex-1 overflow-y-auto p-4"
+        onScroll={handleScroll}
       >
-        {lines.map(line => (
+        {/* Read-only output lines */}
+        {readOnlyLines.map(line => (
           <TerminalLine key={line.id} line={line} />
         ))}
-      </div>
 
-      {/* Prompt input line */}
-      {booted && (
-        <div className="flex items-center px-4 py-2 shrink-0">
-          <span className="text-violet-400 font-bold whitespace-nowrap mr-2">
-            {isInteractive ? '>' : '>_B $'}
-          </span>
-          <div className="relative flex-1">
-            <input
-              ref={inputRef}
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="w-full bg-transparent text-violet-300 outline-none border-none font-mono text-sm caret-transparent"
-              autoFocus
-              spellCheck={false}
-              autoComplete="off"
-              disabled={isStreaming}
-            />
-            {/* Custom blinking cursor */}
-            <span
-              className="absolute top-0 text-violet-400 pointer-events-none font-mono text-sm"
-              style={{ left: `${input.length * 0.6}em` }}
-            >
-              {cursorVisible && !isStreaming ? '█' : ''}
-            </span>
-          </div>
-        </div>
-      )}
+        {/* Active editable prompt (always last) */}
+        {activePrompt && (
+          <ActivePromptLine
+            line={activePrompt}
+            cursorVisible={cursorVisible}
+            isStreaming={isStreaming}
+            onKeyDown={handleKeyDown}
+            inputRef={inputRef}
+          />
+        )}
+      </div>
     </div>
   );
 }
