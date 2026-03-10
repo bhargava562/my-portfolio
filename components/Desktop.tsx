@@ -104,6 +104,13 @@ export default function Desktop() {
       appUrl: '/contact',
       metadata: { icon: 'globe' }
     },
+    // Terminal - Opens B Terminal
+    {
+      id: 'terminal',
+      title: 'Terminal',
+      type: 'app',
+      metadata: { icon: 'terminal' }
+    },
   ];
 
   const handleItemClick = (item: DesktopItem) => {
@@ -166,6 +173,8 @@ export default function Desktop() {
 
     if (item.id === 'contact') {
       windowTitle = 'Mozilla Firefox';
+    } else if (item.id === 'terminal') {
+      windowTitle = 'Terminal';
     } else if (item.type === 'app') {
       windowTitle = 'Web Browser';
     }
@@ -223,7 +232,9 @@ export default function Desktop() {
             `}
           >
             <div className="w-12 h-12 mb-1 relative flex items-center justify-center">
-              {item.metadata?.icon === 'globe' ? (
+              {item.metadata?.icon === 'terminal' ? (
+                <Image src="/terminal.webp" alt="Terminal" width={48} height={48} className="drop-shadow-md" />
+              ) : item.metadata?.icon === 'globe' ? (
                 <Image src="/globe.svg" alt="Contact" width={48} height={48} priority />
               ) : item.id === 'resume' ? (
                 <Image src="/resume.png" alt="Resume" fill sizes="48px" className="object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] rounded" />
