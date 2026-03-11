@@ -338,7 +338,7 @@ export class TerminalEngine {
     try {
       const response = await fetch('/bTerminal.txt');
       const ascii = await response.text();
-      const asciiLines = ascii.split('\n');
+      const asciiLines = ascii.replace(/\r/g, '').split('\n');
       this.pushOutput(asciiLines, 'ascii');
     } catch {
       this.pushOutput(['B Terminal'], 'ascii');

@@ -21,8 +21,13 @@ const TerminalLine = memo(function TerminalLine({ line }: { line: OutputLine }) 
     }
   })();
 
+  const isAscii = line.type === 'ascii';
+  const layoutClass = isAscii 
+    ? 'whitespace-pre leading-none' 
+    : 'whitespace-pre-wrap break-all leading-relaxed';
+
   return (
-    <div className={`whitespace-pre-wrap break-all font-mono text-sm leading-relaxed ${colorClass}`}>
+    <div className={`${layoutClass} font-mono text-sm ${colorClass}`}>
       {line.text}
     </div>
   );
@@ -33,13 +38,21 @@ function ActivePromptLine({
   line,
   cursorVisible,
   isStreaming,
+  isFocused,
+  onChange,
   onKeyDown,
+  onFocus,
+  onBlur,
   inputRef,
 }: {
   line: OutputLine;
   cursorVisible: boolean;
   isStreaming: boolean;
+  isFocused: boolean;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  onFocus: () => void;
+  onBlur: () => void;
   inputRef: React.RefObject<HTMLInputElement | null>;
 }) {
   const prefix = line.prefix || '>_B $';
@@ -54,8 +67,10 @@ function ActivePromptLine({
           ref={inputRef}
           type="text"
           value={line.text}
-          onChange={() => {}} // Controlled by engine via onKeyDown
+          onChange={onChange}
           onKeyDown={onKeyDown}
+          onFocus={onFocus}
+          onBlur={onBlur}
           className="w-full bg-transparent text-violet-300 outline-none border-none font-mono text-sm caret-transparent p-0 m-0"
           autoFocus
           spellCheck={false}
@@ -67,7 +82,7 @@ function ActivePromptLine({
           className="absolute top-0 text-violet-400 pointer-events-none font-mono text-sm"
           style={{ left: `${line.text.length * 0.602}em` }}
         >
-          {cursorVisible && !isStreaming ? '█' : '\u00A0'}
+          {cursorVisible && !isStreaming && isFocused ? '█' : '\u00A0'}
         </span>
       </div>
     </div>
@@ -78,6 +93,7 @@ export default function TerminalContent() {
   const [lines, setLines] = useState<OutputLine[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [cursorVisible, setCursorVisible] = useState(true);
+  const [isFocused, setIsFocused] = useState(true);
 
   const engineRef = useRef<TerminalEngine | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -130,9 +146,15 @@ export default function TerminalContent() {
     userScrolledUpRef.current = !atBottom;
   }, []);
 
-  // Focus hidden input on terminal click
   const handleTerminalClick = useCallback(() => {
     inputRef.current?.focus();
+  }, []);
+
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const engine = engineRef.current;
+    if (engine && !engine.isStreaming && !engine.isExecuting) {
+      engine.updateActivePrompt(e.target.value);
+    }
   }, []);
 
   // All keyboard handling — updates engine directly
@@ -212,7 +234,11 @@ export default function TerminalContent() {
             line={activePrompt}
             cursorVisible={cursorVisible}
             isStreaming={isStreaming}
+            isFocused={isFocused}
+            onChange={handleChange}
             onKeyDown={handleKeyDown}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
             inputRef={inputRef}
           />
         )}
