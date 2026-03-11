@@ -13,7 +13,7 @@ import type { CommandResult, InteractivePrompt, OutputLine } from './types';
 
 export type { OutputLine } from './types';
 
-const MAX_BUFFER_SIZE = 150;
+const MAX_BUFFER_SIZE = 500;
 
 export class TerminalEngine {
   outputBuffer: OutputLine[] = [];

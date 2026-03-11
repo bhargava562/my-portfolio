@@ -6,7 +6,7 @@
 export interface ParsedCommand {
   command: string;
   section: string | null;
-  column: string | null;
+  columns: string[];
   filter: string | null;
   limit: number | null;
   startDate: string | null;
@@ -40,7 +40,7 @@ export function parseCommand(input: string): ParsedCommand {
   const rest = tokens.slice(1);
 
   let section: string | null = null;
-  let column: string | null = null;
+  const columns: string[] = [];
   let filter: string | null = null;
   let limit: number | null = null;
   let startDate: string | null = null;
@@ -94,7 +94,7 @@ export function parseCommand(input: string): ParsedCommand {
       const colonIdx = inner.indexOf(':');
       if (colonIdx === -1) {
         // $column (no filter)
-        column = inner;
+        columns.push(inner);
       } else {
         const key = inner.slice(0, colonIdx);
         let value = inner.slice(colonIdx + 1);
@@ -106,7 +106,7 @@ export function parseCommand(input: string): ParsedCommand {
         if (command === 'msg') {
           flags[key] = value;
         } else {
-          column = key;
+          columns.push(key);
           filter = value;
         }
       }
@@ -119,7 +119,7 @@ export function parseCommand(input: string): ParsedCommand {
   return {
     command,
     section,
-    column,
+    columns,
     filter,
     limit,
     startDate,
@@ -134,7 +134,7 @@ function emptyParsed(raw: string): ParsedCommand {
   return {
     command: '',
     section: null,
-    column: null,
+    columns: [],
     filter: null,
     limit: null,
     startDate: null,

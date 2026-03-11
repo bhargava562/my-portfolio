@@ -68,10 +68,11 @@ export async function lsCommand(cmd: ParsedCommand, engine: ITerminalEngine): Pr
 
   let items = (data[sectionName] as Record<string, unknown>[]) || [];
 
-  // Apply column filter: $column:value
-  if (cmd.column && cmd.filter) {
+  // Apply column filter: $col1:value
+  if (cmd.columns.length > 0 && cmd.filter) {
+    const filterCol = cmd.columns[0];
     items = items.filter(item => {
-      const val = item[cmd.column!];
+      const val = item[filterCol];
       if (Array.isArray(val)) {
         return val.some(v => String(v).toLowerCase() === cmd.filter!.toLowerCase());
       }
@@ -84,25 +85,44 @@ export async function lsCommand(cmd: ParsedCommand, engine: ITerminalEngine): Pr
     items = items.slice(0, cmd.limit);
   }
 
-  // Column extraction: $column (no filter)
-  if (cmd.column && !cmd.filter) {
-    const colName = cmd.column;
-    const values = items.map(item => {
-      const val = item[colName];
-      if (val === undefined || val === null) return '(empty)';
-      if (Array.isArray(val)) return val.join(', ');
-      return String(val);
-    });
+  // Column extraction
+  if (cmd.columns.length > 0) {
+    if (cmd.columns.length === 1) {
+      const colName = cmd.columns[0];
+      const values = items.map(item => {
+        const val = item[colName];
+        if (val === undefined || val === null) return '(empty)';
+        if (Array.isArray(val)) return val.join(', ');
+        return String(val);
+      });
 
-    return {
-      output: [
-        `${sectionName} → ${colName}:`,
-        '',
-        ...values.map((v, i) => `  ${(i + 1).toString().padStart(3)}. ${v}`),
-        '',
-        `Total: ${values.length} entries`,
-      ],
-    };
+      return {
+        output: [
+          `${sectionName} → ${colName}:`,
+          '',
+          ...values.map((v, i) => `  ${(i + 1).toString().padStart(3)}. ${v}`),
+          '',
+          `Total: ${values.length} entries`,
+        ],
+      };
+    } else {
+      // Multi-column format
+      const lines: string[] = [`${sectionName} → ${cmd.columns.join(', ')}:`];
+      lines.push('');
+      
+      items.forEach((item, idx) => {
+        lines.push(`  ─── ${(idx + 1).toString().padStart(2, '0')} ───`);
+        for (const col of cmd.columns) {
+          const val = item[col];
+          const display = Array.isArray(val) ? val.join(', ') : (val !== undefined && val !== null ? String(val) : '(empty)');
+          lines.push(`  ${col.padEnd(15)} ${display}`);
+        }
+        lines.push('');
+      });
+
+      lines.push(`Total: ${items.length} entries`);
+      return { output: lines };
+    }
   }
 
   // Full section dump  

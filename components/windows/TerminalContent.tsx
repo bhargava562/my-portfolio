@@ -55,6 +55,13 @@ function ActivePromptLine({
   onBlur: () => void;
   inputRef: React.RefObject<HTMLInputElement | null>;
 }) {
+  // Auto-refocus the input when streaming finishes
+  useEffect(() => {
+    if (!isStreaming && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isStreaming, inputRef]);
+
   const prefix = line.prefix || '>_B $';
 
   return (
@@ -80,7 +87,7 @@ function ActivePromptLine({
         {/* Blinking block cursor */}
         <span
           className="absolute top-0 text-violet-400 pointer-events-none font-mono text-sm"
-          style={{ left: `${line.text.length * 0.602}em` }}
+          style={{ left: `${line.text.length}ch` }}
         >
           {cursorVisible && !isStreaming && isFocused ? '█' : '\u00A0'}
         </span>
