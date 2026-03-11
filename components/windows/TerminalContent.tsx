@@ -166,6 +166,9 @@ export default function TerminalContent() {
 
   // All keyboard handling — updates engine directly
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Isolating key events to prevent Next.js lock screen router hijacking
+    e.stopPropagation();
+
     const engine = engineRef.current;
     if (!engine) return;
 
@@ -206,18 +209,20 @@ export default function TerminalContent() {
       return;
     }
 
-    // Normal typing — let the native input handle it, then sync
-    // Use a microtask to read the value after the browser processes the keystroke
-    const input = e.currentTarget;
-    setTimeout(() => {
-      engine.updateActivePrompt(input.value);
-    }, 0);
+    // Default browser typing behavior will be caught by onChange
   }, []);
 
   // Separate the active prompt (last line if type 'input') from read-only lines
   const lastLine = lines[lines.length - 1];
   const isLastLineInput = lastLine?.type === 'input';
-  const readOnlyLines = isLastLineInput ? lines.slice(0, -1) : lines;
+  
+  // Virtualize: Render only the last 120 lines to prevent heavy DOM node counts
+  const allReadOnlyLines = isLastLineInput ? lines.slice(0, -1) : lines;
+  const VIRTUAL_LIMIT = 120;
+  const readOnlyLines = allReadOnlyLines.length > VIRTUAL_LIMIT 
+    ? allReadOnlyLines.slice(-VIRTUAL_LIMIT) 
+    : allReadOnlyLines;
+
   const activePrompt = isLastLineInput ? lastLine : null;
 
   return (

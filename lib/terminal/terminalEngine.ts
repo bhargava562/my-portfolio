@@ -134,7 +134,8 @@ export class TerminalEngine {
           if (this.outputQueue.length === 0 && !this.isStreaming) {
             resolve();
           } else {
-            setTimeout(checkDone, 50);
+            // Check less frequently, layout engine handles the frames
+            setTimeout(checkDone, 100);
           }
         };
         checkDone();
@@ -146,6 +147,8 @@ export class TerminalEngine {
     this.isStreaming = true;
     this.onUpdate();
 
+    // The Render Scheduler Phase
+    // Batch lines per animation frame to prevent blocking exactly like xterm.js
     const renderNext = () => {
       if (this.abortController?.signal.aborted) {
         this.outputQueue = [];
@@ -162,22 +165,37 @@ export class TerminalEngine {
         return;
       }
 
-      const line = this.outputQueue.shift()!;
+      // Batch up to 3 lines per frame (60fps = ~180 lines/sec)
+      // This prevents the DOM from freezing during heavy outputs
+      const batchSize = Math.min(3, this.outputQueue.length);
+      const batch = this.outputQueue.splice(0, batchSize);
 
-      // Insert above active prompt
       const lastLine = this.outputBuffer[this.outputBuffer.length - 1];
       if (lastLine && lastLine.type === 'input') {
-        this.outputBuffer.splice(this.outputBuffer.length - 1, 0, line);
+        this.outputBuffer.splice(this.outputBuffer.length - 1, 0, ...batch);
       } else {
-        this.outputBuffer.push(line);
+        this.outputBuffer.push(...batch);
       }
 
       this.evict();
       this.onUpdate();
-      this.streamTimer = setTimeout(renderNext, 40);
+      
+      // We still use a small timeout to simulate typewriter typing, 
+      // but bound the flush loop to the microtask/anim frame boundary.
+      this.streamTimer = setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          requestAnimationFrame(renderNext);
+        } else {
+          renderNext();
+        }
+      }, 15);
     };
 
-    renderNext();
+    if (typeof window !== 'undefined') {
+      requestAnimationFrame(renderNext);
+    } else {
+      renderNext();
+    }
   }
 
   // ─── Command Execution ───────────────────────────────────────
