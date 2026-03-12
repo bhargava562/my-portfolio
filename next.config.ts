@@ -10,7 +10,14 @@ const withSerwist = withSerwistInit({
 
 const nextConfig: NextConfig = {
   // Next.js 15+ STRICTly validates Cross-Origin dev requests. We must explicitly allow the user's subnet.
-  allowedDevOrigins: ['192.168.161.245', '192.168.161.245:3000', '192.168.*', 'localhost:3000'],
+  allowedDevOrigins: [
+    '192.168.161.245', 
+    '192.168.161.245:3000', 
+    '172.16.0.2:3001', 
+    '172.16.0.2', 
+    'localhost:3000', 
+    'localhost:3001'
+  ],
   // Force CORS headers natively for all _next internal chunks
   async headers() {
     return [

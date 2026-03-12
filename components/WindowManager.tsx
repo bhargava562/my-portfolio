@@ -5,6 +5,7 @@ import { DesktopItemType } from '@/types/desktop';
 
 export interface WindowData {
   id: string;
+  baseId: string; // Original ID for component lookup (e.g. 'terminal')
   title: string;
   icon: string;
   type: DesktopItemType;
@@ -20,7 +21,7 @@ export interface WindowData {
 interface WindowContextType {
   windows: WindowData[];
   activeWindowId: string | null;
-  openWindow: (window: Omit<WindowData, 'isMinimized' | 'isMaximized' | 'position' | 'size'>) => void;
+  openWindow: (window: Omit<WindowData, 'isMinimized' | 'isMaximized' | 'position' | 'size' | 'baseId'> & { allowMultiple?: boolean }) => void;
   closeWindow: (id: string) => void;
   minimizeWindow: (id: string) => void;
   maximizeWindow: (id: string) => void;
@@ -37,17 +38,19 @@ export function WindowProvider({ children }: { children: ReactNode }) {
   const [windows, setWindows] = useState<WindowData[]>([]);
   const [activeWindowId, setActiveWindowId] = useState<string | null>(null);
 
-  const openWindow = (windowData: Omit<WindowData, 'isMinimized' | 'isMaximized' | 'position' | 'size'>) => {
-    // Check if window already exists
-    const existingWindow = windows.find(w => w.id === windowData.id);
-    if (existingWindow) {
-      if (existingWindow.isMinimized) {
-        setWindows(prev => prev.map(w =>
-          w.id === windowData.id ? { ...w, isMinimized: false } : w
-        ));
+  const openWindow = (windowData: Omit<WindowData, 'isMinimized' | 'isMaximized' | 'position' | 'size' | 'baseId'> & { allowMultiple?: boolean }) => {
+    // Check if singleton window already exists
+    if (!windowData.allowMultiple) {
+      const existingWindow = windows.find(w => w.id === windowData.id);
+      if (existingWindow) {
+        if (existingWindow.isMinimized) {
+          setWindows(prev => prev.map(w =>
+            w.id === windowData.id ? { ...w, isMinimized: false } : w
+          ));
+        }
+        setActiveWindowId(windowData.id);
+        return;
       }
-      setActiveWindowId(windowData.id);
-      return;
     }
 
     const vw = typeof window !== 'undefined' ? window.innerWidth : 1024;
@@ -58,6 +61,11 @@ export function WindowProvider({ children }: { children: ReactNode }) {
     const defaultWidth = Math.min(800, vw - padding);
     const defaultHeight = Math.min(600, vh - padding);
     
+    // Unique ID for multiple instances
+    const finalId = windowData.allowMultiple 
+      ? `${windowData.id}-${Math.random().toString(36).substr(2, 9)}` 
+      : windowData.id;
+
     // Prevent windows spawning strictly off-screen
     const staggeredX = 100 + (windows.length * 30);
     const staggeredY = 80 + (windows.length * 30);
@@ -66,6 +74,8 @@ export function WindowProvider({ children }: { children: ReactNode }) {
 
     const newWindow: WindowData = {
       ...windowData,
+      id: finalId,
+      baseId: windowData.id,
       isMinimized: false,
       isMaximized: false,
       position: { x, y },

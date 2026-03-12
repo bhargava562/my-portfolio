@@ -21,7 +21,7 @@ export default function Window({ windowData }: WindowProps) {
   const isActive = activeWindowId === windowData.id;
 
   // Strict Registry Check
-  const ContentComponent = COMPONENT_REGISTRY[windowData.id];
+  const ContentComponent = COMPONENT_REGISTRY[windowData.baseId];
 
   if (!ContentComponent && !windowData.content) {
     // Fallback only if explicitly provided in windowData (e.g. for simple alerts), otherwise Error

@@ -23,7 +23,10 @@ export const BootProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     // Check sessionStorage to skip boot on refresh
     try {
-      if (sessionStorage.getItem('bootCompleted') === 'true') {
+      if (sessionStorage.getItem('desktopUnlocked') === 'true') {
+        setState('desktop');
+        bootCompletedRef.current = true;
+      } else if (sessionStorage.getItem('bootCompleted') === 'true') {
         setState('locked');
         bootCompletedRef.current = true;
       }
@@ -108,10 +111,17 @@ export const BootProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const unlockDesktop = () => {
+    console.log("🔓 Unlocking Desktop");
+    try {
+      sessionStorage.setItem('desktopUnlocked', 'true');
+    } catch {}
     setState('desktop');
   };
 
   const lockDesktop = () => {
+    // Only allow locking if we are coming from a session, or if explicitly requested.
+    // This prevents accidental regression if a component remounts.
+    console.log("🔒 Locking Desktop");
     setState('locked');
   };
 

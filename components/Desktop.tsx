@@ -194,6 +194,7 @@ export default function Desktop() {
         item: item, // For DetailView
       },
       content: content, // Keep for fallback/legacy support if Registry lookup fails
+      allowMultiple: item.id === 'terminal',
     });
   };
 
