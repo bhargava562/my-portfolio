@@ -1,7 +1,10 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
 import { DesktopItemType } from '@/types/desktop';
+
+const MAX_WINDOWS = 20;
+const BASE_Z_INDEX = 10;
 
 export interface WindowData {
   id: string;
@@ -14,6 +17,7 @@ export interface WindowData {
   isMaximized: boolean;
   position: { x: number; y: number };
   size: { width: number; height: number };
+  zIndex: number;
   currentPath?: string; // For navigation
   props?: Record<string, unknown>; // Data to pass to the component
 }
@@ -21,7 +25,7 @@ export interface WindowData {
 interface WindowContextType {
   windows: WindowData[];
   activeWindowId: string | null;
-  openWindow: (window: Omit<WindowData, 'isMinimized' | 'isMaximized' | 'position' | 'size' | 'baseId'> & { allowMultiple?: boolean }) => void;
+  openWindow: (window: Omit<WindowData, 'isMinimized' | 'isMaximized' | 'position' | 'size' | 'baseId' | 'zIndex'> & { allowMultiple?: boolean }) => void;
   closeWindow: (id: string) => void;
   minimizeWindow: (id: string) => void;
   maximizeWindow: (id: string) => void;
@@ -37,118 +41,133 @@ const WindowContext = createContext<WindowContextType | undefined>(undefined);
 export function WindowProvider({ children }: { children: ReactNode }) {
   const [windows, setWindows] = useState<WindowData[]>([]);
   const [activeWindowId, setActiveWindowId] = useState<string | null>(null);
+  const [nextZIndex, setNextZIndex] = useState(BASE_Z_INDEX + 1);
 
-  const openWindow = (windowData: Omit<WindowData, 'isMinimized' | 'isMaximized' | 'position' | 'size' | 'baseId'> & { allowMultiple?: boolean }) => {
-    // Check if singleton window already exists
-    if (!windowData.allowMultiple) {
-      const existingWindow = windows.find(w => w.id === windowData.id);
-      if (existingWindow) {
-        if (existingWindow.isMinimized) {
-          setWindows(prev => prev.map(w =>
-            w.id === windowData.id ? { ...w, isMinimized: false } : w
-          ));
+  const openWindow = useCallback((windowData: Omit<WindowData, 'isMinimized' | 'isMaximized' | 'position' | 'size' | 'baseId' | 'zIndex'> & { allowMultiple?: boolean }) => {
+    setWindows(prev => {
+      // Check if singleton window already exists
+      if (!windowData.allowMultiple) {
+        const existingWindow = prev.find(w => w.id === windowData.id);
+        if (existingWindow) {
+          if (existingWindow.isMinimized) {
+            setActiveWindowId(windowData.id);
+            return prev.map(w =>
+              w.id === windowData.id ? { ...w, isMinimized: false } : w
+            );
+          }
+          setActiveWindowId(windowData.id);
+          return prev;
         }
-        setActiveWindowId(windowData.id);
-        return;
       }
-    }
 
-    const vw = typeof window !== 'undefined' ? window.innerWidth : 1024;
-    const vh = typeof window !== 'undefined' ? window.innerHeight : 768;
-    
-    // Constrain window size to screen explicitly
-    const padding = 80;
-    const defaultWidth = Math.min(800, vw - padding);
-    const defaultHeight = Math.min(600, vh - padding);
-    
-    // Unique ID for multiple instances
-    const finalId = windowData.allowMultiple 
-      ? `${windowData.id}-${Math.random().toString(36).substr(2, 9)}` 
-      : windowData.id;
+      // Enforce window limit
+      if (prev.length >= MAX_WINDOWS) {
+        return prev;
+      }
 
-    // Prevent windows spawning strictly off-screen
-    const staggeredX = 100 + (windows.length * 30);
-    const staggeredY = 80 + (windows.length * 30);
-    const x = Math.max(10, Math.min(staggeredX, vw - defaultWidth - 10));
-    const y = Math.max(10, Math.min(staggeredY, vh - defaultHeight - 10));
+      const vw = typeof window !== 'undefined' ? window.innerWidth : 1024;
+      const vh = typeof window !== 'undefined' ? window.innerHeight : 768;
 
-    const newWindow: WindowData = {
-      ...windowData,
-      id: finalId,
-      baseId: windowData.id,
-      isMinimized: false,
-      isMaximized: false,
-      position: { x, y },
-      size: { width: defaultWidth, height: defaultHeight },
-      currentPath: windowData.currentPath || (windowData.props?.initialPath as string) || '/', // Default path
-    };
+      const padding = 80;
+      const defaultWidth = Math.min(800, vw - padding);
+      const defaultHeight = Math.min(600, vh - padding);
 
-    setWindows(prev => [...prev, newWindow]);
-    setActiveWindowId(newWindow.id);
-  };
+      const finalId = windowData.allowMultiple
+        ? `${windowData.id}-${Math.random().toString(36).substr(2, 9)}`
+        : windowData.id;
 
-  const closeWindow = (id: string) => {
+      // Modular stagger to cycle positions instead of linear overflow
+      const staggerOffset = (prev.length % 10) * 30;
+      const staggeredX = 100 + staggerOffset;
+      const staggeredY = 80 + staggerOffset;
+      const x = Math.max(10, Math.min(staggeredX, vw - defaultWidth - 10));
+      const y = Math.max(10, Math.min(staggeredY, vh - defaultHeight - 10));
+
+      const newWindow: WindowData = {
+        ...windowData,
+        id: finalId,
+        baseId: windowData.id,
+        isMinimized: false,
+        isMaximized: false,
+        position: { x, y },
+        size: { width: defaultWidth, height: defaultHeight },
+        zIndex: BASE_Z_INDEX + prev.length + 1,
+        currentPath: windowData.currentPath || (windowData.props?.initialPath as string) || '/',
+      };
+
+      setActiveWindowId(newWindow.id);
+      setNextZIndex(z => z + 1);
+      return [...prev, newWindow];
+    });
+  }, []);
+
+  const closeWindow = useCallback((id: string) => {
     setWindows(prev => prev.filter(w => w.id !== id));
-    if (activeWindowId === id) {
-      setActiveWindowId(null);
-    }
-  };
+    setActiveWindowId(prev => prev === id ? null : prev);
+  }, []);
 
-  const minimizeWindow = (id: string) => {
+  const minimizeWindow = useCallback((id: string) => {
     setWindows(prev => prev.map(w =>
       w.id === id ? { ...w, isMinimized: true } : w
     ));
-    if (activeWindowId === id) {
-      setActiveWindowId(null);
-    }
-  };
+    setActiveWindowId(prev => prev === id ? null : prev);
+  }, []);
 
-  const maximizeWindow = (id: string) => {
+  const maximizeWindow = useCallback((id: string) => {
     setWindows(prev => prev.map(w =>
       w.id === id ? { ...w, isMaximized: !w.isMaximized } : w
     ));
-  };
+  }, []);
 
-  const setActiveWindow = (id: string) => {
+  const setActiveWindow = useCallback((id: string) => {
     setActiveWindowId(id);
-  };
+    setNextZIndex(prev => {
+      const newZ = prev + 1;
+      setWindows(ws => ws.map(w =>
+        w.id === id ? { ...w, zIndex: newZ } : w
+      ));
+      return newZ;
+    });
+  }, []);
 
-  const updateWindowPosition = (id: string, position: { x: number; y: number }) => {
+  const updateWindowPosition = useCallback((id: string, position: { x: number; y: number }) => {
     setWindows(prev => prev.map(w =>
       w.id === id ? { ...w, position } : w
     ));
-  };
+  }, []);
 
-  const updateWindowSize = (id: string, size: { width: number; height: number }) => {
+  const updateWindowSize = useCallback((id: string, size: { width: number; height: number }) => {
     setWindows(prev => prev.map(w =>
       w.id === id ? { ...w, size } : w
     ));
-  };
+  }, []);
 
-  const navigateWindow = (id: string, path: string) => {
+  const navigateWindow = useCallback((id: string, path: string) => {
     setWindows(prev => prev.map(w =>
       w.id === id ? { ...w, currentPath: path } : w
     ));
-  };
+  }, []);
 
-  const isWindowOpen = (id: string) => {
+  const isWindowOpen = useCallback((id: string) => {
     return windows.some(w => w.id === id && !w.isMinimized);
-  };
+  }, [windows]);
+
+  const contextValue = useMemo(() => ({
+    windows,
+    activeWindowId,
+    openWindow,
+    closeWindow,
+    minimizeWindow,
+    maximizeWindow,
+    setActiveWindow,
+    updateWindowPosition,
+    updateWindowSize,
+    navigateWindow,
+    isWindowOpen,
+  }), [windows, activeWindowId, openWindow, closeWindow, minimizeWindow, maximizeWindow, setActiveWindow, updateWindowPosition, updateWindowSize, navigateWindow, isWindowOpen]);
 
   return (
-    <WindowContext.Provider value={{
-      windows,
-      activeWindowId,
-      openWindow,
-      closeWindow,
-      minimizeWindow,
-      maximizeWindow,
-      setActiveWindow,
-      updateWindowPosition,
-      updateWindowSize,
-      navigateWindow,
-      isWindowOpen,
-    }}>
+    <WindowContext.Provider value={contextValue}>
       {children}
     </WindowContext.Provider>
   );

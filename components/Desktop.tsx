@@ -1,117 +1,32 @@
 "use client";
 
 import React, { useRef, useState } from 'react';
-import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useWindows } from './WindowManager';
 import { DesktopItem } from '@/types/desktop';
 import { YaruFolderIcon, YaruFileIcon, YaruAppIcon, YaruLinkedinIcon, YaruGithubIcon } from './icons/YaruIcons';
 
-// Dynamic Imports with Loading Fallback
-const AboutContent = dynamic(() => import('./windows/AboutContent'), {
-  loading: () => <div className="flex items-center justify-center h-full text-white">Loading Content...</div>
-});
+// Static data — hoisted to module scope to avoid re-creation on every render
+const desktopItems: DesktopItem[] = [
+  { id: 'about', title: 'About Me', type: 'file' },
+  { id: 'resume', title: 'Resume.pdf', type: 'file' },
+  { id: 'skills', title: 'Skills', type: 'folder', children: [] },
+  { id: 'experience', title: 'Experience', type: 'folder', children: [] },
+  { id: 'education', title: 'Education', type: 'folder', children: [] },
+  { id: 'certifications', title: 'Certifications', type: 'folder', children: [] },
+  { id: 'hackathons', title: 'Hackathons', type: 'folder', children: [] },
+  { id: 'awards', title: 'Awards', type: 'folder', children: [] },
+  { id: 'blogs', title: 'Blogs', type: 'folder', children: [] },
+  { id: 'projects', title: 'Projects', type: 'folder', children: [] },
+  { id: 'socials', title: 'Socials', type: 'folder', children: [] },
+  { id: 'contact', title: 'Contact Me', type: 'app', appUrl: '/contact', metadata: { icon: 'globe' } },
+  { id: 'terminal', title: 'Terminal', type: 'app', metadata: { icon: 'terminal' } },
+];
 
 export default function Desktop() {
   const { openWindow } = useWindows();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const desktopRef = useRef<HTMLDivElement>(null);
-
-  // Desktop Items - These define what appears on the desktop and how they open
-  const desktopItems: DesktopItem[] = [
-    // About Me - Opens AboutContent
-    {
-      id: 'about',
-      title: 'About Me',
-      type: 'file',
-      content: <AboutContent />,
-    },
-    // Resume - Opens TextEditor
-    {
-      id: 'resume',
-      title: 'Resume.pdf',
-      type: 'file',
-      content: <div className="p-4">Resume Content Placeholder</div>,
-    },
-    // Skills - Opens SkillsContent
-    {
-      id: 'skills',
-      title: 'Skills',
-      type: 'folder',
-      children: [],
-    },
-    // Experience - Opens ExperienceContent
-    {
-      id: 'experience',
-      title: 'Experience',
-      type: 'folder',
-      children: [],
-    },
-    // Education - Opens EducationContent
-    {
-      id: 'education',
-      title: 'Education',
-      type: 'folder',
-      children: [],
-    },
-    // Certifications - Opens CertificationsContent
-    {
-      id: 'certifications',
-      title: 'Certifications',
-      type: 'folder',
-      children: [],
-    },
-    // Hackathons
-    {
-      id: 'hackathons',
-      title: 'Hackathons',
-      type: 'folder',
-      children: [],
-    },
-    // Awards
-    {
-      id: 'awards',
-      title: 'Awards',
-      type: 'folder',
-      children: [],
-    },
-    // Blogs
-    {
-      id: 'blogs',
-      title: 'Blogs',
-      type: 'folder',
-      children: [],
-    },
-    // Projects - Opens FileExplorer
-    {
-      id: 'projects',
-      title: 'Projects',
-      type: 'folder',
-      children: [],
-    },
-    // Socials Folder
-    {
-      id: 'socials',
-      title: 'Socials',
-      type: 'folder',
-      children: [],
-    },
-    // Contact Me - Opens ContactForm
-    {
-      id: 'contact',
-      title: 'Contact Me',
-      type: 'app',
-      appUrl: '/contact',
-      metadata: { icon: 'globe' }
-    },
-    // Terminal - Opens B Terminal
-    {
-      id: 'terminal',
-      title: 'Terminal',
-      type: 'app',
-      metadata: { icon: 'terminal' }
-    },
-  ];
 
   const handleItemClick = (item: DesktopItem) => {
     setSelectedItems([item.id]);
@@ -168,7 +83,6 @@ export default function Desktop() {
       return;
     }
 
-    let content;
     let windowTitle = item.title;
 
     if (item.id === 'contact') {
@@ -193,7 +107,7 @@ export default function Desktop() {
         initialUrl: item.appUrl, // For Browser
         item: item, // For DetailView
       },
-      content: content, // Keep for fallback/legacy support if Registry lookup fails
+      content: undefined,
       allowMultiple: item.id === 'terminal',
     });
   };

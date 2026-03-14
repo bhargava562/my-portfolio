@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { YaruFolderIcon, YaruFileIcon } from '../icons/YaruIcons';
 import { DesktopItem } from '@/types/desktop';
 import WindowLayout from './WindowLayout';
@@ -10,24 +10,25 @@ interface FileExplorerProps {
     windowId: string;
     rootItems: DesktopItem[];
     initialPath?: string;
-    onItemClick?: (item: DesktopItem) => void; // Keep for backward compatibility or file opening
+    onItemClick?: (item: DesktopItem) => void;
 }
 
 export default function FileExplorer({ windowId, rootItems, initialPath = '/', onItemClick }: FileExplorerProps) {
     const { navigateWindow, windows } = useWindows();
+    const initializedRef = useRef(false);
 
-    // Get current path from window state
-    const currentWindow = windows.find(w => w.id === windowId);
-    const currentPath = currentWindow?.currentPath || initialPath;
+    // Extract primitive string — stable dependency for useEffect
+    const currentPath = windows.find(w => w.id === windowId)?.currentPath || initialPath;
 
-    // Ensure path is set in state on mount if missing, or if initialPath changes
+    // Set initial path once on mount — avoids re-render loop from object deps
     useEffect(() => {
-        if (initialPath && currentWindow?.currentPath !== initialPath) {
-            navigateWindow(windowId, initialPath);
-        } else if (currentWindow && !currentWindow.currentPath) {
-            navigateWindow(windowId, initialPath);
+        if (!initializedRef.current) {
+            initializedRef.current = true;
+            if (currentPath !== initialPath) {
+                navigateWindow(windowId, initialPath);
+            }
         }
-    }, [windowId, initialPath, currentWindow, navigateWindow]);
+    }, []);
 
     // Helper to resolve items at current path
     const getItemsAtPath = (path: string, root: DesktopItem[]): DesktopItem[] => {

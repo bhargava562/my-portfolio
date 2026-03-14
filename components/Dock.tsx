@@ -1,53 +1,61 @@
 "use client";
 
+import React, { useMemo, memo } from 'react';
 import { Home, Trash2, File, Globe } from 'lucide-react';
 import Image from 'next/image';
 import { useWindows } from './WindowManager';
 
-export default function Dock() {
-  const { openWindow, isWindowOpen, windows, minimizeWindow, activeWindowId, setActiveWindow } = useWindows();
+interface DockItem {
+  id: string;
+  icon: React.ElementType;
+  label: string;
+}
 
-  interface DockItem {
-    id: string;
-    icon: React.ElementType;
-    label: string;
-    isTemp?: boolean;
-  }
+export default memo(function Dock() {
+  const { openWindow, windows, minimizeWindow, activeWindowId, setActiveWindow } = useWindows();
 
-  // Single Source of Truth: Only show running windows
-  const dockItems: DockItem[] = windows.map(w => {
-    let Icon = File;
-    if (w.type === 'folder') Icon = Home;
-    if (w.type === 'app' && w.id !== 'terminal') Icon = Globe;
+  // O(n) build once, memoized — avoids rebuild on every unrelated re-render
+  const dockItems: DockItem[] = useMemo(() =>
+    windows.map(w => {
+      let Icon = File;
+      if (w.type === 'folder') Icon = Home;
+      if (w.type === 'app' && w.id !== 'terminal') Icon = Globe;
 
-    return {
-      id: w.id,
-      icon: Icon,
-      label: w.title,
-      isTemp: false
-    };
-  });
+      return {
+        id: w.id,
+        icon: Icon,
+        label: w.title,
+      };
+    }),
+    [windows]
+  );
+
+  // O(n) Set build once, then O(1) lookups per dock item — replaces O(n) .some() per item
+  const openWindowIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const w of windows) {
+      if (!w.isMinimized) ids.add(w.id);
+    }
+    return ids;
+  }, [windows]);
 
   const handleAppClick = (app: DockItem) => {
-    const window = windows.find(w => w.id === app.id);
-    if (!window) return;
+    const win = windows.find(w => w.id === app.id);
+    if (!win) return;
 
-    if (window.isMinimized) {
-      // Restore
+    if (win.isMinimized) {
       openWindow({
-        id: window.id,
-        title: window.title,
-        icon: window.icon,
-        type: window.type,
-        content: window.content,
-        currentPath: window.currentPath,
-        props: window.props,
+        id: win.id,
+        title: win.title,
+        icon: win.icon,
+        type: win.type,
+        content: win.content,
+        currentPath: win.currentPath,
+        props: win.props,
       });
     } else if (activeWindowId === app.id) {
-      // Minimize if already active
       minimizeWindow(app.id);
     } else {
-      // Focus if open but not active
       setActiveWindow(app.id);
     }
   };
@@ -58,7 +66,7 @@ export default function Dock() {
       <div className="flex-1 flex flex-col gap-2 overflow-y-auto overflow-x-hidden no-scrollbar w-full items-center">
         {dockItems.map((app) => {
           const Icon = app.icon;
-          const isOpen = isWindowOpen(app.id);
+          const isOpen = openWindowIds.has(app.id);
           const isActive = activeWindowId === app.id;
 
           return (
@@ -75,7 +83,7 @@ export default function Dock() {
               {/* Icon */}
               <div className={`w-12 h-12 flex items-center justify-center rounded-lg transition-all ${isActive ? 'bg-white/20' : (isOpen ? 'bg-white/5' : 'hover:bg-white/10')
                 }`}>
-                {app.id === 'terminal' ? (
+                {app.id === 'terminal' || app.id.startsWith('terminal-') ? (
                   <Image src="/terminal.webp" alt="Terminal" width={24} height={24} />
                 ) : (
                   <Icon className="w-6 h-6 text-white" />
@@ -104,4 +112,4 @@ export default function Dock() {
       </button>
     </div>
   );
-}
+});

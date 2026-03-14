@@ -212,8 +212,11 @@ export class TerminalEngine {
       return;
     }
 
-    // Record in history
+    // Record in history (capped at 200 to prevent unbounded growth)
     this.commandHistory.push(trimmed);
+    if (this.commandHistory.length > 200) {
+      this.commandHistory.shift();
+    }
     this.historyIndex = this.commandHistory.length;
 
     this.isExecuting = true;

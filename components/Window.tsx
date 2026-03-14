@@ -1,3 +1,4 @@
+import React, { memo } from 'react';
 import { Minus, Maximize2, X } from 'lucide-react';
 import { Rnd } from 'react-rnd';
 import { useWindows, WindowData } from './WindowManager';
@@ -7,7 +8,7 @@ interface WindowProps {
   windowData: WindowData;
 }
 
-export default function Window({ windowData }: WindowProps) {
+const Window = memo(function Window({ windowData }: WindowProps) {
   const {
     closeWindow,
     minimizeWindow,
@@ -24,9 +25,6 @@ export default function Window({ windowData }: WindowProps) {
   const ContentComponent = COMPONENT_REGISTRY[windowData.baseId];
 
   if (!ContentComponent && !windowData.content) {
-    // Fallback only if explicitly provided in windowData (e.g. for simple alerts), otherwise Error
-    // But user said "DO NOT fallback to <Home />".
-    // If both are missing, render 404.
     return (
       <Rnd
         default={{
@@ -35,7 +33,7 @@ export default function Window({ windowData }: WindowProps) {
           width: windowData.size.width,
           height: windowData.size.height,
         }}
-        className="z-50"
+        style={{ zIndex: windowData.zIndex }}
       >
         <div className="w-full h-full bg-red-500 text-white p-4 rounded">
           Error: Component not found for ID &quot;{windowData.id}&quot;
@@ -53,8 +51,8 @@ export default function Window({ windowData }: WindowProps) {
   if (windowData.isMaximized) {
     return (
       <div
-        className="fixed inset-0 z-50 flex flex-col pointer-events-auto"
-        style={{ top: '28px', left: '64px', width: 'calc(100vw - 64px)', height: 'calc(100vh - 28px)' }}
+        className="fixed inset-0 flex flex-col pointer-events-auto"
+        style={{ top: '28px', left: '64px', width: 'calc(100vw - 64px)', height: 'calc(100vh - 28px)', zIndex: windowData.zIndex }}
       >
         <WindowFrame
           windowData={windowData}
@@ -91,7 +89,8 @@ export default function Window({ windowData }: WindowProps) {
       onMouseDown={() => setActiveWindow(windowData.id)}
       minWidth={300}
       minHeight={200}
-      className={`flex flex-col ${isActive ? 'z-50' : 'z-10'} pointer-events-auto`}
+      style={{ zIndex: windowData.zIndex }}
+      className="flex flex-col pointer-events-auto"
       dragHandleClassName="window-drag-handle"
       cancel=".window-controls"
       bounds="parent"
@@ -108,7 +107,9 @@ export default function Window({ windowData }: WindowProps) {
       </WindowFrame>
     </Rnd>
   );
-}
+});
+
+export default Window;
 
 interface WindowFrameProps {
   children: React.ReactNode;
@@ -120,7 +121,7 @@ interface WindowFrameProps {
   onMouseDown: () => void;
 }
 
-function WindowFrame({ children, windowData, isActive, onMinimize, onMaximize, onClose, onMouseDown }: WindowFrameProps) {
+const WindowFrame = memo(function WindowFrame({ children, windowData, isActive, onMinimize, onMaximize, onClose, onMouseDown }: WindowFrameProps) {
   return (
     <div
       className={`flex flex-col w-full h-full ubuntu-window-bg rounded-t-xl shadow-2xl overflow-hidden ${isActive ? 'ring-2 ring-white/20' : ''}`}
@@ -128,7 +129,7 @@ function WindowFrame({ children, windowData, isActive, onMinimize, onMaximize, o
     >
       {/* Title Bar Container */}
       <div className="bg-[#2C2C2C] h-10 flex items-center justify-between px-4 select-none border-b border-[#1E1E1E]">
-        
+
         {/* Drag Handle Area - completely isolates dragging from the buttons! */}
         <div className="flex-1 flex justify-center items-center h-full window-drag-handle cursor-grab active:cursor-grabbing">
           <span className="text-white font-bold text-sm pointer-events-none">{windowData.title}</span>
@@ -166,4 +167,4 @@ function WindowFrame({ children, windowData, isActive, onMinimize, onMaximize, o
       </div>
     </div>
   );
-}
+});

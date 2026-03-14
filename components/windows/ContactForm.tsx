@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from 'react';
-import emailjs from '@emailjs/browser';
+import React, { useState, useRef } from 'react';
 import { Send, AlertCircle, X } from 'lucide-react';
+
+const RATE_LIMIT_MS = 30_000; // 30 seconds between submissions
 
 export default function ContactForm() {
     const [formData, setFormData] = useState({
@@ -12,6 +13,7 @@ export default function ContactForm() {
     });
     const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
     const [validationError, setValidationError] = useState<string | null>(null);
+    const lastSubmitRef = useRef<number>(0);
 
     const validateEmail = (email: string) => {
         return /\S+@\S+\.\S+/.test(email);
@@ -19,7 +21,7 @@ export default function ContactForm() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         // Validation
         if (!formData.name.trim()) {
             setValidationError("Please enter your name.");
@@ -37,9 +39,18 @@ export default function ContactForm() {
             setValidationError("Please enter a message.");
             return;
         }
-        
+
+        // Rate limiting
+        const now = Date.now();
+        if (now - lastSubmitRef.current < RATE_LIMIT_MS) {
+            const remainingSec = Math.ceil((RATE_LIMIT_MS - (now - lastSubmitRef.current)) / 1000);
+            setValidationError(`Please wait ${remainingSec} seconds before sending another message.`);
+            return;
+        }
+
         setValidationError(null);
         setStatus('sending');
+        lastSubmitRef.current = now;
 
         try {
             const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID;
@@ -55,6 +66,9 @@ export default function ContactForm() {
                 setFormData({ name: '', email: '', message: '' });
                 return;
             }
+
+            // Dynamic import — only loads emailjs (~15KB) when actually sending
+            const emailjs = (await import('@emailjs/browser')).default;
 
             await emailjs.send(
                 serviceId,
@@ -96,7 +110,7 @@ export default function ContactForm() {
                         <h3 className="text-sm font-semibold text-gray-900">Validation Error</h3>
                         <p className="text-sm text-gray-600 mt-1">{validationError}</p>
                     </div>
-                    <button 
+                    <button
                         onClick={() => setValidationError(null)}
                         className="text-gray-400 hover:text-gray-600 transition-colors"
                     >
@@ -116,7 +130,9 @@ export default function ContactForm() {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                                 <input
                                     type="text"
+                                    name="name"
                                     value={formData.name}
+                                    maxLength={100}
                                     onChange={(e) => {
                                         setFormData({ ...formData, name: e.target.value });
                                         if (validationError) setValidationError(null);
@@ -130,7 +146,9 @@ export default function ContactForm() {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                                 <input
                                     type="email"
+                                    name="email"
                                     value={formData.email}
+                                    maxLength={254}
                                     onChange={(e) => {
                                         setFormData({ ...formData, email: e.target.value });
                                         if (validationError) setValidationError(null);
@@ -144,7 +162,9 @@ export default function ContactForm() {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
                                 <textarea
                                     rows={4}
+                                    name="message"
                                     value={formData.message}
+                                    maxLength={2000}
                                     onChange={(e) => {
                                         setFormData({ ...formData, message: e.target.value });
                                         if (validationError) setValidationError(null);

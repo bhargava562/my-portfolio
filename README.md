@@ -6,7 +6,7 @@ Welcome to my interactive portfolio! This project is designed to simulate a high
 
 Explore my portfolio exactly as you would navigate a real desktop operating system:
 
-* **🪟 Interactive Window Management:** A custom-built windowing system allows you to open, drag, resize, maximize, minimize, and close application windows seamlessly. An embedded physics and boundary engine ensures windows remain locked within the safe desktop coordinates while preserving overlapping Z-index hierarchies.
+* **🪟 Interactive Window Management:** A custom-built windowing system allows you to open, drag, resize, maximize, minimize, and close application windows seamlessly. An embedded physics and boundary engine ensures windows remain locked within the safe desktop coordinates while preserving per-window Z-index stacking order via an auto-incrementing focus counter.
 * **🖥️ Authentic Desktop Environment:** Complete with an intuitive app Dock, interactive draggable desktop icons, right-click context menus, and flawlessly crafted UI components that rigidly echo the Ubuntu design language.
 * **⏱️ Live System Top Bar:** Features a real-time ticking clock, a functional calendar dropdown built with day-picking date-math algorithms, and a sleek Quick Settings control center housing simulated volume and brightness sliders.
 * **💻 3-Stage Bootloader Sequence:** Start the experience with an authentic Linux GRUB terminal boot trace, cascading progress animations, and a blurred Profile Lock Screen before authenticating into the Desktop.
@@ -38,10 +38,11 @@ Instead of fetching from the database inside React components on every page load
 
 #### 2. The Window Manager (`<WindowProvider>`)
 
-The heart of the OS is the global `WindowContext`. Rather than managing individual states per component, the architecture uses a centralized Redux-style React Context that maintains a canonical array of `Window` definitions.
+The heart of the OS is the global `WindowContext`. Rather than managing individual states per component, the architecture uses a centralized React Context that maintains a canonical array of `Window` definitions. All context actions are stabilized with `useCallback` and the provider value is memoized via `useMemo` to prevent cascading re-renders across consumers.
 
-* **Z-Index Sandboxing:** Whenever a window is focused (`setActiveWindow`), it calculates the maximum current Z-index in the stack and increments upon it, ensuring the currently selected window always renders on top.
-* **Minimization Physics:** When a window minimizes, it visually scales down into the Dock while its internal component unmounts but preserves its virtual state ID, so restoring it snaps instantly back to its exact previous dimensions.
+* **Z-Index Stacking:** Each `WindowData` carries its own `zIndex: number` field. When a window is focused (`setActiveWindow`), it receives the next value from a monotonically-increasing counter, ensuring the focused window always renders on top while inactive windows retain their relative stacking order.
+* **Render Isolation:** Individual `Window` and `WindowFrame` components are wrapped in `React.memo`, preventing re-renders when unrelated windows change state. The `Dock` uses a pre-computed `Set<string>` for O(1) open-window lookups and `useMemo` for dock item derivation.
+* **Resource Guarding:** A hard cap of 20 concurrent windows prevents memory exhaustion. Window stagger positions cycle via modular arithmetic (`offset % 10`) to avoid viewport overflow.
 
 #### 3. Hydration-Aware Boot Sequence
 
@@ -58,9 +59,10 @@ The tech stack strictly embraces a highly modular paradigm:
 | **Tailwind CSS** | `^4.0.0` | The utility-first styling matrix. Upgraded to V4 to employ native cascade variables and high-performance inline CSS animations (used extensively in the pure-CSS bootloader), bypassing JS framerate bottlenecks entirely for raw styles. |
 | **Motion** (Framer) | `12.23.25` | The physics animation engine. Handles the complex spring mathematics required to animate window opening, closing, and dock minimization smoothly based on arbitrary viewport sizes. |
 | **React-RND** | `^10.5.2` | The draggable/resizable substrate sandbox. It inherently encapsulates pointer event delegation, bounding box collisions, and resize handles, which are otherwise highly expensive to implement cross-browser manually. |
-| **Radix UI Primitives** | `^1.x - 2.x` | Headless, unstyled DOM primitives (`Accordion`, `DropdownMenu`, `Dialog`, `ScrollArea`). Essential for injecting native-OS accessibility (keyboard ARIA compliance, focus trapping, menu hierarchies) without opinionated styling conflicts. |
 | **Supabase Client** | `^2.98.0` | Provides the decoupled remote connection logic executed during the `npm run sync` build steps to serialize remote POSTGRES data securely. |
 | **Lucide React** | `^0.555.0` | Vector UI icons cleanly matched to the Ubuntu Yaru aesthetic, retaining crisp boundaries regardless of desktop DPI scaling. |
+| **Sentry** | `^10.42.0` | Production error monitoring and performance tracing. Integrated via `@sentry/nextjs` with source maps disabled in production for security. |
+| **Serwist** | `^9.5.6` | Service worker tooling for Progressive Web App (PWA) support, enabling offline caching and faster repeat visits. |
 
 ---
 
@@ -200,8 +202,75 @@ flowchart TD
 
 | Check | Status | Details |
 | :--- | :---: | :--- |
-| `dangerouslySetInnerHTML` | ✅ Safe | Only used for static CSS injection in `chart.tsx` and `layout.tsx` |
-| DOM Injection | ✅ Protected | React JSX prevents raw HTML insertion from external data |
-| Environment Variables | ✅ Secured | `.gitignore` blocks all `.env*` files from version control |
-| Dependency Audit | ✅ Patched | `npm audit fix` resolved sub-dependency CVEs |
+| `dangerouslySetInnerHTML` | ✅ Safe | Only used for static CSS injection in `layout.tsx` — no user input flows into it |
+| DOM Injection | ✅ Protected | React JSX prevents raw HTML insertion; terminal uses `escapeHtml()` defense-in-depth |
+| Environment Variables | ✅ Secured | `.gitignore` blocks all `.env*` files; Supabase keys are server-only (no `NEXT_PUBLIC_` prefix for service role) |
+| API Authentication | ✅ Protected | `/api/sync` requires `Authorization: Bearer <SYNC_API_SECRET>` header with 60s rate limiting |
+| Security Headers | ✅ Hardened | `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `HSTS`, `Referrer-Policy`, `Permissions-Policy` |
+| Contact Form | ✅ Rate Limited | 30s cooldown between submissions; input length limits enforced (name: 100, email: 254, message: 2000) |
+| Terminal Input | ✅ Sandboxed | No `eval()`/`Function()` — all commands dispatched via static registry; command history capped at 200 entries |
+| Window Resources | ✅ Bounded | Maximum 20 concurrent windows; terminal output buffer capped at 500 lines with DOM virtualized to 120 |
+| Dependency Audit | ✅ Lean | Unused shadcn/ui components and ~30 dead dependencies removed; only essential packages retained |
 | Resume Download | ✅ Domain-locked | Fetch restricted to configured Supabase domain |
+
+---
+
+### 🚀 Getting Started
+
+#### Prerequisites
+
+* Node.js 20+
+* npm
+
+#### Installation
+
+```bash
+git clone <repo-url>
+cd my-portfolio
+npm install
+```
+
+#### Environment Variables
+
+Copy `.env.example` to `.env.local` and fill in your values:
+
+```bash
+cp .env.example .env.local
+```
+
+| Variable | Scope | Description |
+| :--- | :---: | :--- |
+| `NEXT_PUBLIC_EMAILJS_SERVICE_ID` | Client | EmailJS service ID for the contact form |
+| `NEXT_PUBLIC_EMAILJS_TEMPLATE_ID` | Client | EmailJS template ID |
+| `NEXT_PUBLIC_EMAILJS_PUBLIC_KEY` | Client | EmailJS public key |
+| `SYNC_API_SECRET` | Server | Secret token for authenticating `POST /api/sync` requests. Generate with `openssl rand -hex 32` |
+| `NEXT_PUBLIC_SUPABASE_URL` | Server | Supabase project URL (used by sync script) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Server | Supabase anon/service key (used by sync script) |
+
+#### Development
+
+```bash
+npm run dev
+```
+
+#### Production Build
+
+```bash
+npm run build
+npm start
+```
+
+#### Data Sync
+
+To sync portfolio data from Supabase to static JSON:
+
+```bash
+npm run sync
+```
+
+Or via the API (requires `SYNC_API_SECRET`):
+
+```bash
+curl -X POST https://your-domain.com/api/sync \
+  -H "Authorization: Bearer YOUR_SYNC_API_SECRET"
+```
