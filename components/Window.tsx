@@ -8,6 +8,18 @@ interface WindowProps {
   windowData: WindowData;
 }
 
+/**
+ * Stable module-scope component that encapsulates the dynamic registry lookup.
+ * Declared outside Window's render so the linter sees a static component reference.
+ * getComponent returns stable module-scope references (next/dynamic singletons).
+ */
+/* eslint-disable react-hooks/static-components -- getComponent returns stable module-scope next/dynamic refs, not new components */
+const RegistryContent = memo(function RegistryContent({ windowData }: { windowData: WindowData }) {
+  const Component = getComponent(windowData.baseId);
+  return <Component {...windowData.props} windowData={windowData} />;
+});
+/* eslint-enable react-hooks/static-components */
+
 const Window = memo(function Window({ windowData }: WindowProps) {
   const {
     closeWindow,
@@ -21,31 +33,7 @@ const Window = memo(function Window({ windowData }: WindowProps) {
 
   const isActive = activeWindowId === windowData.id;
 
-  // Registry lookup with GenericSectionContent fallback
-  const ContentComponent = getComponent(windowData.baseId);
-
-  if (!ContentComponent && !windowData.content) {
-    return (
-      <Rnd
-        default={{
-          x: windowData.position.x,
-          y: windowData.position.y,
-          width: windowData.size.width,
-          height: windowData.size.height,
-        }}
-        style={{ zIndex: windowData.zIndex }}
-      >
-        <div className="w-full h-full bg-red-500 text-white p-4 rounded">
-          Error: Component not found for ID &quot;{windowData.id}&quot;
-        </div>
-      </Rnd>
-    );
-  }
-
-  let Content = windowData.content;
-  if (ContentComponent) {
-    Content = <ContentComponent {...windowData.props} windowData={windowData} />;
-  }
+  const Content = windowData.content ?? <RegistryContent windowData={windowData} />;
 
   // Handle Maximize State
   if (windowData.isMaximized) {
