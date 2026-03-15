@@ -2,6 +2,7 @@ import dynamic from 'next/dynamic';
 import React from 'react';
 
 // Dynamic Imports
+const GenericSectionContent = dynamic(() => import('./windows/GenericSectionContent'), { loading: () => <div>Loading...</div> });
 const TextEditor = dynamic(() => import('./windows/TextEditor'), { loading: () => <div>Loading...</div> });
 const AboutContent = dynamic(() => import('./windows/AboutContent'), { loading: () => <div>Loading...</div> });
 const ContactForm = dynamic(() => import('@/components/windows/ContactForm'), { loading: () => <div>Loading...</div> });
@@ -32,10 +33,6 @@ export const COMPONENT_REGISTRY: Record<string, React.ElementType> = {
     'terminal': TerminalContent,
 };
 
-export const getComponent = (id: string) => {
-    const Component = COMPONENT_REGISTRY[id];
-    if (!Component) {
-        return null;
-    }
-    return Component;
+export const getComponent = (id: string): React.ElementType => {
+    return COMPONENT_REGISTRY[id] || GenericSectionContent;
 };

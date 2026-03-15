@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import { Minus, Maximize2, X } from 'lucide-react';
 import { Rnd } from 'react-rnd';
 import { useWindows, WindowData } from './WindowManager';
-import { COMPONENT_REGISTRY } from './ComponentRegistry';
+import { getComponent } from './ComponentRegistry';
 
 interface WindowProps {
   windowData: WindowData;
@@ -21,8 +21,8 @@ const Window = memo(function Window({ windowData }: WindowProps) {
 
   const isActive = activeWindowId === windowData.id;
 
-  // Strict Registry Check
-  const ContentComponent = COMPONENT_REGISTRY[windowData.baseId];
+  // Registry lookup with GenericSectionContent fallback
+  const ContentComponent = getComponent(windowData.baseId);
 
   if (!ContentComponent && !windowData.content) {
     return (

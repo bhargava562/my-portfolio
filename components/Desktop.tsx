@@ -1,38 +1,60 @@
 "use client";
 
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useWindows } from './WindowManager';
 import { DesktopItem } from '@/types/desktop';
-import { YaruFolderIcon, YaruFileIcon, YaruAppIcon, YaruLinkedinIcon, YaruGithubIcon } from './icons/YaruIcons';
+import { YaruFolderIcon, YaruFileIcon, YaruAppIcon } from './icons/YaruIcons';
+import { STATIC_FALLBACK_ITEMS, ICON_OVERRIDES, deriveDesktopItems } from '@/lib/sectionMetadata';
+import { getPortfolioData } from '@/lib/actions';
 
-// Static data — hoisted to module scope to avoid re-creation on every render
-const desktopItems: DesktopItem[] = [
-  { id: 'about', title: 'About Me', type: 'file' },
-  { id: 'resume', title: 'Resume.pdf', type: 'file' },
-  { id: 'skills', title: 'Skills', type: 'folder', children: [] },
-  { id: 'experience', title: 'Experience', type: 'folder', children: [] },
-  { id: 'education', title: 'Education', type: 'folder', children: [] },
-  { id: 'certifications', title: 'Certifications', type: 'folder', children: [] },
-  { id: 'hackathons', title: 'Hackathons', type: 'folder', children: [] },
-  { id: 'awards', title: 'Awards', type: 'folder', children: [] },
-  { id: 'blogs', title: 'Blogs', type: 'folder', children: [] },
-  { id: 'projects', title: 'Projects', type: 'folder', children: [] },
-  { id: 'socials', title: 'Socials', type: 'folder', children: [] },
-  { id: 'contact', title: 'Contact Me', type: 'app', appUrl: '/contact', metadata: { icon: 'globe' } },
-  { id: 'terminal', title: 'Terminal', type: 'app', metadata: { icon: 'terminal' } },
-];
+// O(1) type-based icon lookup
+const YARU_BY_TYPE: Record<string, React.ComponentType<{ className?: string }>> = {
+  folder: YaruFolderIcon,
+  file: YaruFileIcon,
+  app: YaruAppIcon,
+};
+
+function renderIcon(item: DesktopItem) {
+  // 1. Check for custom image icon override (O(1))
+  const override = ICON_OVERRIDES[item.id];
+  if (override) {
+    if (override.fill) {
+      return <Image src={override.src} alt={item.title} fill sizes="48px" className={override.className} priority={override.priority} />;
+    }
+    return <Image src={override.src} alt={item.title} width={48} height={48} className={override.className} priority={override.priority} />;
+  }
+
+  // 2. Fall back to type-based Yaru SVG icon (O(1))
+  const YaruIcon = YARU_BY_TYPE[item.type];
+  if (YaruIcon) {
+    return <YaruIcon className="w-full h-full drop-shadow-md" />;
+  }
+
+  return <YaruFileIcon className="w-full h-full drop-shadow-md" />;
+}
 
 export default function Desktop() {
   const { openWindow } = useWindows();
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [desktopItems, setDesktopItems] = useState<DesktopItem[]>(STATIC_FALLBACK_ITEMS);
   const desktopRef = useRef<HTMLDivElement>(null);
 
-  const handleItemClick = (item: DesktopItem) => {
-    setSelectedItems([item.id]);
-  };
+  // Derive desktop items from portfolio.json on mount
+  useEffect(() => {
+    getPortfolioData().then(data => {
+      if (data && Object.keys(data).length > 0) {
+        setDesktopItems(deriveDesktopItems(data));
+      }
+      // If fetch fails (returns {}), STATIC_FALLBACK_ITEMS remain
+    });
+  }, []);
 
-  const handleItemDoubleClick = (item: DesktopItem) => {
+  const handleItemClick = useCallback((item: DesktopItem) => {
+    setSelectedItems([item.id]);
+  }, []);
+
+  const handleItemDoubleClick = useCallback((item: DesktopItem) => {
     // Check for external link (Socials)
     if (item.appUrl && item.appUrl.startsWith('http')) {
       window.open(item.appUrl, '_blank');
@@ -43,7 +65,7 @@ export default function Desktop() {
     if (item.id === 'resume') {
       import('@/lib/actions').then(async ({ getProfile, getImageUrl }) => {
         let resumeUrl = '/Bhargava_resume.pdf'; // default fallback
-        
+
         try {
           const profile = await getProfile();
           if (profile?.resume_path) {
@@ -55,17 +77,17 @@ export default function Desktop() {
           // Force download via Blob to prevent browser preview hijacking on native CDN URLs
           const response = await fetch(resumeUrl, { mode: "cors" });
           if (!response.ok) throw new Error("Network response was not ok");
-          
+
           const blob = await response.blob();
           const objectUrl = window.URL.createObjectURL(blob);
-          
+
           const link = document.createElement("a");
           link.href = objectUrl;
           link.download = "Bhargava_Resume.pdf";
           document.body.appendChild(link);
           link.click();
           link.remove();
-          
+
           // Cleanup memory
           setTimeout(() => window.URL.revokeObjectURL(objectUrl), 1000);
         } catch (error) {
@@ -99,24 +121,23 @@ export default function Desktop() {
       icon: item.type === 'folder' ? 'folder' : (item.type === 'app' ? 'globe' : 'file'),
       type: item.type,
       props: {
-        // Pass necessary props for the component
         windowId: item.id,
         rootItems: desktopItems,
         initialPath: `/${item.id}`,
-        content: item.content, // For TextEditor fallback
-        initialUrl: item.appUrl, // For Browser
-        item: item, // For DetailView
+        content: item.content,
+        initialUrl: item.appUrl,
+        item: item,
       },
       content: undefined,
       allowMultiple: item.id === 'terminal',
     });
-  };
+  }, [openWindow, desktopItems]);
 
-  const handleBackgroundClick = (e: React.MouseEvent) => {
+  const handleBackgroundClick = useCallback((e: React.MouseEvent) => {
     if (e.target === desktopRef.current) {
       setSelectedItems([]);
     }
-  };
+  }, []);
 
   return (
     <div
@@ -147,21 +168,7 @@ export default function Desktop() {
             `}
           >
             <div className="w-12 h-12 mb-1 relative flex items-center justify-center">
-              {item.metadata?.icon === 'terminal' ? (
-                <Image src="/terminal.webp" alt="Terminal" width={48} height={48} className="drop-shadow-md" />
-              ) : item.metadata?.icon === 'globe' ? (
-                <Image src="/globe.svg" alt="Contact" width={48} height={48} priority />
-              ) : item.id === 'resume' ? (
-                <Image src="/resume.png" alt="Resume" fill sizes="48px" className="object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] rounded" />
-              ) : (
-                <>
-                  {item.type === 'folder' && <YaruFolderIcon className="w-full h-full drop-shadow-md" />}
-                  {item.type === 'file' && !item.metadata?.icon && <YaruFileIcon className="w-full h-full drop-shadow-md" />}
-                  {item.type === 'app' && <YaruAppIcon className="w-full h-full drop-shadow-md" />}
-                  {item.metadata?.icon === 'linkedin' && <YaruLinkedinIcon className="w-full h-full drop-shadow-md" />}
-                  {item.metadata?.icon === 'github' && <YaruGithubIcon className="w-full h-full drop-shadow-md" />}
-                </>
-              )}
+              {renderIcon(item)}
             </div>
             <span className={`text-sm text-center line-clamp-2 drop-shadow-md ${isSelected ? 'text-white' : 'text-white'}`}>
               {item.title}
