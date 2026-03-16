@@ -47,6 +47,8 @@ const SECTION_METADATA: Record<string, SectionMeta> = {
   awards:          { id: 'awards',         title: 'Awards',         type: 'folder', sortOrder: 16 },
   blogs:           { id: 'blogs',          title: 'Blogs',          type: 'folder', sortOrder: 17 },
   social_profiles: { id: 'socials',        title: 'Socials',        type: 'folder', sortOrder: 18 },
+  contributions:   { id: 'contributions',  title: 'Contributions',  type: 'folder', sortOrder: 19 },
+  learnings:       { id: 'learnings',      title: 'Learnings',      type: 'folder', sortOrder: 20 },
 };
 
 // ─── Alias Maps ──────────────────────────────────────────────
@@ -108,6 +110,8 @@ export const STATIC_FALLBACK_ITEMS: DesktopItem[] = [
   { id: 'awards',         title: 'Awards',          type: 'folder', children: [] },
   { id: 'blogs',          title: 'Blogs',           type: 'folder', children: [] },
   { id: 'socials',        title: 'Socials',         type: 'folder', children: [] },
+  { id: 'contributions',  title: 'Contributions',   type: 'folder', children: [] },
+  { id: 'learnings',      title: 'Learnings',       type: 'folder', children: [] },
   { id: 'contact',        title: 'Contact Me',      type: 'app', appUrl: '/contact' },
   { id: 'terminal',       title: 'Terminal',         type: 'app' },
 ];

@@ -169,6 +169,20 @@ export const getBlogs = async () => {
     } catch { return []; }
 };
 
+/**
+ * Dynamic accessor — fetch any section by its portfolio.json key.
+ * New tables synced from Supabase are automatically accessible
+ * without adding a dedicated getter function.
+ */
+export const getSection = async (key: string): Promise<Record<string, unknown>[]> => {
+    try {
+        const data = await getPortfolioData();
+        const section = data?.[key];
+        if (Array.isArray(section)) return section as Record<string, unknown>[];
+        return [];
+    } catch { return []; }
+};
+
 // Get skills grouped by category dynamically from JSON
 interface SkillNode {
   id: number;
