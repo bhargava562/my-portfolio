@@ -68,11 +68,21 @@ export const BootProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return;
     }
 
+    // Preload critical static assets via link[rel=preload] for instant desktop responsiveness
+    if (!document.querySelector('link[href="/photos.webp"][rel="preload"]')) {
+      const preloadLink = document.createElement('link');
+      preloadLink.rel = 'preload';
+      preloadLink.as = 'image';
+      preloadLink.href = '/photos.webp';
+      preloadLink.setAttribute('fetchpriority', 'high');
+      document.head.appendChild(preloadLink);
+    }
+
     // Dynamic Data Prime Sequence (only runs on fresh boot)
     import('@/lib/actions').then(({ getPortfolioData, getUiConfigData, getImageUrl }) => {
        const dataPromise = getPortfolioData();
        const uiPromise = getUiConfigData();
-       
+
        Promise.all([dataPromise, uiPromise]).then(([portfolioData]) => {
           // Preload critical images in the background (non-blocking)
           const profile = portfolioData?.profile as Record<string, string> | undefined;

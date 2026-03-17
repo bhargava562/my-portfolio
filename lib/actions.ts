@@ -90,8 +90,11 @@ export const resolveImagePath = async (dataset: string, record: Record<string, u
         primaryUrl = path;
     } else {
         const storageUrl = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL || `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/`;
-        // Ensure we don't double slash if storageUrl has a trailing slash and path doesn't need it, or vice versa
-        const base = storageUrl.endsWith('/') ? storageUrl : `${storageUrl}/`;
+        // Ensure the URL includes the /public/ segment required by Supabase Storage
+        let base = storageUrl.endsWith('/') ? storageUrl : `${storageUrl}/`;
+        if (!base.includes('/public/')) {
+            base += 'public/';
+        }
         const normalizedPath = path.startsWith('/') ? path.substring(1) : path;
         primaryUrl = `${base}${normalizedPath}`;
     }

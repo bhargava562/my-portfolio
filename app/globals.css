@@ -83,3 +83,22 @@ body {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+
+/* Custom styled vertical scrollbar for certifications file explorer */
+.certifications-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.certifications-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.certifications-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(233, 84, 32, 0.4);
+  border-radius: 3px;
+}
+.certifications-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(233, 84, 32, 0.7);
+}
+.certifications-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(233, 84, 32, 0.4) transparent;
+}

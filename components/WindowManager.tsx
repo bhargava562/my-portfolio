@@ -83,6 +83,11 @@ export function WindowProvider({ children }: { children: ReactNode }) {
       const x = Math.max(10, Math.min(staggeredX, vw - defaultWidth - 10));
       const y = Math.max(10, Math.min(staggeredY, vh - defaultHeight - 10));
 
+      // Derive z-index from the actual max across all windows so new windows
+      // always appear in front, even after repeated setActiveWindow promotions
+      const maxZ = prev.reduce((max, w) => Math.max(max, w.zIndex), BASE_Z_INDEX);
+      const newZ = maxZ + 1;
+
       const newWindow: WindowData = {
         ...windowData,
         id: finalId,
@@ -91,12 +96,12 @@ export function WindowProvider({ children }: { children: ReactNode }) {
         isMaximized: false,
         position: { x, y },
         size: { width: defaultWidth, height: defaultHeight },
-        zIndex: BASE_Z_INDEX + prev.length + 1,
+        zIndex: newZ,
         currentPath: windowData.currentPath || (windowData.props?.initialPath as string) || '/',
       };
 
       setActiveWindowId(newWindow.id);
-      setNextZIndex(z => z + 1);
+      setNextZIndex(newZ + 1);
       return [...prev, newWindow];
     });
   }, []);

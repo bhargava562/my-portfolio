@@ -11,9 +11,12 @@ export function buildSupabaseImageUrl(
       return path; // Return as-is if already a full URL or local path
   }
 
-  // Ensure no double slashes if BASE has trailing and path has leading
-  const safeBase = BASE?.endsWith('/') ? BASE : `${BASE}/`;
+  // Ensure the URL includes the /public/ segment required by Supabase Storage
+  let safeBase = BASE?.endsWith('/') ? BASE : `${BASE}/`;
+  if (!safeBase.includes('/public/') && !safeBase.endsWith('/public/')) {
+    safeBase += 'public/';
+  }
   const safePath = path.startsWith('/') ? path.substring(1) : path;
-  
+
   return `${safeBase}${safePath}?width=${width}&quality=${quality}`;
 }

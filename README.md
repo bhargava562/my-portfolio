@@ -6,11 +6,12 @@ Welcome to my interactive portfolio! This project is designed to simulate a high
 
 Explore my portfolio exactly as you would navigate a real desktop operating system:
 
-* **🪟 Interactive Window Management:** A custom-built windowing system allows you to open, drag, resize, maximize, minimize, and close application windows seamlessly. An embedded physics and boundary engine ensures windows remain locked within the safe desktop coordinates while preserving per-window Z-index stacking order via an auto-incrementing focus counter.
+* **🪟 Interactive Window Management:** A custom-built windowing system allows you to open, drag, resize, maximize, minimize, and close application windows seamlessly. An embedded physics and boundary engine ensures windows remain locked within the safe desktop coordinates while preserving per-window Z-index stacking order via a max-derived focus counter that guarantees newly opened windows always appear in front.
 * **🖥️ Authentic Desktop Environment:** Complete with an intuitive app Dock, interactive draggable desktop icons, right-click context menus, and flawlessly crafted UI components that rigidly echo the Ubuntu design language.
 * **⏱️ Live System Top Bar:** Features a real-time ticking clock, a functional calendar dropdown built with day-picking date-math algorithms, and a sleek Quick Settings control center housing simulated volume and brightness sliders.
-* **💻 3-Stage Bootloader Sequence:** Start the experience with an authentic Linux GRUB terminal boot trace, cascading progress animations, and a blurred Profile Lock Screen before authenticating into the Desktop.
+* **💻 3-Stage Bootloader Sequence:** Start the experience with an authentic Linux GRUB terminal boot trace, cascading progress animations, and a blurred Profile Lock Screen before authenticating into the Desktop. Critical assets like `/photos.webp` are preloaded via `<link rel="preload">` during boot for instant desktop responsiveness.
 * **📂 Root File System Navigation:** Browse through distinct "apps" and "folders" representing my Projects, Skills, Experience, and Certifications via an intuitive File Explorer interface powered by structured breadcrumb pathing.
+* **🏅 Certifications File Manager:** A dedicated file-system UI groups certifications by issuing organization — organizations with multiple certs render as openable folders, single-cert organizations render as file icons. Each certificate image opens in an independent viewer window with concurrent multi-window support (up to 20 simultaneous windows).
 
 ---
 
@@ -40,9 +41,10 @@ Instead of fetching from the database inside React components on every page load
 
 The heart of the OS is the global `WindowContext`. Rather than managing individual states per component, the architecture uses a centralized React Context that maintains a canonical array of `Window` definitions. All context actions are stabilized with `useCallback` and the provider value is memoized via `useMemo` to prevent cascading re-renders across consumers.
 
-* **Z-Index Stacking:** Each `WindowData` carries its own `zIndex: number` field. When a window is focused (`setActiveWindow`), it receives the next value from a monotonically-increasing counter, ensuring the focused window always renders on top while inactive windows retain their relative stacking order.
+* **Z-Index Stacking:** Each `WindowData` carries its own `zIndex: number` field. When a window is focused (`setActiveWindow`), it receives the next value from a monotonically-increasing counter. New windows derive their z-index from `Math.max()` across all existing windows, guaranteeing they always render on top regardless of prior focus-promotion history.
 * **Render Isolation:** Individual `Window` and `WindowFrame` components are wrapped in `React.memo`, preventing re-renders when unrelated windows change state. The `Dock` uses a pre-computed `Set<string>` for O(1) open-window lookups and `useMemo` for dock item derivation.
-* **Resource Guarding:** A hard cap of 20 concurrent windows prevents memory exhaustion. Window stagger positions cycle via modular arithmetic (`offset % 10`) to avoid viewport overflow.
+* **Resource Guarding:** A hard cap of 20 concurrent windows prevents memory exhaustion. Window stagger positions cycle via modular arithmetic (`offset % 10`) to avoid viewport overflow. Click debouncing (500ms ref guard) prevents double-click events from spawning duplicate `allowMultiple` windows.
+* **Concurrent Certificate Viewers:** Certificate image windows use `allowMultiple: true` with unique IDs (`cert-viewer-{random9}`). Each open viewer pushes a `/photos.webp` icon to the Dock sidebar for process-level visibility. Clicking a dock icon brings that specific viewer to the front.
 
 #### 3. Hydration-Aware Boot Sequence
 
@@ -79,8 +81,9 @@ flowchart TD
     A["App Start"] --> B["Bootloader Mount"]
     B --> C["Hydration Check"]
     C -->|Session cached| D["Skip to Lock Screen"]
-    C -->|Fresh session| E["Fetch portfolio.json"]
-    C -->|Fresh session| F["Fetch ui_config.json"]
+    C -->|Fresh session| P["Preload /photos.webp\n(link rel=preload, fetchpriority=high)"]
+    P --> E["Fetch portfolio.json"]
+    P --> F["Fetch ui_config.json"]
     E --> G["Promise.all Resolution"]
     F --> G
     G --> H["Preload Critical Images\n(Profile, Banner)"]
@@ -93,6 +96,7 @@ flowchart TD
     style A fill:#E95420,color:#fff
     style L fill:#77216F,color:#fff
     style G fill:#2C001E,color:#fff
+    style P fill:#3ECF8E,color:#fff
 ```
 
 #### 2. Data & Presentation Separation
@@ -124,13 +128,13 @@ flowchart LR
 
 #### 3. Image Loading Pipeline
 
-All images follow a strict CDN-optimized pipeline with universal fallback protection.
+All images follow a strict CDN-optimized pipeline with universal fallback protection. Both `buildSupabaseImageUrl()` and `resolveImagePath()` enforce the required `/public/` segment in Supabase Storage URLs, preventing 504 timeouts from malformed paths.
 
 ```mermaid
 flowchart TD
     A["Image Request"] --> B{"Source Type?"}
     B -->|Absolute URL| C["Direct Fetch"]
-    B -->|Relative Path| D["Construct Supabase CDN URL"]
+    B -->|Relative Path| D["Construct Supabase CDN URL\n(enforces /public/ segment)"]
     C --> E["Next.js Image Optimizer"]
     D --> E
     E --> F{"Load Success?"}
@@ -141,6 +145,17 @@ flowchart TD
     style H fill:#1E1E1E,color:#fff,stroke:#E95420
     style G fill:#2C2C2C,color:#fff
 ```
+
+All image rendering paths implement fallback logic:
+
+| Component | Fallback Mechanism |
+| :--- | :--- |
+| `ImageWithFallback` | `onError` → `/linux-placeholder.webp` |
+| `AboutContent` (avatar/banner) | Inherits `ImageWithFallback` fallback; explicit placeholder branch |
+| `ProjectsContent` | Inherits `ImageWithFallback` fallback |
+| `SocialsContent` | Inherits `ImageWithFallback` fallback; SVG icon branch |
+| `BlogsContent` | `onError` state → `BookOpen` icon placeholder |
+| `CertificationsContent` (viewer) | `onError` → `/linux-placeholder.webp` + error message |
 
 #### 4. Resume Forced Download Pipeline
 
@@ -198,7 +213,41 @@ flowchart TD
 | Image Assets | Browser HTTP Cache | Browser policy | Cache expiry |
 | Critical Images | Preloaded in Bootloader | Page session | Page refresh |
 
-#### 6. Security Posture
+#### 6. Certifications File-System Architecture
+
+The `CertificationsContent` window implements a file-manager metaphor with dynamic grouping and concurrent image viewing.
+
+```mermaid
+flowchart TD
+    A["portfolio.json\n(certifications array)"] --> B["useMemo Grouping\nO(n) Map by issuing_organization"]
+    B --> C{"Organization\nCert Count?"}
+    C -->|"> 1"| D["Render Folder Icon\n(org name + badge count)"]
+    C -->|"= 1"| E["Render File Icon\n(/photos.webp thumbnail)"]
+    D -->|Click| F["Nested Grid View\n(certs inside org)"]
+    F --> G["Cert File Icons"]
+    E -->|Click| H["openCertificateViewer()"]
+    G -->|Click| H
+    H --> I["500ms Debounce Guard"]
+    I --> J["openWindow()\nallowMultiple: true"]
+    J --> K["New Window\ncert-viewer-{random9}"]
+    K --> L["Dock Icon\n/photos.webp pushed"]
+
+    style B fill:#E95420,color:#fff
+    style J fill:#77216F,color:#fff
+    style I fill:#2C001E,color:#fff
+```
+
+| Feature | Implementation |
+| :--- | :--- |
+| Grouping Algorithm | `useMemo` + `Map<org, CertNode[]>` — O(n) single-pass |
+| Layout | CSS Grid `repeat(auto-fill, minmax(100px, 1fr))` |
+| Overflow Protection | `overflow-y-auto` + custom Ubuntu-orange scrollbar |
+| Concurrent Windows | `allowMultiple: true` with unique `cert-viewer-{id}` |
+| Double-Click Guard | Ref-based 500ms debounce prevents duplicate popups |
+| Image Fallback | `onError` → `/linux-placeholder.webp` + error message |
+| Dock Integration | `/photos.webp` icon per open viewer; click to focus |
+
+#### 7. Security Posture
 
 | Check | Status | Details |
 | :--- | :---: | :--- |
