@@ -490,6 +490,7 @@
       ],
       "created_at": "2026-03-01T05:26:47.145626",
       "demo_url": "",
+      "demo_video_url": "https://drive.google.com/file/d/1Wzh6vzLab-EgbuhhdbbIJ8K3fY0aU6if/view?usp=sharing",
       "description": "BlockSafe is an AI-powered cognitive firewall designed to detect psychological manipulation in scam conversations. It includes a cognitive risk engine, autonomous AI honeypot, and threat intelligence dashboard that converts scam attempts into ML-ready defensive intelligence.",
       "display_order": 10,
       "end_date": "2026-02-22",

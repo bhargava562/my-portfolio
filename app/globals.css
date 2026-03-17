@@ -102,3 +102,22 @@ body {
   scrollbar-width: thin;
   scrollbar-color: rgba(233, 84, 32, 0.4) transparent;
 }
+
+/* Custom scrollbar for projects detail view */
+.projects-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.projects-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.projects-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.4);
+  border-radius: 3px;
+}
+.projects-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.7);
+}
+.projects-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 102, 241, 0.4) transparent;
+}
