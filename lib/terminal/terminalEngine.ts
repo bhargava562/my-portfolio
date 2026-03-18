@@ -9,7 +9,7 @@
 
 import { parseCommand } from './commandParser';
 import { COMMAND_REGISTRY } from './commandRegistry';
-import type { CommandResult, InteractivePrompt, OutputLine } from './types';
+import type { CommandResult, InteractivePrompt, OutputLine, TerminalContext } from './types';
 
 export type { OutputLine } from './types';
 
@@ -28,9 +28,17 @@ export class TerminalEngine {
   private outputQueue: OutputLine[] = [];
   private onUpdate: () => void;
   private streamTimer: ReturnType<typeof setTimeout> | null = null;
+  private context: TerminalContext;
 
-  constructor(onUpdate: () => void) {
+  /**
+   * @param onUpdate  Called whenever the buffer changes — triggers React re-render.
+   * @param openWindow  OS-level callback to open a desktop window by ID.
+   */
+  constructor(onUpdate: () => void, openWindow?: (id: string) => void) {
     this.onUpdate = onUpdate;
+    this.context = {
+      openWindow: openWindow ?? (() => {}),
+    };
   }
 
   private nextId(): number {
@@ -39,58 +47,32 @@ export class TerminalEngine {
 
   // ─── Buffer Operations ───────────────────────────────────────
 
-  /**
-   * Push lines into the buffer (before the active prompt).
-   * The active prompt is always the last line — new output inserts above it.
-   */
   pushOutput(lines: string[], type: OutputLine['type'] = 'output'): void {
     const newLines = lines.map(text => ({ id: this.nextId(), text, type }));
-
-    // Find the active prompt (last line if it's type 'input')
     const lastLine = this.outputBuffer[this.outputBuffer.length - 1];
     if (lastLine && lastLine.type === 'input') {
-      // Insert before the active prompt
       this.outputBuffer.splice(this.outputBuffer.length - 1, 0, ...newLines);
     } else {
       this.outputBuffer.push(...newLines);
     }
-
     this.evict();
     this.onUpdate();
   }
 
-  /**
-   * Append a new active prompt line at the end of the buffer.
-   */
   appendPrompt(prefix: string = '>_B $'): void {
-    this.outputBuffer.push({
-      id: this.nextId(),
-      text: '',
-      type: 'input',
-      prefix,
-    });
+    this.outputBuffer.push({ id: this.nextId(), text: '', type: 'input', prefix });
     this.evict();
     this.onUpdate();
   }
 
-  /**
-   * Update the active prompt text (for typing and history navigation).
-   */
   updateActivePrompt(text: string): void {
     const lastLine = this.outputBuffer[this.outputBuffer.length - 1];
     if (lastLine && lastLine.type === 'input') {
-      // Create a new object so React detects the change
-      this.outputBuffer[this.outputBuffer.length - 1] = {
-        ...lastLine,
-        text,
-      };
+      this.outputBuffer[this.outputBuffer.length - 1] = { ...lastLine, text };
       this.onUpdate();
     }
   }
 
-  /**
-   * Freeze the active prompt: convert it from 'input' to 'prompt' (read-only).
-   */
   private freezePrompt(): string {
     const lastLine = this.outputBuffer[this.outputBuffer.length - 1];
     if (lastLine && lastLine.type === 'input') {
@@ -107,9 +89,6 @@ export class TerminalEngine {
     return '';
   }
 
-  /**
-   * FIFO eviction to prevent memory bloat.
-   */
   private evict(): void {
     if (this.outputBuffer.length > MAX_BUFFER_SIZE) {
       this.outputBuffer = this.outputBuffer.slice(-MAX_BUFFER_SIZE);
@@ -118,10 +97,6 @@ export class TerminalEngine {
 
   // ─── Streaming Queue ─────────────────────────────────────────
 
-  /**
-   * Push lines to the streaming queue for animated 40ms/line rendering.
-   * Inserts lines above the active prompt.
-   */
   pushToStreamQueue(lines: string[], type: OutputLine['type'] = 'output'): Promise<void> {
     return new Promise((resolve) => {
       const newLines = lines.map(text => ({ id: this.nextId(), text, type }));
@@ -134,7 +109,6 @@ export class TerminalEngine {
           if (this.outputQueue.length === 0 && !this.isStreaming) {
             resolve();
           } else {
-            // Check less frequently, layout engine handles the frames
             setTimeout(checkDone, 100);
           }
         };
@@ -147,8 +121,6 @@ export class TerminalEngine {
     this.isStreaming = true;
     this.onUpdate();
 
-    // The Render Scheduler Phase
-    // Batch lines per animation frame to prevent blocking exactly like xterm.js
     const renderNext = () => {
       if (this.abortController?.signal.aborted) {
         this.outputQueue = [];
@@ -165,8 +137,6 @@ export class TerminalEngine {
         return;
       }
 
-      // Batch up to 3 lines per frame (60fps = ~180 lines/sec)
-      // This prevents the DOM from freezing during heavy outputs
       const batchSize = Math.min(3, this.outputQueue.length);
       const batch = this.outputQueue.splice(0, batchSize);
 
@@ -179,9 +149,7 @@ export class TerminalEngine {
 
       this.evict();
       this.onUpdate();
-      
-      // We still use a small timeout to simulate typewriter typing, 
-      // but bound the flush loop to the microtask/anim frame boundary.
+
       this.streamTimer = setTimeout(() => {
         if (typeof window !== 'undefined') {
           requestAnimationFrame(renderNext);
@@ -200,9 +168,6 @@ export class TerminalEngine {
 
   // ─── Command Execution ───────────────────────────────────────
 
-  /**
-   * Execute a command from the active prompt.
-   */
   async executeCommand(): Promise<void> {
     const input = this.freezePrompt();
     const trimmed = input.trim();
@@ -212,11 +177,8 @@ export class TerminalEngine {
       return;
     }
 
-    // Record in history (capped at 200 to prevent unbounded growth)
     this.commandHistory.push(trimmed);
-    if (this.commandHistory.length > 200) {
-      this.commandHistory.shift();
-    }
+    if (this.commandHistory.length > 200) this.commandHistory.shift();
     this.historyIndex = this.commandHistory.length;
 
     this.isExecuting = true;
@@ -226,10 +188,10 @@ export class TerminalEngine {
     const handler = COMMAND_REGISTRY[parsed.command];
 
     if (!handler) {
-      this.pushOutput([
-        `Command not found: ${this.escapeHtml(parsed.command)}`,
-        'Type "help" to see available commands.',
-      ], 'error');
+      this.pushOutput(
+        [`bash: ${this.escapeHtml(parsed.command)}: command not found`],
+        'error'
+      );
       this.isExecuting = false;
       this.appendPrompt();
       return;
@@ -238,7 +200,7 @@ export class TerminalEngine {
     this.abortController = new AbortController();
 
     try {
-      const result: CommandResult = await handler(parsed, this);
+      const result: CommandResult = await handler(parsed, this, this.context);
 
       if (this.abortController.signal.aborted) {
         this.isExecuting = false;
@@ -263,7 +225,6 @@ export class TerminalEngine {
       }
 
       if (result.output.length > 0) {
-        // Append prompt first so streaming inserts above it
         this.appendPrompt();
         this.isExecuting = false;
         await this.pushToStreamQueue(result.output);
@@ -273,10 +234,7 @@ export class TerminalEngine {
       }
     } catch {
       if (!this.abortController?.signal.aborted) {
-        this.pushOutput([
-          'Terminal internal error',
-          'Execution safely aborted',
-        ], 'error');
+        this.pushOutput(['Terminal internal error', 'Execution safely aborted'], 'error');
       }
       this.isExecuting = false;
       this.appendPrompt();
@@ -285,9 +243,6 @@ export class TerminalEngine {
     }
   }
 
-  /**
-   * Handle interactive mode input (msg command sequential prompts).
-   */
   async handleInteractiveInput(): Promise<void> {
     if (!this.interactiveMode) return;
 
@@ -317,21 +272,12 @@ export class TerminalEngine {
   // ─── Controls ────────────────────────────────────────────────
 
   abort(): void {
-    if (this.abortController) {
-      this.abortController.abort();
-    }
-
-    if (this.streamTimer) {
-      clearTimeout(this.streamTimer);
-      this.streamTimer = null;
-    }
-
+    if (this.abortController) this.abortController.abort();
+    if (this.streamTimer) { clearTimeout(this.streamTimer); this.streamTimer = null; }
     this.outputQueue = [];
     this.isStreaming = false;
     this.isExecuting = false;
     this.interactiveMode = null;
-
-    // Freeze current prompt, show ^C, append new prompt
     this.freezePrompt();
     this.pushOutput(['^C', 'Command cancelled'], 'error');
     this.appendPrompt();
@@ -339,17 +285,16 @@ export class TerminalEngine {
 
   navigateHistory(direction: 'up' | 'down'): void {
     if (this.commandHistory.length === 0) return;
-
     if (direction === 'up') {
       this.historyIndex = Math.max(0, this.historyIndex - 1);
       this.updateActivePrompt(this.commandHistory[this.historyIndex] || '');
     } else {
       this.historyIndex = Math.min(this.commandHistory.length, this.historyIndex + 1);
-      if (this.historyIndex >= this.commandHistory.length) {
-        this.updateActivePrompt('');
-      } else {
-        this.updateActivePrompt(this.commandHistory[this.historyIndex] || '');
-      }
+      this.updateActivePrompt(
+        this.historyIndex >= this.commandHistory.length
+          ? ''
+          : this.commandHistory[this.historyIndex] || ''
+      );
     }
   }
 
@@ -359,8 +304,7 @@ export class TerminalEngine {
     try {
       const response = await fetch('/bTerminal.txt');
       const ascii = await response.text();
-      const asciiLines = ascii.replace(/\r/g, '').split('\n');
-      this.pushOutput(asciiLines, 'ascii');
+      this.pushOutput(ascii.replace(/\r/g, '').split('\n'), 'ascii');
     } catch {
       this.pushOutput(['B Terminal'], 'ascii');
     }
@@ -372,7 +316,6 @@ export class TerminalEngine {
       '',
     ], 'system');
 
-    // Append the first active prompt
     this.appendPrompt();
   }
 
@@ -388,12 +331,8 @@ export class TerminalEngine {
   }
 
   destroy(): void {
-    if (this.streamTimer) {
-      clearTimeout(this.streamTimer);
-    }
-    if (this.abortController) {
-      this.abortController.abort();
-    }
+    if (this.streamTimer) clearTimeout(this.streamTimer);
+    if (this.abortController) this.abortController.abort();
     this.outputBuffer = [];
     this.commandHistory = [];
     this.outputQueue = [];

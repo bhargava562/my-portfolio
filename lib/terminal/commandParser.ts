@@ -27,14 +27,35 @@ export interface ParsedCommand {
  *   command --date --start:YYYY-MM-DD --end:YYYY-MM-DD
  *   command --section --limit N
  *   command --flag $key:'value with spaces'
+ *   echo "Hello World"          ← double-quoted args
+ *   ./projects.sh               ← normalized to: open projects
  */
 export function parseCommand(input: string): ParsedCommand {
-  const trimmed = input.trim();
+  // Collapse multiple spaces, then trim
+  const trimmed = input.replace(/\s+/g, ' ').trim();
+
   if (!trimmed) {
     return emptyParsed(trimmed);
   }
 
-  // Tokenize respecting quoted values (single quotes around values)
+  // Normalize ./foo.sh  →  open foo  (strip extension)
+  const scriptAlias = trimmed.match(/^\.\/([a-zA-Z0-9_-]+)(?:\.[a-z]+)?$/);
+  if (scriptAlias) {
+    const appName = scriptAlias[1].toLowerCase();
+    return {
+      command: 'open',
+      section: null,
+      columns: [],
+      filter: null,
+      limit: null,
+      startDate: null,
+      endDate: null,
+      flags: {},
+      rawArgs: [appName],
+      raw: trimmed,
+    };
+  }
+
   const tokens = tokenize(trimmed);
   const command = tokens[0].toLowerCase();
   const rest = tokens.slice(1);
@@ -54,9 +75,7 @@ export function parseCommand(input: string): ParsedCommand {
     // --limit N
     if (token === '--limit' && i + 1 < rest.length) {
       const n = parseInt(rest[i + 1], 10);
-      if (!isNaN(n) && n > 0) {
-        limit = n;
-      }
+      if (!isNaN(n) && n > 0) limit = n;
       i++;
       continue;
     }
@@ -73,7 +92,7 @@ export function parseCommand(input: string): ParsedCommand {
       continue;
     }
 
-    // --section flag (first one wins as section, rest go to flags)
+    // --flag
     if (token.startsWith('--')) {
       const flagName = token.slice(2);
       if (flagName === 'date') {
@@ -93,16 +112,14 @@ export function parseCommand(input: string): ParsedCommand {
       const inner = token.slice(1);
       const colonIdx = inner.indexOf(':');
       if (colonIdx === -1) {
-        // $column (no filter)
         columns.push(inner);
       } else {
         const key = inner.slice(0, colonIdx);
         let value = inner.slice(colonIdx + 1);
-        // Strip surrounding single quotes
-        if (value.startsWith("'") && value.endsWith("'")) {
+        if ((value.startsWith("'") && value.endsWith("'")) ||
+            (value.startsWith('"') && value.endsWith('"'))) {
           value = value.slice(1, -1);
         }
-        // For ls: first $ is column:filter. For msg: accumulate as flags
         if (command === 'msg') {
           flags[key] = value;
         } else {
@@ -146,29 +163,34 @@ function emptyParsed(raw: string): ParsedCommand {
 }
 
 /**
- * Tokenize input, respecting single-quoted values attached to $key:'...'
+ * Tokenize input respecting both single-quoted and double-quoted values.
+ * Quoted strings are emitted as a single token with quotes stripped.
  */
 function tokenize(input: string): string[] {
   const tokens: string[] = [];
   let current = '';
-  let inQuote = false;
+  let quoteChar: '"' | "'" | null = null;
 
   for (let i = 0; i < input.length; i++) {
     const ch = input[i];
 
-    if (ch === "'" && !inQuote) {
-      inQuote = true;
+    // Opening quote (only when not already inside a quote)
+    if ((ch === '"' || ch === "'") && quoteChar === null) {
+      quoteChar = ch;
+      // Keep the quote character so $key:'value' parsing still works
       current += ch;
       continue;
     }
 
-    if (ch === "'" && inQuote) {
-      inQuote = false;
+    // Closing quote
+    if (ch === quoteChar) {
+      quoteChar = null;
       current += ch;
       continue;
     }
 
-    if (ch === ' ' && !inQuote) {
+    // Space outside quotes → token boundary
+    if (ch === ' ' && quoteChar === null) {
       if (current) {
         tokens.push(current);
         current = '';
@@ -179,9 +201,6 @@ function tokenize(input: string): string[] {
     current += ch;
   }
 
-  if (current) {
-    tokens.push(current);
-  }
-
+  if (current) tokens.push(current);
   return tokens;
 }

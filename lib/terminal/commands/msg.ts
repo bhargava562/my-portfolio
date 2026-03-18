@@ -6,7 +6,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import type { ParsedCommand, CommandResult, InteractivePrompt, ITerminalEngine } from '../types';
+import type { ParsedCommand, CommandResult, InteractivePrompt, ITerminalEngine, TerminalContext } from '../types';
 
 async function sendEmail(name: string, email: string, message: string): Promise<string[]> {
   const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID;
@@ -51,7 +51,7 @@ async function sendEmail(name: string, email: string, message: string): Promise<
   }
 }
 
-export async function msgCommand(cmd: ParsedCommand, _engine: ITerminalEngine): Promise<CommandResult> {
+export async function msgCommand(cmd: ParsedCommand, _engine: ITerminalEngine, _ctx: TerminalContext): Promise<CommandResult> {
   if (!cmd.flags['user']) {
     return {
       output: [

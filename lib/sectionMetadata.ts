@@ -33,22 +33,22 @@ export interface IconOverride {
 const SECTION_METADATA: Record<string, SectionMeta> = {
   // Special items (always present, not derived from portfolio data)
   about:    { id: 'about',    title: 'About Me',   type: 'file', sortOrder: 0 },
-  resume:   { id: 'resume',   title: 'Resume.pdf', type: 'file', sortOrder: 1 },
-  contact:  { id: 'contact',  title: 'Contact Me', type: 'app',  sortOrder: 100, appUrl: '/contact' },
-  terminal: { id: 'terminal', title: 'Terminal',    type: 'app',  sortOrder: 101 },
+  contact:  { id: 'contact',  title: 'Contact Me', type: 'app',  sortOrder: 12, appUrl: '/contact' },
+  resume:   { id: 'resume',   title: 'Resume.pdf', type: 'file', sortOrder: 13 },
+  terminal: { id: 'terminal', title: 'Terminal',    type: 'app',  sortOrder: 14 },
 
   // Data sections (keyed by portfolio.json key)
-  skills:          { id: 'skills',         title: 'Skills',         type: 'folder', sortOrder: 10 },
-  experience:      { id: 'experience',     title: 'Experience',     type: 'folder', sortOrder: 11 },
-  education:       { id: 'education',      title: 'Education',      type: 'folder', sortOrder: 12 },
-  certifications:  { id: 'certifications', title: 'Certifications', type: 'folder', sortOrder: 13 },
-  projects:        { id: 'projects',       title: 'Projects',       type: 'folder', sortOrder: 14 },
-  hackathons:      { id: 'hackathons',     title: 'Hackathons',     type: 'folder', sortOrder: 15 },
-  awards:          { id: 'awards',         title: 'Awards',         type: 'folder', sortOrder: 16 },
-  blogs:           { id: 'blogs',          title: 'Blogs',          type: 'folder', sortOrder: 17 },
-  social_profiles: { id: 'socials',        title: 'Socials',        type: 'folder', sortOrder: 18 },
-  contributions:   { id: 'contributions',  title: 'Contributions',  type: 'folder', sortOrder: 19 },
-  learnings:       { id: 'learnings',      title: 'Learnings',      type: 'folder', sortOrder: 20 },
+  learnings:       { id: 'learnings',      title: 'Applied Knowledge', type: 'folder', sortOrder: 1 },
+  skills:          { id: 'skills',         title: 'Skills',            type: 'folder', sortOrder: 2 },
+  experience:      { id: 'experience',     title: 'Experience',        type: 'folder', sortOrder: 3 },
+  projects:        { id: 'projects',       title: 'Projects',          type: 'folder', sortOrder: 4 },
+  education:       { id: 'education',      title: 'Education',         type: 'folder', sortOrder: 5 },
+  contributions:   { id: 'contributions',  title: 'Contributions',     type: 'folder', sortOrder: 6 },
+  hackathons:      { id: 'hackathons',     title: 'Hackathons',        type: 'folder', sortOrder: 7 },
+  certifications:  { id: 'certifications', title: 'Certifications',    type: 'folder', sortOrder: 8 },
+  awards:          { id: 'awards',         title: 'Awards',            type: 'folder', sortOrder: 9 },
+  blogs:           { id: 'blogs',          title: 'Blogs',             type: 'folder', sortOrder: 10 },
+  social_profiles: { id: 'socials',        title: 'Socials',           type: 'folder', sortOrder: 11 },
 };
 
 // ─── Alias Maps ──────────────────────────────────────────────
@@ -99,21 +99,21 @@ function getDefaultMeta(dataKey: string): SectionMeta {
 // ─── Static Fallback (renders while data loads / if fetch fails) ──
 
 export const STATIC_FALLBACK_ITEMS: DesktopItem[] = [
-  { id: 'about',          title: 'About Me',        type: 'file' },
-  { id: 'resume',         title: 'Resume.pdf',      type: 'file' },
-  { id: 'skills',         title: 'Skills',          type: 'folder', children: [] },
-  { id: 'experience',     title: 'Experience',      type: 'folder', children: [] },
-  { id: 'education',      title: 'Education',       type: 'folder', children: [] },
-  { id: 'certifications', title: 'Certifications',  type: 'folder', children: [] },
-  { id: 'projects',       title: 'Projects',        type: 'folder', children: [] },
-  { id: 'hackathons',     title: 'Hackathons',      type: 'folder', children: [] },
-  { id: 'awards',         title: 'Awards',          type: 'folder', children: [] },
-  { id: 'blogs',          title: 'Blogs',           type: 'folder', children: [] },
-  { id: 'socials',        title: 'Socials',         type: 'folder', children: [] },
-  { id: 'contributions',  title: 'Contributions',   type: 'folder', children: [] },
-  { id: 'learnings',      title: 'Learnings',       type: 'folder', children: [] },
-  { id: 'contact',        title: 'Contact Me',      type: 'app', appUrl: '/contact' },
-  { id: 'terminal',       title: 'Terminal',         type: 'app' },
+  { id: 'about',          title: 'About Me',          type: 'file' },
+  { id: 'learnings',      title: 'Applied Knowledge', type: 'folder', children: [] },
+  { id: 'skills',         title: 'Skills',            type: 'folder', children: [] },
+  { id: 'experience',     title: 'Experience',        type: 'folder', children: [] },
+  { id: 'projects',       title: 'Projects',          type: 'folder', children: [] },
+  { id: 'education',      title: 'Education',         type: 'folder', children: [] },
+  { id: 'contributions',  title: 'Contributions',     type: 'folder', children: [] },
+  { id: 'hackathons',     title: 'Hackathons',        type: 'folder', children: [] },
+  { id: 'certifications', title: 'Certifications',    type: 'folder', children: [] },
+  { id: 'awards',         title: 'Awards',            type: 'folder', children: [] },
+  { id: 'blogs',          title: 'Blogs',             type: 'folder', children: [] },
+  { id: 'socials',        title: 'Socials',           type: 'folder', children: [] },
+  { id: 'contact',        title: 'Contact Me',        type: 'app', appUrl: '/contact' },
+  { id: 'resume',         title: 'Resume.pdf',        type: 'file' },
+  { id: 'terminal',       title: 'Terminal',          type: 'app' },
 ];
 
 // ─── Derivation Function ─────────────────────────────────────

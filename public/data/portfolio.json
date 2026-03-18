@@ -396,6 +396,7 @@
       "date_learned": "2026-02-21",
       "display_order": 3,
       "id": "f4c2d3e4-b5c6-4d7e-9f0a-1b2c3d4e5f6a",
+      "image_path": "learned/ai.webp",
       "improved_approach": "Stateful agentic loops with LangGraph.",
       "links": [
         {

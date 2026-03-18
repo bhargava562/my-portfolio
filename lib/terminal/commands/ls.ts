@@ -4,9 +4,8 @@
  * Supports sections, column extraction, column filtering, date ranges, and limits.
  */
 
-import type { ParsedCommand, CommandResult, ITerminalEngine } from '../types';
+import type { ParsedCommand, CommandResult, ITerminalEngine, TerminalContext } from '../types';
 
-// Date-like field names to detect dynamically
 const DATE_FIELD_PATTERNS = ['date', 'start_date', 'end_date', 'issue_date', 'created_at', 'year'];
 
 function isDateField(key: string): boolean {
@@ -16,8 +15,7 @@ function isDateField(key: string): boolean {
 
 function parseDateValue(val: unknown): Date | null {
   if (!val) return null;
-  const str = String(val);
-  const d = new Date(str);
+  const d = new Date(String(val));
   return isNaN(d.getTime()) ? null : d;
 }
 
@@ -26,29 +24,41 @@ async function fetchPortfolioData(): Promise<Record<string, unknown>> {
   return (await getPortfolioData()) as Record<string, unknown>;
 }
 
-export async function lsCommand(cmd: ParsedCommand, engine: ITerminalEngine): Promise<CommandResult> {
-  const data = await fetchPortfolioData();
+// Fake filesystem shown when `ls` is called with no arguments
+const FAKE_FS_LINES = [
+  '',
+  '  /home/bhargava/portfolio',
+  '  ├── about.txt',
+  '  ├── projects.sh',
+  '  ├── experience.log',
+  '  ├── applied_knowledge.md',
+  '  ├── skills.json',
+  '  ├── certifications/',
+  '  ├── education/',
+  '  ├── hackathons/',
+  '  ├── awards/',
+  '  ├── blogs/',
+  '  └── contact.sh',
+  '',
+  '  Run  ls --<section>  to inspect a section.',
+  '  Run  open <app>      to launch a window.',
+  '',
+];
 
-  // Exclude 'profile' from browsable sections
+export async function lsCommand(
+  cmd: ParsedCommand,
+  engine: ITerminalEngine,
+  _ctx: TerminalContext,
+): Promise<CommandResult> {
+  const data = await fetchPortfolioData();
   const sections = Object.keys(data).filter(k => k !== 'profile' && Array.isArray(data[k]));
 
-  // ls (no section) → list available sections
+  // ls (no section, no date flag) → fake filesystem
   if (!cmd.section && !cmd.flags['date']) {
-    return {
-      output: [
-        'Available sections:',
-        '',
-        ...sections.map(s => {
-          const arr = data[s] as unknown[];
-          return `  ${s.padEnd(20)} (${arr.length} entries)`;
-        }),
-        '',
-        'Usage: ls --<section>',
-      ],
-    };
+    return { output: FAKE_FS_LINES };
   }
 
-  // ls --date (date filter across all sections)
+  // ls --date
   if (cmd.flags['date']) {
     return handleDateFilter(data, sections, cmd, engine);
   }
@@ -58,7 +68,7 @@ export async function lsCommand(cmd: ParsedCommand, engine: ITerminalEngine): Pr
   if (!sectionName || !sections.includes(sectionName)) {
     return {
       output: [
-        `Section not found: ${engine.escapeHtml(sectionName || '')}`,
+        `ls: cannot access '${engine.escapeHtml(sectionName || '')}': No such section`,
         '',
         'Available sections:',
         ...sections.map(s => `  ${s}`),
@@ -68,34 +78,25 @@ export async function lsCommand(cmd: ParsedCommand, engine: ITerminalEngine): Pr
 
   let items = (data[sectionName] as Record<string, unknown>[]) || [];
 
-  // Apply column filter: $col1:value
   if (cmd.columns.length > 0 && cmd.filter) {
     const filterCol = cmd.columns[0];
     items = items.filter(item => {
       const val = item[filterCol];
-      if (Array.isArray(val)) {
-        return val.some(v => String(v).toLowerCase() === cmd.filter!.toLowerCase());
-      }
+      if (Array.isArray(val)) return val.some(v => String(v).toLowerCase() === cmd.filter!.toLowerCase());
       return String(val || '').toLowerCase() === cmd.filter!.toLowerCase();
     });
   }
 
-  // Apply limit
-  if (cmd.limit && cmd.limit > 0) {
-    items = items.slice(0, cmd.limit);
-  }
+  if (cmd.limit && cmd.limit > 0) items = items.slice(0, cmd.limit);
 
-  // Column extraction
   if (cmd.columns.length > 0) {
     if (cmd.columns.length === 1) {
       const colName = cmd.columns[0];
       const values = items.map(item => {
         const val = item[colName];
         if (val === undefined || val === null) return '(empty)';
-        if (Array.isArray(val)) return val.join(', ');
-        return String(val);
+        return Array.isArray(val) ? val.join(', ') : String(val);
       });
-
       return {
         output: [
           `${sectionName} → ${colName}:`,
@@ -105,40 +106,26 @@ export async function lsCommand(cmd: ParsedCommand, engine: ITerminalEngine): Pr
           `Total: ${values.length} entries`,
         ],
       };
-    } else {
-      // Multi-column format
-      const lines: string[] = [`${sectionName} → ${cmd.columns.join(', ')}:`];
-      lines.push('');
-      
-      items.forEach((item, idx) => {
-        lines.push(`  ─── ${(idx + 1).toString().padStart(2, '0')} ───`);
-        for (const col of cmd.columns) {
-          const val = item[col];
-          const display = Array.isArray(val) ? val.join(', ') : (val !== undefined && val !== null ? String(val) : '(empty)');
-          lines.push(`  ${col.padEnd(15)} ${display}`);
-        }
-        lines.push('');
-      });
-
-      lines.push(`Total: ${items.length} entries`);
-      return { output: lines };
     }
+
+    const lines: string[] = [`${sectionName} → ${cmd.columns.join(', ')}:`, ''];
+    items.forEach((item, idx) => {
+      lines.push(`  ─── ${(idx + 1).toString().padStart(2, '0')} ───`);
+      for (const col of cmd.columns) {
+        const val = item[col];
+        const display = Array.isArray(val) ? val.join(', ') : (val != null ? String(val) : '(empty)');
+        lines.push(`  ${col.padEnd(15)} ${display}`);
+      }
+      lines.push('');
+    });
+    lines.push(`Total: ${items.length} entries`);
+    return { output: lines };
   }
 
-  // Full section dump  
-  if (items.length === 0) {
-    return { output: [`No entries found in ${sectionName}.`] };
-  }
+  if (items.length === 0) return { output: [`No entries found in ${sectionName}.`] };
 
-  // Detect columns from first item
-  const columns = Object.keys(items[0]).filter(k =>
-    k !== 'id' && k !== 'created_at' && !k.endsWith('_path')
-  );
-
-  const lines: string[] = [
-    `${sectionName} (${items.length} entries):`,
-    '',
-  ];
+  const columns = Object.keys(items[0]).filter(k => k !== 'id' && k !== 'created_at' && !k.endsWith('_path'));
+  const lines: string[] = [`${sectionName} (${items.length} entries):`, ''];
 
   items.forEach((item, idx) => {
     lines.push(`  ─── Entry ${idx + 1} ───`);
@@ -146,9 +133,7 @@ export async function lsCommand(cmd: ParsedCommand, engine: ITerminalEngine): Pr
       const val = item[col];
       if (val === undefined || val === null) continue;
       const display = Array.isArray(val) ? val.join(', ') : String(val);
-      if (display.length > 0) {
-        lines.push(`  ${col.padEnd(25)} ${display}`);
-      }
+      if (display.length > 0) lines.push(`  ${col.padEnd(25)} ${display}`);
     }
     lines.push('');
   });
@@ -161,43 +146,37 @@ function handleDateFilter(
   data: Record<string, unknown>,
   sections: string[],
   cmd: ParsedCommand,
-  engine: ITerminalEngine
+  engine: ITerminalEngine,
 ): CommandResult {
   const startDate = cmd.startDate ? new Date(cmd.startDate) : null;
   const endDate = cmd.endDate ? new Date(cmd.endDate) : null;
 
-  if (startDate && isNaN(startDate.getTime())) {
+  if (startDate && isNaN(startDate.getTime()))
     return { output: [`Invalid start date: ${engine.escapeHtml(cmd.startDate || '')}`] };
-  }
-  if (endDate && isNaN(endDate.getTime())) {
+  if (endDate && isNaN(endDate.getTime()))
     return { output: [`Invalid end date: ${engine.escapeHtml(cmd.endDate || '')}`] };
-  }
 
   const results: string[] = ['Date filter results:', ''];
 
   for (const section of sections) {
     const items = data[section] as Record<string, unknown>[];
-    if (!items || items.length === 0) continue;
+    if (!items?.length) continue;
 
-    // Detect date fields dynamically
-    const sampleKeys = Object.keys(items[0]);
-    const dateFields = sampleKeys.filter(k => isDateField(k));
-    if (dateFields.length === 0) continue;
+    const dateFields = Object.keys(items[0]).filter(k => isDateField(k));
+    if (!dateFields.length) continue;
 
-    const matched = items.filter(item => {
-      // Match if any date field falls in range
-      return dateFields.some(field => {
+    const matched = items.filter(item =>
+      dateFields.some(field => {
         const d = parseDateValue(item[field]);
         if (!d) return false;
         if (startDate && d < startDate) return false;
         if (endDate && d > endDate) return false;
         return true;
-      });
-    });
+      })
+    );
 
     if (matched.length > 0) {
       results.push(`  ${section} (${matched.length} matches):`);
-      // Show title or name field
       matched.forEach(item => {
         const title = item.title || item.name || item.company || item.institution || 'Untitled';
         const dateVal = dateFields.map(f => item[f] ? String(item[f]).slice(0, 10) : '').filter(Boolean).join(' ~ ');
@@ -207,9 +186,6 @@ function handleDateFilter(
     }
   }
 
-  if (results.length <= 2) {
-    results.push('  No entries found matching the date criteria.');
-  }
-
+  if (results.length <= 2) results.push('  No entries found matching the date criteria.');
   return { output: results };
 }

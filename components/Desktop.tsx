@@ -142,7 +142,7 @@ export default function Desktop() {
   return (
     <div
       ref={desktopRef}
-      className="absolute inset-0 z-0 p-4 grid grid-cols-[repeat(auto-fill,100px)] grid-rows-[repeat(auto-fill,100px)] gap-4 content-start"
+      className="absolute inset-0 z-0 p-4 grid grid-cols-[repeat(auto-fill,100px)] gap-x-4 gap-y-4 content-start items-start"
       onClick={handleBackgroundClick}
       style={{
         paddingTop: '40px', // Space for TopBar
@@ -163,14 +163,14 @@ export default function Desktop() {
               e.stopPropagation();
               handleItemDoubleClick(item);
             }}
-            className={`flex flex-col items-center justify-center p-2 rounded border border-transparent transition-colors cursor-default
+            className={`w-[100px] h-[104px] flex flex-col items-center justify-start pt-2 px-1 rounded border border-transparent transition-colors cursor-default
               ${isSelected ? 'bg-[rgba(233,84,32,0.4)] border-[rgba(233,84,32,0.6)]' : 'hover:bg-white/10'}
             `}
           >
-            <div className="w-12 h-12 mb-1 relative flex items-center justify-center">
+            <div className="w-12 h-12 flex-shrink-0 relative flex items-center justify-center">
               {renderIcon(item)}
             </div>
-            <span className={`text-sm text-center line-clamp-2 drop-shadow-md ${isSelected ? 'text-white' : 'text-white'}`}>
+            <span className="mt-1 text-sm text-white text-center leading-tight line-clamp-2 drop-shadow-md w-full break-words">
               {item.title}
             </span>
           </div>

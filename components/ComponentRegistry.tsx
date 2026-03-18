@@ -2,6 +2,7 @@ import dynamic from 'next/dynamic';
 import React from 'react';
 
 // Dynamic Imports
+const AppliedKnowledgeContent = dynamic(() => import('./windows/AppliedKnowledgeContent'), { loading: () => <div>Loading...</div> });
 const GenericSectionContent = dynamic(() => import('./windows/GenericSectionContent'), { loading: () => <div>Loading...</div> });
 const TextEditor = dynamic(() => import('./windows/TextEditor'), { loading: () => <div>Loading...</div> });
 const AboutContent = dynamic(() => import('./windows/AboutContent'), { loading: () => <div>Loading...</div> });
@@ -18,6 +19,7 @@ const BlogsContent = dynamic(() => import('./windows/BlogsContent'), { loading: 
 const TerminalContent = dynamic(() => import('./windows/TerminalContent'), { loading: () => <div>Loading...</div> });
 
 export const COMPONENT_REGISTRY: Record<string, React.ElementType> = {
+    'learnings': AppliedKnowledgeContent,
     'about': AboutContent,
     'contact': ContactForm,
     'skills': SkillsContent,

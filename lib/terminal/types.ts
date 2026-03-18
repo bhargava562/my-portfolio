@@ -1,11 +1,29 @@
 /**
  * B Terminal — Shared Types
- * Extracted to break circular dependency between commandRegistry and terminalEngine.
  */
 
 import type { ParsedCommand } from './commandParser';
 
 export type { ParsedCommand };
+
+// ─── Context ──────────────────────────────────────────────────────────────────
+
+/** Passed to every command handler so commands can interact with the OS. */
+export interface TerminalContext {
+  /** Open a desktop window by its registry ID (e.g. 'projects', 'learnings'). */
+  openWindow: (id: string) => void;
+}
+
+// ─── Command ──────────────────────────────────────────────────────────────────
+
+export interface Command {
+  name: string;
+  description: string;
+  usage: string;
+  execute: (args: string[], context: TerminalContext) => Promise<CommandResult>;
+}
+
+// ─── Results ──────────────────────────────────────────────────────────────────
 
 export interface CommandResult {
   output: string[];
@@ -20,9 +38,8 @@ export interface InteractivePrompt {
   onComplete: (answers: Record<string, string>, engine: ITerminalEngine) => Promise<string[]>;
 }
 
-/**
- * Interface for TerminalEngine — used by command handlers to avoid importing the class directly.
- */
+// ─── Engine Interface ─────────────────────────────────────────────────────────
+
 export interface ITerminalEngine {
   outputBuffer: OutputLine[];
   commandHistory: string[];
@@ -47,8 +64,12 @@ export interface OutputLine {
   prefix?: string;
 }
 
+/**
+ * CommandHandler receives the parsed command, the engine instance, and the
+ * OS-level context (openWindow etc.) so commands stay fully decoupled from UI.
+ */
 export type CommandHandler = (
   cmd: ParsedCommand,
-  engine: ITerminalEngine
+  engine: ITerminalEngine,
+  context: TerminalContext,
 ) => Promise<CommandResult>;
-

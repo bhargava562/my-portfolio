@@ -8,6 +8,8 @@
 
 import React, { useEffect, useRef, useState, useCallback, memo } from 'react';
 import { TerminalEngine, OutputLine } from '@/lib/terminal/terminalEngine';
+import { useWindows } from '@/components/WindowManager';
+import { getComponent } from '@/components/ComponentRegistry';
 
 // Memoized output line (read-only lines)
 const TerminalLine = memo(function TerminalLine({ line }: { line: OutputLine }) {
@@ -102,6 +104,7 @@ export default function TerminalContent() {
   const [cursorVisible, setCursorVisible] = useState(true);
   const [isFocused, setIsFocused] = useState(true);
 
+  const { openWindow } = useWindows();
   const engineRef = useRef<TerminalEngine | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -116,9 +119,21 @@ export default function TerminalContent() {
     setIsStreaming(engine.isStreaming);
   }, []);
 
+  // OS-level openWindow bridge for the terminal engine
+  const handleOpenWindow = useCallback((id: string) => {
+    const Component = getComponent(id);
+    openWindow({
+      id,
+      title: id.charAt(0).toUpperCase() + id.slice(1),
+      icon: 'file',
+      type: 'file',
+      content: React.createElement(Component),
+    });
+  }, [openWindow]);
+
   // Initialize engine
   useEffect(() => {
-    const engine = new TerminalEngine(syncState);
+    const engine = new TerminalEngine(syncState, handleOpenWindow);
     engineRef.current = engine;
     engine.loadBootSequence().then(() => syncState());
 
@@ -126,7 +141,7 @@ export default function TerminalContent() {
       engine.destroy();
       engineRef.current = null;
     };
-  }, [syncState]);
+  }, [syncState, handleOpenWindow]);
 
   // Blinking cursor 500ms
   useEffect(() => {
