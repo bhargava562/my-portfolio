@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
-import Image from "next/image";
-import { getSection, getImageUrl } from "@/lib/actions";
+import { getSection } from "@/lib/actions";
+import { ImageWithFallback } from "@/components/common/ImageWithFallback";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -14,12 +14,14 @@ interface LearningNode {
   improved_approach: string | null;
   adaptation_reason: string | null;
   date_learned: string;
-  image_url: string | null;
+  image_path: string | null;  // Supabase storage path, e.g. "learned/ai.webp"
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const PAGE_SIZE = 5;
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatDateline(iso: string): string {
   return new Date(iso).toLocaleDateString("en-IN", {
@@ -30,18 +32,44 @@ function formatDateline(iso: string): string {
   });
 }
 
-function resolveImage(raw: string | null): string | null {
-  if (!raw) return null;
-  if (raw.startsWith("http") || raw.startsWith("/")) return raw;
-  return getImageUrl(raw);
+/**
+ * Constructs full Supabase Storage URL from a relative path.
+ * Uses NEXT_PUBLIC_SUPABASE_STORAGE_URL and NEXT_PUBLIC_SUPABASE_BUCKET env vars.
+ *
+ * URL structure: {STORAGE_URL}{BUCKET}/{path}
+ * Example: https://xxx.supabase.co/storage/v1/object/public/learned/ai.webp
+ *
+ * @param path - Relative storage path (e.g., "learned/ai.webp")
+ * @returns Full public URL or null if path is empty/invalid
+ */
+function getStorageUrl(path: string | null | undefined): string | null {
+  if (!path || path.trim() === "") return null;
+
+  // Already a full URL or local path - return as-is
+  if (path.startsWith("http") || path.startsWith("/")) {
+    return path;
+  }
+
+  const storageUrl = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL;
+  const bucket = process.env.NEXT_PUBLIC_SUPABASE_BUCKET || "public";
+
+  if (!storageUrl) {
+    console.warn("[AppliedKnowledge] NEXT_PUBLIC_SUPABASE_STORAGE_URL not set");
+    return null;
+  }
+
+  // Ensure trailing slash on storage URL
+  const baseUrl = storageUrl.endsWith("/") ? storageUrl : `${storageUrl}/`;
+  // Remove leading slash from path if present
+  const safePath = path.startsWith("/") ? path.slice(1) : path;
+
+  return `${baseUrl}${bucket}/${safePath}`;
 }
 
 // ─── Article Card ─────────────────────────────────────────────────────────────
 
 function ArticleCard({ item, isHero }: { item: LearningNode; isHero?: boolean }) {
-  const [imgError, setImgError] = useState(false);
-  const imgSrc = resolveImage(item.image_url);
-  const showImage = !!imgSrc && !imgError;
+  const imgSrc = getStorageUrl(item.image_path);
 
   return (
     <article className={`pb-8 mb-8 border-b-2 border-gray-200 ${isHero ? "" : ""}`}>
@@ -82,25 +110,26 @@ function ArticleCard({ item, isHero }: { item: LearningNode; isHero?: boolean })
         </div>
       )}
 
-      {/* Image */}
-      {showImage && (
-        <div className="relative w-full h-52 mb-3 bg-gray-100">
-          <Image
-            src={imgSrc!}
-            alt={item.title}
-            fill
-            className="object-cover"
-            onError={() => setImgError(true)}
-            sizes="(max-width: 768px) 100vw, 70vw"
-          />
-          <p className="absolute bottom-0 left-0 right-0 bg-black/40 text-white text-[10px] px-2 py-1 text-center">
-            {item.title}
-          </p>
-        </div>
+      {/* TOI-Style Image with Caption */}
+      {imgSrc && (
+        <figure className="mb-6">
+          <div className="relative w-full aspect-video overflow-hidden border border-gray-200 bg-gray-50">
+            <ImageWithFallback
+              fill
+              src={imgSrc}
+              alt={item.title}
+              className="object-cover hover:scale-105 transition-transform duration-500"
+              sizes="(max-width: 768px) 100vw, 70vw"
+            />
+          </div>
+          <figcaption className="text-[10px] text-gray-500 uppercase tracking-widest mt-1 mb-4 text-right border-b border-gray-100 pb-2">
+            {item.title} — TNN File Photo
+          </figcaption>
+        </figure>
       )}
 
       {/* Body */}
-      <p className="text-lg text-[#333] leading-relaxed mt-4 mb-4">
+      <p className="text-lg text-[#333] leading-relaxed mb-4">
         {item.concept_learned}
       </p>
       {item.previous_approach && (

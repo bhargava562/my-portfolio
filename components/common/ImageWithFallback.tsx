@@ -4,54 +4,101 @@ import Image from "next/image"
 import { useState } from "react"
 import { buildSupabaseImageUrl } from "@/lib/image-utils"
 
-interface Props {
-  imagePath: string
+// ─── Types ───────────────────────────────────────────────────
+
+interface BaseProps {
   alt: string
-  width: number
-  height: number
   className?: string
   priority?: boolean
+  sizes?: string
 }
 
-export function ImageWithFallback({
-  imagePath,
-  alt,
-  width,
-  height,
-  className,
-  priority = false
-}: Props) {
+interface FixedProps extends BaseProps {
+  imagePath: string
+  width: number
+  height: number
+  fill?: false
+  src?: never
+}
 
-  // Resolve base urls
-  const supabaseUrl = buildSupabaseImageUrl(imagePath, width)
-  
-  // Universal fallback to placeholder, ignoring old fallback structures
-  const fallbackUrl = '/linux-placeholder.webp';
+interface FillProps extends BaseProps {
+  fill: true
+  src: string
+  imagePath?: never
+  width?: never
+  height?: never
+}
 
-  const initialSrc = supabaseUrl || fallbackUrl;
-  const [src, setSrc] = useState(initialSrc);
-  
-  // React to prop changes directly in render to avoid effect lag parsing
-  if (src !== initialSrc && src !== fallbackUrl) {
-    setSrc(initialSrc);
+type Props = FixedProps | FillProps
+
+// ─── Constants ───────────────────────────────────────────────
+
+const FALLBACK_URL = '/linux-placeholder.webp'
+
+// ─── Helper ──────────────────────────────────────────────────
+
+function resolveImageSrc(props: Props): string {
+  if ('src' in props && props.src) {
+    // Fill mode: src can be a full URL or a Supabase path
+    const raw = props.src
+    if (raw.startsWith('http') || raw.startsWith('/')) {
+      return raw
+    }
+    // Treat as Supabase storage path
+    return buildSupabaseImageUrl(raw, 800) || FALLBACK_URL
+  }
+  // Fixed mode: use imagePath
+  if ('imagePath' in props && props.imagePath) {
+    return buildSupabaseImageUrl(props.imagePath, props.width!) || FALLBACK_URL
+  }
+  return FALLBACK_URL
+}
+
+// ─── Component ───────────────────────────────────────────────
+
+export function ImageWithFallback(props: Props) {
+  const { alt, className, priority = false, sizes } = props
+
+  const initialSrc = resolveImageSrc(props)
+  const [src, setSrc] = useState(initialSrc)
+
+  // React to prop changes
+  if (src !== initialSrc && src !== FALLBACK_URL) {
+    setSrc(initialSrc)
   }
 
   const handleError = () => {
-    if (src !== fallbackUrl) {
-      setSrc(fallbackUrl)
+    if (src !== FALLBACK_URL) {
+      setSrc(FALLBACK_URL)
     }
   }
 
+  const defaultSizes = "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+
+  // Fill mode
+  if (props.fill) {
+    return (
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        className={className || 'object-cover'}
+        sizes={sizes || defaultSizes}
+        onError={handleError}
+        priority={priority}
+      />
+    )
+  }
+
+  // Fixed dimensions mode
   return (
     <Image
       src={src}
       alt={alt}
-      width={width}
-      height={height}
+      width={props.width}
+      height={props.height}
       className={`object-contain bg-[#1E1E1E] ${className || ''}`}
-      sizes="(max-width: 768px) 100vw,
-             (max-width: 1200px) 50vw,
-             33vw"
+      sizes={sizes || defaultSizes}
       onError={handleError}
       priority={priority}
     />

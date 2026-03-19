@@ -12,26 +12,64 @@ interface ColumnInfo {
 
 interface TableRelation {
   parentTable: string;
-  foreignKey: string;         // Column in child that references parent
-  nestAs: string;             // Key name on the parent object
+  foreignKey: string;
+  nestAs: string;
 }
 
 interface TableFilter {
   column: string;
   value: unknown;
-  selectColumns?: string;     // Custom select instead of '*'
+  selectColumns?: string;
 }
 
-// ─── Declarative Configuration ───────────────────────────────
-// Only special behaviors go here — NOT the table list itself.
+interface TableFetchResult {
+  table: string;
+  status: 'success' | 'failed';
+  data: unknown[];
+  error?: string;
+}
+
+interface PortfolioData {
+  [key: string]: unknown[] | Record<string, unknown>;
+}
+
+// ─── Dynamic Table Registry ──────────────────────────────────
+// Requirement 1: All tables defined here as fallback/override
 
 /**
- * Junction/child tables that get nested into a parent instead of appearing top-level.
- * Key = child table name; value = how to nest it.
+ * Static table registry - fallback when RPC discovery fails.
  *
- * Convention: `{parent}_skills` tables have a `{singular(parent)}_id` FK,
- * but project_collaborators uses `project_id` → `collaborators`.
+ * IMPORTANT: These are DATABASE TABLE NAMES, not UI folder names.
+ * UI folder mappings are handled in lib/sectionMetadata.ts:
+ *   - social_profiles (table) → socials (folder)
+ *   - learnings (table) → Applied Knowledge (folder)
  */
+const TABLE_REGISTRY: readonly string[] = [
+  // Core content tables
+  'projects',
+  'experience',
+  'education',
+  'certifications',
+  'skills',
+  'learnings',          // UI: "Applied Knowledge"
+  'hackathons',
+  'awards',
+  'blogs',
+  'contributions',
+  // Profile & social
+  'profile',
+  'social_profiles',    // UI: "Socials"
+  // Junction/child tables (nested into parents)
+  'project_collaborators',
+  'project_skills',
+  'experience_skills',
+  'certification_skills',
+  'contribution_skills',
+  'learning_links',
+] as const;
+
+// ─── Declarative Configuration ───────────────────────────────
+
 const RELATIONS: Record<string, TableRelation> = {
   project_collaborators:  { parentTable: 'projects',       foreignKey: 'project_id',       nestAs: 'collaborators' },
   project_skills:         { parentTable: 'projects',       foreignKey: 'project_id',       nestAs: 'skills' },
@@ -41,7 +79,6 @@ const RELATIONS: Record<string, TableRelation> = {
   learning_links:         { parentTable: 'learnings',      foreignKey: 'learning_id',      nestAs: 'links' },
 };
 
-/** Tables that require row-level filtering or column restriction */
 const FILTERS: Record<string, TableFilter> = {
   blogs: {
     column: 'is_published',
@@ -50,26 +87,24 @@ const FILTERS: Record<string, TableFilter> = {
   },
 };
 
-/** Tables that should be flattened to a single object (not an array) */
 const SINGLETON_TABLES = new Set(['profile']);
 
 // ─── Sort Column Detection ──────────────────────────────────
 
-/** Priority order for auto-detecting the sort column from table schema */
 const SORT_PRIORITY: { pattern: RegExp; ascending: boolean }[] = [
-  { pattern: /^display_order$/,   ascending: true },
-  { pattern: /^sort_order$/,      ascending: true },
-  { pattern: /^start_date$/,      ascending: false },
+  { pattern: /^display_order$/,    ascending: true },
+  { pattern: /^sort_order$/,       ascending: true },
+  { pattern: /^start_date$/,       ascending: false },
   { pattern: /^event_start_date$/, ascending: false },
-  { pattern: /^published_at$/,    ascending: false },
-  { pattern: /^issue_date$/,      ascending: false },
-  { pattern: /^award_date$/,      ascending: false },
-  { pattern: /_date$/,            ascending: false },
-  { pattern: /^created_at$/,      ascending: false },
+  { pattern: /^published_at$/,     ascending: false },
+  { pattern: /^issue_date$/,       ascending: false },
+  { pattern: /^award_date$/,       ascending: false },
+  { pattern: /_date$/,             ascending: false },
+  { pattern: /^created_at$/,       ascending: false },
 ];
 
 function detectSortColumn(columns: ColumnInfo[]): { column: string; ascending: boolean } | null {
-  if (columns.length === 0) return null; // No introspection data — skip ordering
+  if (columns.length === 0) return null;
 
   const colSet = new Set(columns.map(c => c.column_name));
   for (const rule of SORT_PRIORITY) {
@@ -79,22 +114,20 @@ function detectSortColumn(columns: ColumnInfo[]): { column: string; ascending: b
       }
     }
   }
-  // Fallback: order by id ascending if the table has an id column
   if (colSet.has('id')) return { column: 'id', ascending: true };
-  return null; // No sortable column found — skip ordering
+  return null;
 }
 
 // ─── Data Utilities ─────────────────────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function cleanData(obj: any): any {
+function cleanData(obj: unknown): unknown {
   if (Array.isArray(obj)) {
     return obj.map(cleanData).filter(val => val !== null && val !== undefined);
   } else if (obj !== null && typeof obj === 'object') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return Object.keys(obj).reduce((acc: any, key: string) => {
-      if (key !== 'updated_at' && obj[key] !== null && obj[key] !== undefined) {
-        acc[key] = cleanData(obj[key]);
+    const record = obj as Record<string, unknown>;
+    return Object.keys(record).reduce((acc: Record<string, unknown>, key: string) => {
+      if (key !== 'updated_at' && record[key] !== null && record[key] !== undefined) {
+        acc[key] = cleanData(record[key]);
       }
       return acc;
     }, {});
@@ -102,32 +135,157 @@ function cleanData(obj: any): any {
   return obj;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function sortObject(obj: any): any {
+function sortObject(obj: unknown): unknown {
   if (Array.isArray(obj)) return obj.map(sortObject);
   if (obj !== null && typeof obj === 'object') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sorted: any = {};
-    Object.keys(obj).sort().forEach(key => {
-      sorted[key] = sortObject(obj[key]);
+    const record = obj as Record<string, unknown>;
+    const sorted: Record<string, unknown> = {};
+    Object.keys(record).sort().forEach(key => {
+      sorted[key] = sortObject(record[key]);
     });
     return sorted;
   }
   return obj;
 }
 
+// ─── Supabase Client Factory ────────────────────────────────
+// Requirement 3: RLS Bypassing with Service Role Key
+
+function createSyncClient(): { client: SupabaseClient; usingServiceRole: boolean } {
+  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+  // Prefer service role key (bypasses RLS) → fallback to anon key
+  const SERVICE_KEY = process.env.NEXT_SUPABASE_SERVICE_ROLE_KEY;
+  const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const SUPABASE_KEY = SERVICE_KEY || ANON_KEY;
+
+  if (!SUPABASE_URL) {
+    throw new Error('[SYNC CRITICAL] Missing NEXT_PUBLIC_SUPABASE_URL in environment');
+  }
+
+  if (!SUPABASE_KEY) {
+    throw new Error('[SYNC CRITICAL] Missing Supabase key. Provide NEXT_SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  }
+
+  const usingServiceRole = Boolean(SERVICE_KEY);
+
+  if (usingServiceRole) {
+    console.log('[Sync] ✓ Using SERVICE_ROLE_KEY (RLS bypassed)');
+  } else {
+    console.warn('[SYNC WARNING] Using ANON_KEY - RLS policies may block data. Set NEXT_SUPABASE_SERVICE_ROLE_KEY for full access.');
+  }
+
+  const client = createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+
+  return { client, usingServiceRole };
+}
+
+// ─── Table Discovery ────────────────────────────────────────
+
+async function discoverTables(supabase: SupabaseClient): Promise<string[]> {
+  // Try dynamic discovery via RPC first
+  try {
+    const { data: tables, error } = await supabase.rpc('list_public_tables');
+
+    if (!error && tables && Array.isArray(tables) && tables.length > 0) {
+      const discovered = tables.map((t: { table_name: string }) => t.table_name);
+      console.log(`[Sync] Discovered ${discovered.length} tables via RPC`);
+
+      // Merge with registry to catch any new tables not in registry
+      const mergedSet = new Set([...discovered, ...TABLE_REGISTRY]);
+      return Array.from(mergedSet);
+    }
+  } catch (err) {
+    console.warn('[SYNC WARNING] RPC list_public_tables failed, using static registry');
+  }
+
+  // Fallback to static registry
+  console.log(`[Sync] Using static TABLE_REGISTRY (${TABLE_REGISTRY.length} tables)`);
+  return [...TABLE_REGISTRY];
+}
+
+// ─── Single Table Fetch ─────────────────────────────────────
+// Requirement 2: Full Column & Row Extraction with select('*')
+
+async function fetchTable(
+  supabase: SupabaseClient,
+  tableName: string,
+  columns: ColumnInfo[]
+): Promise<TableFetchResult> {
+  try {
+    const filter = FILTERS[tableName];
+
+    // REQUIREMENT 2: Always use select('*') unless filter specifies columns
+    // This ensures ALL columns (including new ones like demo_video_url) are fetched
+    const selectCols = filter?.selectColumns || '*';
+
+    let query = supabase.from(tableName).select(selectCols);
+
+    // Apply row-level filter if configured
+    if (filter) {
+      query = query.eq(filter.column, filter.value);
+    }
+
+    // REQUIREMENT 2: NO .limit() modifier - fetch ALL rows
+    // Auto-detect sort column from schema
+    const sort = detectSortColumn(columns);
+    if (sort) {
+      query = query.order(sort.column, { ascending: sort.ascending });
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      return {
+        table: tableName,
+        status: 'failed',
+        data: [],
+        error: error.message,
+      };
+    }
+
+    const cleaned = cleanData(data || []) as unknown[];
+    return {
+      table: tableName,
+      status: 'success',
+      data: cleaned,
+    };
+  } catch (err) {
+    return {
+      table: tableName,
+      status: 'failed',
+      data: [],
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+// ─── Column Introspection ───────────────────────────────────
+
+async function introspectColumns(
+  supabase: SupabaseClient,
+  tableName: string
+): Promise<ColumnInfo[]> {
+  try {
+    const { data, error } = await supabase.rpc('get_table_columns', { p_table_name: tableName });
+    if (error) {
+      console.warn(`[SYNC WARNING] Column introspection failed for '${tableName}': ${error.message}`);
+      return [];
+    }
+    return (data as ColumnInfo[]) || [];
+  } catch {
+    return [];
+  }
+}
+
 // ─── Main Sync Engine ───────────────────────────────────────
 
 export async function runSync(): Promise<void> {
-  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
-    console.error("CRITICAL: Missing Supabase credentials in .env");
-    throw new Error("Missing Supabase credentials");
-  }
-
-  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
   const DATA_DIR = path.join(process.cwd(), 'public', 'data');
   const JSON_FILE = path.join(DATA_DIR, 'portfolio.json');
   const MIN_JSON_FILE = path.join(DATA_DIR, 'portfolio.min.json');
@@ -135,14 +293,17 @@ export async function runSync(): Promise<void> {
   const HASH_FILE = path.join(DATA_DIR, 'portfolio.hash');
   const LOCK_FILE = path.join(DATA_DIR, 'portfolio.lock');
 
+  // ── Create Supabase Client (with RLS bypass if service key available) ──
+  const { client: supabase } = createSyncClient();
+
   // ── Lock Acquisition ──
   try {
     const lockStats = await fs.stat(LOCK_FILE);
     if (Date.now() - lockStats.mtimeMs < 5 * 60 * 1000) {
-      console.log("Sync already running, skipping...");
+      console.log('[Sync] Already running, skipping...');
       return;
     }
-    console.log("Stale lock found, removing...");
+    console.log('[Sync] Stale lock found, removing...');
     await fs.unlink(LOCK_FILE).catch(() => {});
   } catch {
     // Lock doesn't exist — proceed
@@ -157,76 +318,93 @@ export async function runSync(): Promise<void> {
   try {
     await fs.writeFile(LOCK_FILE, 'locked');
   } catch (err) {
-    console.error("Failed to acquire lock:", err);
+    console.error('[SYNC CRITICAL] Failed to acquire lock:', err);
     return;
   }
 
   try {
-    console.log("[Sync] Starting dynamic Supabase portfolio sync...");
+    console.log('\n════════════════════════════════════════════════════════════');
+    console.log('[Sync] Starting Supabase Portfolio Sync...');
+    console.log('════════════════════════════════════════════════════════════\n');
 
-    // ── Phase 1: Table Discovery via RPC ──
-    const { data: tables, error: tableErr } = await supabase.rpc('list_public_tables');
-    if (tableErr) {
-      throw new Error(`Table discovery failed: ${tableErr.message}`);
-    }
-    if (!tables || tables.length === 0) {
-      throw new Error("No tables found in public schema");
-    }
-
-    const tableNames: string[] = tables.map((t: { table_name: string }) => t.table_name);
+    // ── Phase 1: Table Discovery ──
+    const allTables = await discoverTables(supabase);
     const childTableNames = new Set(Object.keys(RELATIONS));
+    const topLevelTables = allTables.filter(t => !childTableNames.has(t));
+    const childTables = allTables.filter(t => childTableNames.has(t));
 
-    // Separate top-level tables from junction/child tables
-    const topLevelTables = tableNames.filter(t => !childTableNames.has(t));
-    const childTables = tableNames.filter(t => childTableNames.has(t));
-
-    console.log(`[Sync] Discovered ${tableNames.length} tables: [${tableNames.join(', ')}]`);
+    console.log(`[Sync] Top-level tables: [${topLevelTables.join(', ')}]`);
+    console.log(`[Sync] Child tables: [${childTables.join(', ')}]`);
 
     // ── Phase 2: Column Introspection (parallel) ──
-    const allTablesToIntrospect = [...topLevelTables, ...childTables];
+    console.log('[Sync] Introspecting table schemas...');
     const columnResults = await Promise.allSettled(
-      allTablesToIntrospect.map(t => introspectColumns(supabase, t))
+      allTables.map(t => introspectColumns(supabase, t))
     );
 
     const columnMap = new Map<string, ColumnInfo[]>();
-    for (let i = 0; i < allTablesToIntrospect.length; i++) {
+    for (let i = 0; i < allTables.length; i++) {
       const result = columnResults[i];
-      if (result.status === 'fulfilled' && result.value) {
-        columnMap.set(allTablesToIntrospect[i], result.value);
+      if (result.status === 'fulfilled') {
+        columnMap.set(allTables[i], result.value);
       }
     }
 
-    // ── Phase 3: Parallel Data Fetch ──
-    const fetchResults = await Promise.allSettled(
-      allTablesToIntrospect.map(tableName =>
-        fetchTableDynamic(supabase, tableName, columnMap.get(tableName) || [])
-      )
+    // ── Phase 3: Concurrent Data Fetch (Promise.allSettled) ──
+    // REQUIREMENT 1: Use Promise.allSettled for concurrent fetching
+    console.log('[Sync] Fetching all tables concurrently...\n');
+
+    const fetchPromises = allTables.map(tableName =>
+      fetchTable(supabase, tableName, columnMap.get(tableName) || [])
     );
 
-    // Build raw data map from fetch results
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rawDataMap = new Map<string, any[]>();
-    for (let i = 0; i < allTablesToIntrospect.length; i++) {
-      const result = fetchResults[i];
-      const tableName = allTablesToIntrospect[i];
-      if (result.status === 'fulfilled') {
-        rawDataMap.set(tableName, result.value);
+    const fetchResults = await Promise.allSettled(fetchPromises);
+
+    // ── Phase 4: Process Results & Build Data Map ──
+    const dataMap = new Map<string, unknown[]>();
+    let successCount = 0;
+    let failCount = 0;
+
+    for (let i = 0; i < allTables.length; i++) {
+      const tableName = allTables[i];
+      const settledResult = fetchResults[i];
+
+      if (settledResult.status === 'rejected') {
+        // Promise rejection (network error, etc.)
+        console.error(`[SYNC WARNING] Table '${tableName}' fetch rejected: ${settledResult.reason}`);
+        dataMap.set(tableName, []);
+        failCount++;
+        continue;
+      }
+
+      const result = settledResult.value;
+
+      if (result.status === 'failed') {
+        // REQUIREMENT 4: Visible warning but continue with empty array
+        console.warn(`[SYNC WARNING] Table '${tableName}' failed: ${result.error}`);
+        dataMap.set(tableName, []);
+        failCount++;
       } else {
-        console.warn(`[Sync] Failed to fetch ${tableName}: ${result.reason}`);
+        const rowCount = result.data.length;
+        console.log(`  ✓ ${tableName}: ${rowCount} row${rowCount !== 1 ? 's' : ''}`);
+        dataMap.set(tableName, result.data);
+        successCount++;
       }
     }
 
-    // ── Phase 4: Assemble Payload ──
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const payload: Record<string, any> = {};
+    console.log(`\n[Sync] Fetch complete: ${successCount} succeeded, ${failCount} failed\n`);
+
+    // ── Phase 5: Assemble Payload ──
+    const payload: PortfolioData = {};
 
     // Add top-level tables
     for (const tableName of topLevelTables) {
-      const data = rawDataMap.get(tableName);
+      const data = dataMap.get(tableName);
       if (data === undefined) continue;
 
       if (SINGLETON_TABLES.has(tableName)) {
-        payload[tableName] = data[0] || {};
+        // Flatten singleton to object
+        payload[tableName] = (data[0] as Record<string, unknown>) || {};
       } else {
         payload[tableName] = data;
       }
@@ -235,23 +413,39 @@ export async function runSync(): Promise<void> {
     // Nest child/junction tables into their parents
     for (const childTable of childTables) {
       const relation = RELATIONS[childTable];
-      const childData = rawDataMap.get(childTable);
+      if (!relation) continue;
+
+      const childData = dataMap.get(childTable);
       const parentData = payload[relation.parentTable];
 
       if (!childData || !Array.isArray(parentData)) continue;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      payload[relation.parentTable] = parentData.map((parent: any) => ({
-        ...parent,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        [relation.nestAs]: childData.filter((child: any) => child[relation.foreignKey] === parent.id),
-      }));
+      payload[relation.parentTable] = parentData.map((parent) => {
+        const parentRecord = parent as Record<string, unknown>;
+        const parentId = parentRecord.id;
+        return {
+          ...parentRecord,
+          [relation.nestAs]: childData.filter((child) => {
+            const childRecord = child as Record<string, unknown>;
+            return childRecord[relation.foreignKey] === parentId;
+          }),
+        };
+      });
     }
 
     const tableCount = Object.keys(payload).length;
     console.log(`[Sync] Assembled payload with ${tableCount} top-level keys`);
 
-    // ── Phase 5: Hash Comparison & Atomic Write ──
+    // Log row counts per key
+    for (const [key, value] of Object.entries(payload)) {
+      if (Array.isArray(value)) {
+        console.log(`  • ${key}: ${value.length} items`);
+      } else {
+        console.log(`  • ${key}: (singleton object)`);
+      }
+    }
+
+    // ── Phase 6: Hash Comparison & Atomic Write ──
     const sortedPayload = sortObject(payload);
     const minifiedString = JSON.stringify(sortedPayload);
     const jsonString = JSON.stringify(sortedPayload, null, 2);
@@ -260,14 +454,17 @@ export async function runSync(): Promise<void> {
     let oldHash: string | null = null;
     try {
       oldHash = await fs.readFile(HASH_FILE, 'utf8');
-    } catch { /* File might not exist */ }
+    } catch {
+      // File might not exist
+    }
 
     if (oldHash === newHash) {
-      console.log("[Sync] Data unchanged. Skipping file writes.");
+      console.log('\n[Sync] Data unchanged. Skipping file writes.');
+      console.log('════════════════════════════════════════════════════════════\n');
       return;
     }
 
-    console.log(`[Sync] Changes detected. Writing to disk [${newHash.slice(0, 12)}...]`);
+    console.log(`\n[Sync] Changes detected. Writing to disk [hash: ${newHash.slice(0, 12)}...]`);
 
     // Atomic write: .tmp → rename
     await fs.writeFile(TMP_FILE, jsonString, 'utf8');
@@ -278,52 +475,20 @@ export async function runSync(): Promise<void> {
     await fs.rename(TMP_MIN_FILE, MIN_JSON_FILE);
 
     await fs.writeFile(HASH_FILE, newHash, 'utf8');
-    console.log("[Sync] Sync completed successfully.");
+
+    console.log('[Sync] Files written:');
+    console.log(`  • ${JSON_FILE}`);
+    console.log(`  • ${MIN_JSON_FILE}`);
+    console.log(`  • ${HASH_FILE}`);
+    console.log('\n════════════════════════════════════════════════════════════');
+    console.log('[Sync] ✓ Sync completed successfully!');
+    console.log('════════════════════════════════════════════════════════════\n');
   } catch (err) {
-    console.error("[Sync] FAILED:", err);
+    console.error('\n════════════════════════════════════════════════════════════');
+    console.error('[SYNC CRITICAL] Sync FAILED:', err);
+    console.error('════════════════════════════════════════════════════════════\n');
     throw err;
   } finally {
     await fs.unlink(LOCK_FILE).catch(() => {});
   }
-}
-
-// ─── Helpers ────────────────────────────────────────────────
-
-async function introspectColumns(supabase: SupabaseClient, tableName: string): Promise<ColumnInfo[]> {
-  const { data, error } = await supabase.rpc('get_table_columns', { p_table_name: tableName });
-  if (error) {
-    console.warn(`[Sync] Column introspection failed for ${tableName}: ${error.message}`);
-    return [];
-  }
-  return data as ColumnInfo[];
-}
-
-async function fetchTableDynamic(
-  supabase: SupabaseClient,
-  tableName: string,
-  columns: ColumnInfo[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): Promise<any[]> {
-  const filter = FILTERS[tableName];
-  const selectCols = filter?.selectColumns || '*';
-
-  let query = supabase.from(tableName).select(selectCols);
-
-  // Apply row-level filter if configured
-  if (filter) {
-    query = query.eq(filter.column, filter.value);
-  }
-
-  // Auto-detect sort column from schema (skip if no introspection data)
-  const sort = detectSortColumn(columns);
-  if (sort) {
-    query = query.order(sort.column, { ascending: sort.ascending });
-  }
-
-  const { data, error } = await query;
-  if (error) {
-    throw new Error(`Fetch ${tableName} failed: ${error.message}`);
-  }
-
-  return cleanData(data || []);
 }

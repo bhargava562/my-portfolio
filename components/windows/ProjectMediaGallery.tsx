@@ -1,6 +1,6 @@
 "use client";
 
-import { ImageWithFallback } from "@/components/common/MediaWithFallback";
+import { ImageWithFallback } from "@/components/common/ImageWithFallback";
 import { MediaFacade, OptimizedVideo } from "@/components/common/MediaFacade";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -50,11 +50,9 @@ function Screenshot({ src, alt }: { src: string; alt: string }) {
   return (
     <div className="relative h-24 w-40 flex-shrink-0 rounded-lg overflow-hidden border border-white/10 bg-black/30">
       <ImageWithFallback
-        imagePath={src}
-        alt={alt}
-        width={160}
-        height={96}
         fill
+        src={src}
+        alt={alt}
         className="object-cover"
         sizes="160px"
       />

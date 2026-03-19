@@ -55,9 +55,19 @@ export function getUiConfigData(): Promise<Record<string, unknown>> {
 export function getImageUrl(path: string | null): string {
     if (!path) return '';
     if (path.startsWith('http') || path.startsWith('/')) return path;
-    const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-    // Format is storage/v1/object/public/[bucket_or_path]
-    return `${baseUrl}/storage/v1/object/public/${path}`;
+
+    const storageUrl = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL;
+    const bucket = process.env.NEXT_PUBLIC_SUPABASE_BUCKET || 'public';
+
+    if (!storageUrl) {
+        console.warn('[actions] NEXT_PUBLIC_SUPABASE_STORAGE_URL not set');
+        return '';
+    }
+
+    const baseUrl = storageUrl.endsWith('/') ? storageUrl : `${storageUrl}/`;
+    const safePath = path.startsWith('/') ? path.substring(1) : path;
+
+    return `${baseUrl}${bucket}/${safePath}`;
 }
 
 export interface ImageConfig {
@@ -74,31 +84,31 @@ export const getImageConfig = async (dataset: string): Promise<ImageConfig | nul
 
 export const resolveImagePath = async (dataset: string, record: Record<string, unknown>) => {
     const config = await getImageConfig(dataset);
-    
+
     // Default fallback if not defined in config
     const defaultFallback = `/${dataset}/default.webp`;
     const fallbackUrl = config?.fallback || defaultFallback;
-    
+
     if (!config || !record || !record[config.imageField]) {
         return { primaryUrl: null, fallbackUrl };
     }
-    
+
     const path = record[config.imageField] as string;
     let primaryUrl = null;
-    
+
     if (path.startsWith('http') || path.startsWith('/')) {
         primaryUrl = path;
     } else {
-        const storageUrl = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL || `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/`;
-        // Ensure the URL includes the /public/ segment required by Supabase Storage
-        let base = storageUrl.endsWith('/') ? storageUrl : `${storageUrl}/`;
-        if (!base.includes('/public/')) {
-            base += 'public/';
+        const storageUrl = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL;
+        const bucket = process.env.NEXT_PUBLIC_SUPABASE_BUCKET || 'public';
+
+        if (storageUrl) {
+            const baseUrl = storageUrl.endsWith('/') ? storageUrl : `${storageUrl}/`;
+            const safePath = path.startsWith('/') ? path.substring(1) : path;
+            primaryUrl = `${baseUrl}${bucket}/${safePath}`;
         }
-        const normalizedPath = path.startsWith('/') ? path.substring(1) : path;
-        primaryUrl = `${base}${normalizedPath}`;
     }
-    
+
     return { primaryUrl, fallbackUrl };
 };
 

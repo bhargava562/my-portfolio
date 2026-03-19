@@ -1,4 +1,5 @@
-const BASE = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL;
+const STORAGE_URL = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL;
+const BUCKET = process.env.NEXT_PUBLIC_SUPABASE_BUCKET || "public";
 
 export function buildSupabaseImageUrl(
   path: string,
@@ -6,17 +7,20 @@ export function buildSupabaseImageUrl(
   quality = 75
 ) {
   if (!path) return "";
-  
+
   if (path.startsWith('http') || path.startsWith('/')) {
-      return path; // Return as-is if already a full URL or local path
+    return path; // Return as-is if already a full URL or local path
   }
 
-  // Ensure the URL includes the /public/ segment required by Supabase Storage
-  let safeBase = BASE?.endsWith('/') ? BASE : `${BASE}/`;
-  if (!safeBase.includes('/public/') && !safeBase.endsWith('/public/')) {
-    safeBase += 'public/';
+  if (!STORAGE_URL) {
+    console.warn("[image-utils] NEXT_PUBLIC_SUPABASE_STORAGE_URL not set");
+    return "";
   }
+
+  // Ensure trailing slash on storage URL
+  const baseUrl = STORAGE_URL.endsWith('/') ? STORAGE_URL : `${STORAGE_URL}/`;
+  // Remove leading slash from path if present
   const safePath = path.startsWith('/') ? path.substring(1) : path;
 
-  return `${safeBase}${safePath}?width=${width}&quality=${quality}`;
+  return `${baseUrl}${BUCKET}/${safePath}?width=${width}&quality=${quality}`;
 }

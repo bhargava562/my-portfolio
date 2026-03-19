@@ -27,13 +27,29 @@ To ensure the application runs at 60fps globally with zero database latency, it 
 
 ```mermaid
 graph TD
-    A[Supabase PostgreSQL] -->|npm run sync / node.js script| B[JSON Serialization]
-    B -->|Writes payload| C[public/data/portfolio.json]
-    C -->|Zero-latency O1 fetch| D[Next.js App Router Server Components]
-    D -->|Statically Injects| E[Client Desktop View]
+    A[Supabase PostgreSQL] -->|npm run sync| B[runSync.ts]
+    B -->|Promise.allSettled| C[Concurrent Table Fetch]
+    C -->|Service Role Key\nBypasses RLS| D[Full Data Extract]
+    D -->|JSON Serialization| E[public/data/portfolio.json]
+    E -->|Zero-latency O1 fetch| F[Next.js App Router]
+    F -->|Statically Injects| G[Client Desktop View]
+
+    style B fill:#E95420,color:#fff
+    style D fill:#3ECF8E,color:#fff
 ```
 
-Instead of fetching from the database inside React components on every page load, a custom Node.js build script (`scripts/syncPortfolio.ts`) is executed ahead-of-time. It connects to the Supabase PostgreSQL database, aggregates all tables (Profile, Projects, Skills, Education, etc.), recursively serializes the entire relational map, and statically compiles it into pure `.json` payloads (`public/data/portfolio.json`).
+Instead of fetching from the database inside React components on every page load, a custom Node.js build script (`scripts/syncPortfolio.ts`) is executed ahead-of-time. It connects to the Supabase PostgreSQL database using the **Service Role Key** (bypassing Row Level Security), aggregates all tables via a dynamic registry with `Promise.allSettled` for fault tolerance, and statically compiles the entire relational map into pure `.json` payloads.
+
+**Sync Engine Features:**
+| Feature | Implementation |
+| :--- | :--- |
+| Table Discovery | RPC `list_public_tables` with static fallback registry |
+| Concurrent Fetch | `Promise.allSettled()` — individual table failures don't crash build |
+| RLS Bypass | `NEXT_SUPABASE_SERVICE_ROLE_KEY` preferred over anon key |
+| Column Extraction | `select('*')` — new columns auto-included without code changes |
+| Error Isolation | Failed tables log `[SYNC WARNING]` and return empty arrays |
+| Change Detection | SHA256 hash comparison skips writes when data unchanged |
+| Atomic Writes | `.tmp` file rename prevents partial/corrupted JSON |
 
 * **Why?** The Next.js frontend strictly consumes static JSON, guaranteeing `O(1)` fetch times, zero database connection limits, and robust fallback resilience. The portfolio acts as a pure View-Controller while the database serves only as an isolated headless CMS.
 
@@ -128,34 +144,59 @@ flowchart LR
 
 #### 3. Image Loading Pipeline
 
-All images follow a strict CDN-optimized pipeline with universal fallback protection. Both `buildSupabaseImageUrl()` and `resolveImagePath()` enforce the required `/public/` segment in Supabase Storage URLs, preventing 504 timeouts from malformed paths.
+All images follow a strict CDN-optimized pipeline with unified URL construction and universal fallback protection.
 
 ```mermaid
 flowchart TD
     A["Image Request"] --> B{"Source Type?"}
-    B -->|Absolute URL| C["Direct Fetch"]
-    B -->|Relative Path| D["Construct Supabase CDN URL\n(enforces /public/ segment)"]
-    C --> E["Next.js Image Optimizer"]
-    D --> E
-    E --> F{"Load Success?"}
-    F -->|Yes| G["Render with object-contain\nCentered + Dark Gray Fill"]
-    F -->|No| H["/linux-placeholder.webp\nUniversal Fallback"]
-    H --> G
+    B -->|Absolute URL| C["Return As-Is"]
+    B -->|Local Path /| C
+    B -->|Relative Path| D["Construct Supabase CDN URL"]
 
-    style H fill:#1E1E1E,color:#fff,stroke:#E95420
-    style G fill:#2C2C2C,color:#fff
+    subgraph URL["Unified URL Construction"]
+        D --> E["STORAGE_URL + BUCKET + path"]
+        E --> F["https://xxx.supabase.co/storage/v1/object/public/learned/ai.webp"]
+    end
+
+    C --> G["Next.js Image Optimizer"]
+    F --> G
+    G --> H{"Load Success?"}
+    H -->|Yes| I["Render Image"]
+    H -->|No| J["/linux-placeholder.webp"]
+    J --> I
+
+    style D fill:#3ECF8E,color:#fff
+    style J fill:#1E1E1E,color:#fff,stroke:#E95420
 ```
 
-All image rendering paths implement fallback logic:
+**Unified URL Construction Pattern:**
+```
+${NEXT_PUBLIC_SUPABASE_STORAGE_URL}${NEXT_PUBLIC_SUPABASE_BUCKET}/${path}
+```
+
+All URL construction functions (`buildSupabaseImageUrl`, `getImageUrl`, `resolveImagePath`, `getStorageUrl`) use the same environment-driven pattern, preventing double-segment bugs like `/public/public/`.
+
+**ImageWithFallback Component:**
+
+Supports two modes via discriminated union types:
+
+```typescript
+// Fill mode (for responsive containers)
+<ImageWithFallback fill src={url} alt="..." sizes="100vw" />
+
+// Fixed mode (for known dimensions)
+<ImageWithFallback imagePath={path} width={200} height={150} alt="..." />
+```
 
 | Component | Fallback Mechanism |
 | :--- | :--- |
-| `ImageWithFallback` | `onError` → `/linux-placeholder.webp` |
-| `AboutContent` (avatar/banner) | Inherits `ImageWithFallback` fallback; explicit placeholder branch |
+| `ImageWithFallback` | `onError` → `/linux-placeholder.webp` (both modes) |
+| `AboutContent` (avatar/banner) | Inherits `ImageWithFallback` fallback |
 | `ProjectsContent` | Inherits `ImageWithFallback` fallback |
+| `AppliedKnowledgeContent` | TOI-style image with `ImageWithFallback` fill mode |
 | `SocialsContent` | Inherits `ImageWithFallback` fallback; SVG icon branch |
 | `BlogsContent` | `onError` state → `BookOpen` icon placeholder |
-| `CertificationsContent` (viewer) | `onError` → `/linux-placeholder.webp` + error message |
+| `CertificationsContent` | `onError` → `/linux-placeholder.webp` + error message |
 
 #### 4. Resume Forced Download Pipeline
 
@@ -247,7 +288,48 @@ flowchart TD
 | Image Fallback | `onError` → `/linux-placeholder.webp` + error message |
 | Dock Integration | `/photos.webp` icon per open viewer; click to focus |
 
-#### 7. Security Posture
+#### 7. Applied Knowledge — Times of India Layout
+
+The `AppliedKnowledgeContent` window presents learnings in a newspaper editorial format inspired by the Times of India design language.
+
+```mermaid
+flowchart TD
+    A["portfolio.json\n(learnings array)"] --> B["Sort by date_learned DESC"]
+    B --> C["Infinite Scroll Feed"]
+
+    subgraph Article["ArticleCard Component"]
+        D["Dateline\n(By Author | TNN | Date IST)"]
+        E["Headline\n(font-serif bold)"]
+        F["Key Takeaways Box\n(red accent)"]
+        G["TOI-Style Image\n(aspect-video + hover zoom)"]
+        H["Caption\n(uppercase tracking-widest)"]
+        I["Body Text\n(concept_learned)"]
+        J["Previous Approach\n(italic)"]
+    end
+
+    C --> D
+    D --> E --> F --> G --> H --> I --> J
+
+    subgraph Sidebar["Trending Sidebar"]
+        K["Top 5 Articles"]
+        L["Click → Scroll to Article"]
+    end
+
+    style F fill:#d32f2f,color:#fff
+    style G fill:#3ECF8E,color:#fff
+```
+
+| Feature | Implementation |
+| :--- | :--- |
+| Image Integration | `ImageWithFallback` fill mode with `getStorageUrl()` |
+| Image Container | `relative w-full aspect-video overflow-hidden border` |
+| Hover Effect | `hover:scale-105 transition-transform duration-500` |
+| Caption Style | TOI-style uppercase tracking with border-bottom |
+| Infinite Scroll | `IntersectionObserver` sentinel with 5-item pages |
+| Search | Real-time filtering by title/concept |
+| Trending | Sticky sidebar with top 5 recent articles |
+
+#### 8. Security Posture
 
 | Check | Status | Details |
 | :--- | :---: | :--- |
@@ -289,12 +371,16 @@ cp .env.example .env.local
 
 | Variable | Scope | Description |
 | :--- | :---: | :--- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Client | Supabase project URL (e.g., `https://xxx.supabase.co`) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Client | Supabase anonymous key (for client-side queries) |
+| `NEXT_PUBLIC_SUPABASE_BUCKET` | Client | Storage bucket name (default: `public`) |
+| `NEXT_PUBLIC_SUPABASE_STORAGE_URL` | Client | Storage base URL (e.g., `https://xxx.supabase.co/storage/v1/object/`) |
+| `NEXT_SUPABASE_SERVICE_ROLE_KEY` | Server | Service role key for sync script (bypasses RLS) |
+| `SYNC_API_SECRET` | Server | Secret token for `POST /api/sync`. Generate with `openssl rand -hex 32` |
 | `NEXT_PUBLIC_EMAILJS_SERVICE_ID` | Client | EmailJS service ID for the contact form |
 | `NEXT_PUBLIC_EMAILJS_TEMPLATE_ID` | Client | EmailJS template ID |
 | `NEXT_PUBLIC_EMAILJS_PUBLIC_KEY` | Client | EmailJS public key |
-| `SYNC_API_SECRET` | Server | Secret token for authenticating `POST /api/sync` requests. Generate with `openssl rand -hex 32` |
-| `NEXT_PUBLIC_SUPABASE_URL` | Server | Supabase project URL (used by sync script) |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Server | Supabase anon/service key (used by sync script) |
+| `NEXT_PUBLIC_SENTRY_DSN` | Client | Sentry DSN for error tracking (optional) |
 
 #### Development
 
