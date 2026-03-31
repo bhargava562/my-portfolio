@@ -1,7 +1,17 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
+
+// Suppress Serwist Turbopack warning (safe — Serwist is disabled in dev mode)
+if (process.env.NODE_ENV === "development") {
+  process.env.SERWIST_SUPPRESS_TURBOPACK_WARNING = "1";
+}
+
 import withSerwistInit from "@serwist/next";
 
+// Serwist Service Worker configuration
+// DISABLED in development (no Service Worker during dev with Turbopack)
+// ENABLED in production (PWA + offline support, does not require Turbopack)
+// See: https://serwist.pages.dev/docs/next/turbo
 const withSerwist = withSerwistInit({
   swSrc: "app/sw.ts",
   swDest: "public/sw.js",

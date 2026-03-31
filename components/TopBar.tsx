@@ -6,12 +6,16 @@ import { motion, AnimatePresence } from 'motion/react';
 import QuickSettings from './QuickSettings';
 import CalendarDropdown from './CalendarDropdown';
 import { useBoot } from '@/hooks/useBootState';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 export default function TopBar() {
   const [showQuickSettings, setShowQuickSettings] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
-  
+
   const { lockDesktop } = useBoot();
+
+  // Hide topbar on mobile
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   const [dateString, setDateString] = useState<string>('');
 
@@ -35,6 +39,11 @@ export default function TopBar() {
     const interval = setInterval(updateDate, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Hide on mobile
+  if (isMobile) {
+    return null;
+  }
 
   return (
     <>

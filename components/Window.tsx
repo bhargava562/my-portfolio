@@ -1,8 +1,10 @@
 import React, { memo } from 'react';
 import { Minus, Maximize2, X } from 'lucide-react';
 import { Rnd } from 'react-rnd';
+import { motion } from 'motion/react';
 import { useWindows, WindowData } from './WindowManager';
 import { getComponent } from './ComponentRegistry';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 interface WindowProps {
   windowData: WindowData;
@@ -31,11 +33,46 @@ const Window = memo(function Window({ windowData }: WindowProps) {
     updateWindowSize,
   } = useWindows();
 
+  // Mobile detection: forces fullscreen, disables dragging/resizing
+  const isMobile = useMediaQuery('(max-width: 768px)');
+
   const isActive = activeWindowId === windowData.id;
 
   const Content = windowData.content ?? <RegistryContent windowData={windowData} />;
 
-  // Handle Maximize State
+  // Mobile: Force fullscreen and disable dragging/resizing
+  if (isMobile) {
+    return (
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.8, opacity: 0 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        className="fixed inset-0 flex flex-col pointer-events-auto z-50"
+        style={{
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100dvh',
+          zIndex: windowData.zIndex,
+        }}
+      >
+        <WindowFrame
+          windowData={windowData}
+          isActive={isActive}
+          onMinimize={() => minimizeWindow(windowData.id)}
+          onMaximize={() => maximizeWindow(windowData.id)}
+          onClose={() => closeWindow(windowData.id)}
+          onMouseDown={() => setActiveWindow(windowData.id)}
+          isMobile={true}
+        >
+          {Content}
+        </WindowFrame>
+      </motion.div>
+    );
+  }
+
+  // Handle Maximize State (desktop only)
   if (windowData.isMaximized) {
     return (
       <div
@@ -49,6 +86,7 @@ const Window = memo(function Window({ windowData }: WindowProps) {
           onMaximize={() => maximizeWindow(windowData.id)}
           onClose={() => closeWindow(windowData.id)}
           onMouseDown={() => setActiveWindow(windowData.id)}
+          isMobile={false}
         >
           {Content}
         </WindowFrame>
@@ -56,6 +94,7 @@ const Window = memo(function Window({ windowData }: WindowProps) {
     );
   }
 
+  // Desktop: draggable and resizable window
   return (
     <Rnd
       default={{
@@ -90,6 +129,7 @@ const Window = memo(function Window({ windowData }: WindowProps) {
         onMaximize={() => maximizeWindow(windowData.id)}
         onClose={() => closeWindow(windowData.id)}
         onMouseDown={() => setActiveWindow(windowData.id)}
+        isMobile={false}
       >
         {Content}
       </WindowFrame>
@@ -107,38 +147,42 @@ interface WindowFrameProps {
   onMaximize: () => void;
   onClose: () => void;
   onMouseDown: () => void;
+  isMobile: boolean;
 }
 
-const WindowFrame = memo(function WindowFrame({ children, windowData, isActive, onMinimize, onMaximize, onClose, onMouseDown }: WindowFrameProps) {
+const WindowFrame = memo(function WindowFrame({ children, windowData, isActive, onMinimize, onMaximize, onClose, onMouseDown, isMobile }: WindowFrameProps) {
   return (
     <div
-      className={`flex flex-col w-full h-full ubuntu-window-bg rounded-t-xl shadow-2xl overflow-hidden ${isActive ? 'ring-2 ring-white/20' : ''}`}
+      className={`flex flex-col w-full h-full ubuntu-window-bg rounded-t-xl shadow-2xl overflow-hidden ${isMobile ? '' : (isActive ? 'ring-2 ring-white/20' : '')}`}
       onMouseDown={onMouseDown}
     >
       {/* Title Bar Container */}
-      <div className="bg-[#2C2C2C] h-10 flex items-center justify-between px-4 select-none border-b border-[#1E1E1E]">
-
-        {/* Drag Handle Area - completely isolates dragging from the buttons! */}
-        <div className="flex-1 flex justify-center items-center h-full window-drag-handle cursor-grab active:cursor-grabbing">
+      <div className={`${isMobile ? 'bg-[#1a1a1a]' : 'bg-[#2C2C2C]'} h-10 flex items-center justify-between px-4 select-none border-b border-[#1E1E1E]`}>
+        {/* Drag Handle Area - Mobile: only close button visible */}
+        <div className={`flex-1 flex ${isMobile ? 'justify-start' : 'justify-center'} items-center h-full ${!isMobile ? 'window-drag-handle' : ''} ${!isMobile ? 'cursor-grab active:cursor-grabbing' : ''}`}>
           <span className="text-white font-bold text-sm pointer-events-none">{windowData.title}</span>
         </div>
 
-        {/* Window Controls */}
+        {/* Window Controls - Simplified on mobile */}
         <div className="flex items-center gap-2 cursor-default window-controls">
-          <button
-            onMouseDown={(e) => { e.stopPropagation(); }}
-            onClick={(e) => { e.stopPropagation(); onMinimize(); }}
-            className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 transition-colors"
-          >
-            <Minus className="w-4 h-4 text-white hover:text-white" />
-          </button>
-          <button
-            onMouseDown={(e) => { e.stopPropagation(); }}
-            onClick={(e) => { e.stopPropagation(); onMaximize(); }}
-            className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 transition-colors"
-          >
-            <Maximize2 className="w-4 h-4 text-white hover:text-white" />
-          </button>
+          {!isMobile && (
+            <>
+              <button
+                onMouseDown={(e) => { e.stopPropagation(); }}
+                onClick={(e) => { e.stopPropagation(); onMinimize(); }}
+                className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 transition-colors"
+              >
+                <Minus className="w-4 h-4 text-white hover:text-white" />
+              </button>
+              <button
+                onMouseDown={(e) => { e.stopPropagation(); }}
+                onClick={(e) => { e.stopPropagation(); onMaximize(); }}
+                className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 transition-colors"
+              >
+                <Maximize2 className="w-4 h-4 text-white hover:text-white" />
+              </button>
+            </>
+          )}
           <button
             onMouseDown={(e) => { e.stopPropagation(); }}
             onClick={(e) => { e.stopPropagation(); onClose(); }}
