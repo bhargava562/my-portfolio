@@ -4,6 +4,7 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import { WindowProvider } from "@/components/WindowManager";
 import TopBar from "@/components/TopBar";
+import ResponsiveNavigation from "@/components/ResponsiveNavigation";
 import WindowContainer from "@/components/WindowContainer";
 import BootOverlay from "@/components/BootOverlay";
 import { BootProvider } from "@/hooks/useBootState";
@@ -29,6 +30,9 @@ export default function Home() {
 
           {/* Top Navigation Bar (hidden on mobile) */}
           <TopBar />
+
+          {/* Responsive Navigation: Left sidebar on desktop, bottom bar on mobile */}
+          <ResponsiveNavigation />
 
           {/* Desktop Surface with app icons */}
           <Desktop />
