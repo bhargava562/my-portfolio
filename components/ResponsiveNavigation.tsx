@@ -119,51 +119,7 @@ export default memo(function ResponsiveNavigation() {
     );
   }
 
-  // Mobile layout: fixed bottom navigation bar (Android-style)
-  return (
-    <div className="fixed bottom-0 left-0 right-0 h-20 bg-black/70 backdrop-blur-md z-40 flex items-center justify-around px-2 border-t border-white/5">
-      {dockItems.slice(0, 5).map((app) => {
-        const Icon = app.icon;
-        const isOpen = openWindowIds.has(app.id);
-        const isActive = activeWindowId === app.id;
-
-        return (
-          <button
-            key={app.id}
-            onClick={() => handleAppClick(app)}
-            className="flex flex-col items-center gap-1 p-2 relative"
-          >
-            {/* Running Indicator */}
-            {isOpen && (
-              <div className="absolute top-0 w-1.5 h-1.5 bg-[#E95420] rounded-full" />
-            )}
-
-            {/* Icon */}
-            <div className={`w-10 h-10 flex items-center justify-center rounded-lg transition-all ${isActive ? 'bg-white/20' : (isOpen ? 'bg-white/5' : 'hover:bg-white/10')}`}>
-              {app.id === 'terminal' || app.id.startsWith('terminal-') ? (
-                <Image src="/terminal.webp" alt="Terminal" width={20} height={20} />
-              ) : app.id.startsWith('cert-viewer-') ? (
-                <Image src="/photos.webp" alt={app.label} width={20} height={20} className="rounded" />
-              ) : (
-                <Icon className="w-5 h-5 text-white" />
-              )}
-            </div>
-
-            {/* Label on mobile */}
-            <span className="text-xs text-white text-center line-clamp-1 pointer-events-none">
-              {app.label.length > 8 ? app.label.slice(0, 8) : app.label}
-            </span>
-          </button>
-        );
-      })}
-
-      {/* Trash on mobile */}
-      <button className="flex flex-col items-center gap-1 p-2">
-        <div className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10 transition-all">
-          <Trash2 className="w-5 h-5 text-white" />
-        </div>
-        <span className="text-xs text-white pointer-events-none">Trash</span>
-      </button>
-    </div>
-  );
+  // Mobile: Hide navigation bar completely to allow fullscreen window content
+  // Windows will use 100dvh height and won't be obstructed
+  return null;
 });
