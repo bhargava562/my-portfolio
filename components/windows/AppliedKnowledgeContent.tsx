@@ -318,7 +318,7 @@ export default function AppliedKnowledgeContent() {
       ref={feedRef}
       className="flex-1 h-full bg-white overflow-y-auto applied-knowledge-scrollbar @container"
     >
-      <div className="max-w-7xl mx-auto px-2 @sm:px-3 @md:px-4 @lg:px-6 py-2 @sm:py-3 @md:py-4 @lg:py-6">
+      <div className="px-2 @sm:px-3 @md:px-4 @lg:px-6 py-2 @sm:py-3 @md:py-4 @lg:py-6 w-full">
 
         {/* ── Masthead ── */}
         <header className="mb-3 @sm:mb-4 @md:mb-6 @lg:mb-8 border-b-4 border-red-600 pb-2 @sm:pb-3 @md:pb-4 @lg:pb-6">

@@ -141,7 +141,7 @@ export default function ContributionsContent() {
     : contributions;
 
   return (
-    <div className="h-full overflow-y-auto bg-white">
+    <div className="h-full overflow-y-auto bg-white @container">
       <style jsx>{`
         div::-webkit-scrollbar {
           width: 12px;
@@ -158,14 +158,14 @@ export default function ContributionsContent() {
         }
       `}</style>
 
-      <div className="flex flex-col lg:flex-row gap-6 p-4 sm:p-6 max-w-7xl mx-auto">
+      <div className="flex flex-col @3xl:flex-row gap-3 @sm:gap-4 @md:gap-5 @lg:gap-6 p-2 @sm:p-3 @md:p-4 @lg:p-6 w-full">
         {/* Timeline Feed - Left Column */}
         <div className="flex-1 min-w-0">
-          <div className="mb-6 sm:mb-8">
-            <h1 className="text-xl sm:text-2xl font-semibold text-[#24292f] mb-2">
+          <div className="mb-4 @sm:mb-5 @md:mb-6 @lg:mb-8">
+            <h1 className="text-lg @sm:text-xl @md:text-2xl @lg:text-3xl font-semibold text-[#24292f] mb-1 @sm:mb-2">
               Contribution activity
             </h1>
-            <p className="text-[#57606a] text-sm">
+            <p className="text-[#57606a] text-[10px] @sm:text-xs @md:text-sm">
               {filteredContributions.length} contribution
               {filteredContributions.length !== 1 ? "s" : ""}
               {selectedYear ? ` in ${selectedYear}` : ""}
@@ -175,10 +175,10 @@ export default function ContributionsContent() {
           {/* Timeline Container */}
           <div className="relative">
             {/* Vertical Timeline Line */}
-            <div className="absolute left-[19px] sm:left-[19px] top-0 bottom-0 w-[2px] bg-[#d0d7de]"></div>
+            <div className="absolute left-3.5 @sm:left-4 @md:left-4.5 @lg:left-5 top-0 bottom-0 w-[2px] bg-[#d0d7de]"></div>
 
             {/* Timeline Items */}
-            <div className="space-y-6 sm:space-y-8">
+            <div className="space-y-3 @sm:space-y-4 @md:space-y-5 @lg:space-y-6">
               {filteredContributions.map((contribution, idx) => (
                 <div
                   key={
@@ -186,18 +186,18 @@ export default function ContributionsContent() {
                       ? `${contribution.id}-${idx}`
                       : `contribution-${idx}`
                   }
-                  className="relative pl-12 sm:pl-14"
+                  className="relative pl-9 @sm:pl-10 @md:pl-11 @lg:pl-12"
                 >
                   {/* Timeline Node */}
-                  <div className="absolute left-0 top-1 w-10 h-10 bg-white border border-[#d0d7de] rounded-full flex items-center justify-center shadow-sm">
-                    <GitCommit className="w-5 h-5 text-[#57606a]" />
+                  <div className="absolute left-0 top-1 w-8 @sm:w-9 @md:w-10 h-8 @sm:h-9 @md:h-10 bg-white border border-[#d0d7de] rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
+                    <GitCommit className="w-4 @sm:w-4.5 @md:w-5 h-4 @sm:h-4.5 @md:h-5 text-[#57606a]" />
                   </div>
 
                   {/* Content Card */}
-                  <div className="border border-[#d0d7de] rounded-md p-3 sm:p-4 hover:border-[#0969da] transition-colors bg-white">
+                  <div className="border border-[#d0d7de] rounded-md p-2 @sm:p-3 @md:p-4 hover:border-[#0969da] transition-colors bg-white">
                     {/* Header */}
-                    <div className="mb-3">
-                      <p className="text-[#57606a] text-sm mb-1 break-words">
+                    <div className="mb-2 @sm:mb-2.5 @md:mb-3">
+                      <p className="text-[#57606a] text-xs @sm:text-sm @md:text-base mb-0.5 @sm:mb-1 break-words">
                         Contributed to{" "}
                         {contribution.link_url ? (
                           <a
@@ -214,20 +214,20 @@ export default function ContributionsContent() {
                           </span>
                         )}
                       </p>
-                      <p className="text-xs text-[#57606a]">
+                      <p className="text-[9px] @sm:text-[10px] @md:text-xs text-[#57606a]">
                         {formatDate(contribution.contribution_date)}
                       </p>
                     </div>
 
                     {/* Description */}
-                    <p className="text-[#24292f] text-sm mb-3 leading-relaxed break-words">
+                    <p className="text-[#24292f] text-xs @sm:text-sm @md:text-base mb-2 @sm:mb-2.5 @md:mb-3 leading-relaxed break-words">
                       {contribution.description}
                     </p>
 
                     {/* Impact Result */}
                     {contribution.impact_result && (
-                      <div className="flex items-start gap-2 mb-3 text-sm">
-                        <Check className="w-4 h-4 text-[#2da44e] flex-shrink-0 mt-0.5" />
+                      <div className="flex items-start gap-1.5 @sm:gap-2 mb-2 @sm:mb-2.5 @md:mb-3 text-xs @sm:text-sm @md:text-base">
+                        <Check className="w-3.5 h-3.5 @sm:w-4 @sm:h-4 @md:w-5 @md:h-5 text-[#2da44e] flex-shrink-0 mt-0.5" />
                         <p className="text-[#2da44e] break-words">
                           {contribution.impact_result}
                         </p>
@@ -236,7 +236,7 @@ export default function ContributionsContent() {
 
                     {/* Skills */}
                     {contribution.skills && contribution.skills.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                      <div className="flex flex-wrap gap-1 @sm:gap-1.5 @md:gap-2">
                         {contribution.skills.map((junction) => {
                           if (!junction || !junction.skill_id) return null;
                           const skillName = skillMap.get(junction.skill_id);
@@ -244,7 +244,7 @@ export default function ContributionsContent() {
                           return (
                             <span
                               key={junction.skill_id}
-                              className="inline-block px-2.5 py-1 bg-[#f6f8fa] text-[#0969da] text-xs rounded-full border border-[#d0d7de] font-medium whitespace-nowrap"
+                              className="inline-block px-1.5 @sm:px-2 @md:px-2.5 py-0.5 @sm:py-1 bg-[#f6f8fa] text-[#0969da] text-[9px] @sm:text-[10px] @md:text-xs rounded-full border border-[#d0d7de] font-medium whitespace-nowrap"
                             >
                               {skillName}
                             </span>
@@ -260,15 +260,15 @@ export default function ContributionsContent() {
         </div>
 
         {/* Year Filter - Right Column */}
-        <div className="w-full lg:w-48 flex-shrink-0 order-first lg:order-last">
-          <div className="lg:sticky lg:top-6">
-            <h3 className="text-sm font-semibold text-[#24292f] mb-3">
+        <div className="w-full @3xl:w-48 flex-shrink-0 order-first @3xl:order-last">
+          <div className="@3xl:sticky @3xl:top-6">
+            <h3 className="text-xs @sm:text-sm @md:text-base font-semibold text-[#24292f] mb-2 @sm:mb-2.5 @md:mb-3">
               Filter by year
             </h3>
-            <div className="flex flex-wrap lg:flex-col gap-2 lg:space-y-1">
+            <div className="flex flex-wrap @3xl:flex-col gap-1.5 @sm:gap-2 @3xl:space-y-1">
               <button
                 onClick={() => setSelectedYear(null)}
-                className={`px-3 py-2 text-sm rounded-md transition-colors ${
+                className={`px-2 @sm:px-3 py-1.5 @sm:py-2 text-xs @sm:text-sm rounded-md transition-colors ${
                   selectedYear === null
                     ? "bg-[#0969da] text-white font-semibold"
                     : "text-[#0969da] hover:bg-[#f6f8fa]"
@@ -280,7 +280,7 @@ export default function ContributionsContent() {
                 <button
                   key={year}
                   onClick={() => setSelectedYear(year)}
-                  className={`px-3 py-2 text-sm rounded-md transition-colors ${
+                  className={`px-2 @sm:px-3 py-1.5 @sm:py-2 text-xs @sm:text-sm rounded-md transition-colors ${
                     selectedYear === year
                       ? "bg-[#0969da] text-white font-semibold"
                       : "text-[#0969da] hover:bg-[#f6f8fa]"
