@@ -92,7 +92,8 @@ export default function EducationContent() {
   };
 
   return (
-    <div className="h-full overflow-y-auto bg-gradient-to-br from-[#f8f9fa] to-[#e8eaed]">
+    // Container query context
+    <div className="h-full overflow-y-auto bg-gradient-to-br from-[#f8f9fa] to-[#e8eaed] @container">
       <div className="p-4 sm:p-6 max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
@@ -104,8 +105,8 @@ export default function EducationContent() {
           </p>
         </div>
 
-        {/* Grid of Education Cards */}
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-6">
+        {/* Grid of Education Cards — Container query responsive: 1 col → 2 cols (@sm) → 3 cols (@lg) */}
+        <div className="grid grid-cols-1 @sm:grid-cols-2 @lg:grid-cols-3 gap-6">
           {education.map((edu, index) => {
             const gradientClass = CLASSROOM_GRADIENTS[index % CLASSROOM_GRADIENTS.length];
             

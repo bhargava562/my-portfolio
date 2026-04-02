@@ -104,11 +104,8 @@ export default function Desktop() {
     return chunks.length === 0 ? [[]] : chunks;
   }, [desktopItems, itemsPerPage, isMobile]);
 
-  const handleItemClick = useCallback((item: DesktopItem) => {
-    setSelectedItems([item.id]);
-  }, []);
-
-  const handleItemDoubleClick = useCallback((item: DesktopItem) => {
+  // Extract common window-opening logic to avoid circular dependencies
+  const openDesktopItem = useCallback((item: DesktopItem) => {
     // Check for external link (Socials)
     if (item.appUrl && item.appUrl.startsWith('http')) {
       window.open(item.appUrl, '_blank');
@@ -186,6 +183,20 @@ export default function Desktop() {
       allowMultiple: item.id === 'terminal',
     });
   }, [openWindow, desktopItems]);
+
+  const handleItemClick = useCallback((item: DesktopItem) => {
+    setSelectedItems([item.id]);
+    // On mobile: single tap opens the app instantly (better UX than double-click)
+    // Double-click is unreliable on touch devices (browser may hijack for zooming)
+    if (isMobile) {
+      openDesktopItem(item);
+      setSelectedItems([]); // Clear selection after opening
+    }
+  }, [isMobile, openDesktopItem]);
+
+  const handleItemDoubleClick = useCallback((item: DesktopItem) => {
+    openDesktopItem(item);
+  }, [openDesktopItem]);
 
   const handleBackgroundClick = useCallback((e: React.MouseEvent) => {
     if (e.target === desktopRef.current) {

@@ -153,8 +153,8 @@ export default function ProjectsContent() {
   }
 
   return (
-    // ── Outer shell: relative + overflow-hidden so the absolute overlay is clipped inside the window ──
-    <div className="relative flex-1 h-full bg-[#1e1e1e] text-white flex flex-col overflow-hidden">
+    // ── Outer shell with @container for responsive grid based on window width ──
+    <div className="relative flex-1 h-full bg-[#1e1e1e] text-white flex flex-col overflow-hidden @container">
 
       {/* ── Sticky breadcrumb header (mirrors CertificationsContent pattern) ── */}
       <div className="flex items-center gap-3 px-6 py-4 border-b border-[#333333] bg-[#1a1a1a] flex-shrink-0">
@@ -180,9 +180,9 @@ export default function ProjectsContent() {
         )}
       </div>
 
-      {/* ── Grid view ── */}
+      {/* ── Grid view with container queries ── */}
       <div className="flex-1 overflow-y-auto projects-scrollbar p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-fr">
+        <div className="grid grid-cols-1 @md:grid-cols-2 @lg:grid-cols-3 gap-4 auto-rows-fr">
           {projects.map(project => (
             <ProjectCard
               key={project.id}

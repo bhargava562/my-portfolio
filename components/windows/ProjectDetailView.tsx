@@ -63,6 +63,7 @@ function Screenshot({ src, alt }: { src: string; alt: string }) {
         src={imgSrc}
         alt={alt}
         fill
+        sizes="128px"
         className="object-cover"
         onError={() => setImgSrc("/linux-placeholder.webp")}
       />
@@ -84,43 +85,43 @@ export default function ProjectDetailView({ project }: Props) {
   const hasDemo = !!(project.demo_url && project.demo_url.trim());
 
   return (
-    // 2-column grid: 2/3 left for content, 1/3 right for video/links
-    <div className="w-full h-full bg-[#121212] overflow-y-auto projects-scrollbar">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-8 max-w-7xl">
+    // Container query context: 2-column grid responsive to window width
+    <div className="w-full h-full bg-[#121212] overflow-y-auto projects-scrollbar @container">
+      <div className="grid grid-cols-1 @lg:grid-cols-3 gap-6 @lg:gap-8 p-4 sm:p-6 md:p-8 max-w-7xl">
 
         {/* ════════════════════════════════════════════════════════════════════
             LEFT COLUMN (2/3) — All content sections
             ════════════════════════════════════════════════════════════════════ */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="@lg:col-span-2 space-y-4 sm:space-y-5 md:space-y-6">
 
           {/* Title + Meta */}
           <div>
-            <div className="flex flex-wrap items-center gap-2 mb-3">
+            <div className="flex flex-wrap items-center gap-2 mb-2 sm:mb-3">
               {project.is_featured && (
-                <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20">
+                <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20">
                   Featured
                 </span>
               )}
               {project.project_type && (
-                <span className="text-[10px] font-semibold uppercase tracking-widest px-2.5 py-1 rounded-full bg-indigo-500/15 text-indigo-400 border border-indigo-500/20">
+                <span className="text-[10px] font-semibold uppercase tracking-widest px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-indigo-500/15 text-indigo-400 border border-indigo-500/20">
                   {project.project_type}
                 </span>
               )}
             </div>
 
-            <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight mb-2">
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white leading-tight mb-1 sm:mb-2">
               {project.title}
             </h1>
 
             {project.tagline && (
-              <p className="text-lg text-indigo-300/80 italic mb-3">
+              <p className="text-sm sm:text-base md:text-lg text-indigo-300/80 italic mb-2 sm:mb-3">
                 {project.tagline}
               </p>
             )}
 
             {(project.role || project.team_name) && (
-              <div className="flex items-center gap-2 text-sm text-gray-400 pt-2 border-t border-white/10">
-                <Briefcase className="w-4 h-4 text-orange-400" />
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-400 pt-2 border-t border-white/10">
+                <Briefcase className="w-3 h-3 sm:w-4 sm:h-4 text-orange-400 flex-shrink-0" />
                 {project.role && (
                   <span>
                     <span className="text-[#E95420] font-semibold">{project.role}</span>
@@ -138,21 +139,21 @@ export default function ProjectDetailView({ project }: Props) {
 
           {/* Description */}
           <div>
-            <p className="text-base text-gray-300 leading-relaxed">
+            <p className="text-xs sm:text-sm md:text-base text-gray-300 leading-relaxed">
               {project.description}
             </p>
           </div>
 
           {/* Business Problem */}
           {project.business_problem && (
-            <div className="border-l-4 border-l-amber-500 bg-amber-500/5 rounded-r-lg p-4 space-y-2">
+            <div className="border-l-4 border-l-amber-500 bg-amber-500/5 rounded-r-lg p-3 sm:p-4 space-y-2">
               <div className="flex items-center gap-2">
-                <Lightbulb className="w-4 h-4 text-amber-400 flex-shrink-0" />
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-amber-400">
+                <Lightbulb className="w-3 h-3 sm:w-4 sm:h-4 text-amber-400 flex-shrink-0" />
+                <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-amber-400">
                   The Problem
                 </h3>
               </div>
-              <p className="text-sm text-gray-300 leading-relaxed">
+              <p className="text-xs sm:text-sm text-gray-300 leading-relaxed">
                 {project.business_problem}
               </p>
             </div>
@@ -160,14 +161,14 @@ export default function ProjectDetailView({ project }: Props) {
 
           {/* Engineering Solution */}
           {project.engineering_solution && (
-            <div className="border-l-4 border-l-indigo-500 bg-indigo-500/5 rounded-r-lg p-4 space-y-2">
+            <div className="border-l-4 border-l-indigo-500 bg-indigo-500/5 rounded-r-lg p-3 sm:p-4 space-y-2">
               <div className="flex items-center gap-2">
-                <Wrench className="w-4 h-4 text-indigo-400 flex-shrink-0" />
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-indigo-400">
+                <Wrench className="w-3 h-3 sm:w-4 sm:h-4 text-indigo-400 flex-shrink-0" />
+                <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-indigo-400">
                   The Solution
                 </h3>
               </div>
-              <p className="text-sm text-gray-200 leading-relaxed">
+              <p className="text-xs sm:text-sm text-gray-200 leading-relaxed">
                 {project.engineering_solution}
               </p>
             </div>
@@ -175,15 +176,15 @@ export default function ProjectDetailView({ project }: Props) {
 
           {/* Tech Stack */}
           {techList.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-400 border-b border-white/10 pb-2">
+            <div className="space-y-2 sm:space-y-3">
+              <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-400 border-b border-white/10 pb-2">
                 Tech Stack
               </h3>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
                 {techList.map(tech => (
                   <span
                     key={tech}
-                    className="text-xs font-medium px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 hover:border-white/20 transition-colors"
+                    className="text-[10px] sm:text-xs font-medium px-2 sm:px-3 py-1 sm:py-1.5 rounded-md bg-white/5 border border-white/10 text-gray-300 hover:bg-white/10 hover:border-white/20 transition-colors"
                   >
                     {tech}
                   </span>
@@ -194,11 +195,11 @@ export default function ProjectDetailView({ project }: Props) {
 
           {/* Screenshots strip */}
           {screenshots.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-400 border-b border-white/10 pb-2">
+            <div className="space-y-2 sm:space-y-3">
+              <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-400 border-b border-white/10 pb-2">
                 Screenshots
               </h3>
-              <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+              <div className="flex gap-2 sm:gap-3 overflow-x-auto no-scrollbar pb-2">
                 {screenshots.map((s, i) => (
                   <Screenshot key={i} src={s} alt={`${project.title} screenshot ${i + 1}`} />
                 ))}
@@ -208,10 +209,10 @@ export default function ProjectDetailView({ project }: Props) {
 
           {/* Collaborators */}
           {collaborators.length > 0 && (
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-gray-500" />
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-400 border-b border-white/10 pb-2 flex-1">
+                <Users className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500 flex-shrink-0" />
+                <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-gray-400 border-b border-white/10 pb-2 flex-1">
                   Team
                 </h3>
               </div>
@@ -244,7 +245,7 @@ export default function ProjectDetailView({ project }: Props) {
         {/* ════════════════════════════════════════════════════════════════════
             RIGHT COLUMN (1/3) — Video sidebar
             ════════════════════════════════════════════════════════════════════ */}
-        <div className="lg:col-span-1 space-y-4 sticky top-8 h-fit">
+        <div className="@lg:col-span-1 space-y-4 sticky top-8 h-fit">
 
           {/* Demo Video */}
           {media && (

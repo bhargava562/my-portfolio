@@ -24,15 +24,15 @@ export default function HomeContent() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col @container">
         {/* Breadcrumb */}
         <div className="bg-gray-700 px-4 py-2 text-white text-sm border-b border-gray-600">
           Home
         </div>
 
-        {/* File Grid */}
+        {/* File Grid — Container query responsive: 1 col → 2 cols (@sm) → 4 cols (@lg) */}
         <div className="flex-1 p-6 overflow-auto">
-          <div className="grid grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 @sm:grid-cols-2 @lg:grid-cols-4 gap-6">
             {items.map((item) => {
               const Icon = item.icon;
               return (

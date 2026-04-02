@@ -50,10 +50,12 @@ export default function SkillsContent() {
   const defaultIconStr = (skillsConfig.defaultIcon as string) || 'Code2';
 
   return (
-    <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-auto text-white bg-[#1E1E1E]">
-      <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Technical Skills & Expertise</h1>
-      {/* Mobile-First Responsive Grid: 1 col (mobile) → 2 cols (tablet: md) → 3 cols (desktop: lg) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+    // Container query context: this div's width determines breakpoints for children
+    <div className="flex-1 h-full bg-[#1E1E1E] overflow-auto text-white @container">
+      <div className="p-4 sm:p-6 md:p-8">
+        <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Technical Skills & Expertise</h1>
+        {/* Container query responsive grid: 1 col (default) → 2 cols (@md) → 3 cols (@lg) */}
+        <div className="grid grid-cols-1 @md:grid-cols-2 @lg:grid-cols-3 gap-4 w-full">
         {Object.entries(skillsByCategory).map(([category, skills]) => {
           const iconName = categoryIconsMap[category] || defaultIconStr;
           // @ts-expect-error - Dynamic lucide indexing
@@ -100,6 +102,7 @@ export default function SkillsContent() {
             </div>
           );
         })}
+        </div>
       </div>
     </div>
   );

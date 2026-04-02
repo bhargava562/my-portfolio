@@ -29,15 +29,17 @@ export default function AwardsContent() {
     }
 
     return (
-        <div className="flex-1 p-8 overflow-auto text-white bg-[#1E1E1E] h-full">
+        // Container query context
+        <div className="flex-1 p-8 overflow-auto text-white bg-[#1E1E1E] h-full @container">
             <div className="flex items-center gap-3 mb-8">
                 <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center">
                     <Award className="w-6 h-6 text-yellow-500" />
                 </div>
                 <h1 className="text-2xl font-bold">Awards & Honors</h1>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            {/* Container query responsive grid */}
+            <div className="grid grid-cols-1 @md:grid-cols-2 gap-6">
                 {awards.map((award) => (
                     <div key={award.id} className="relative overflow-hidden bg-gradient-to-br from-[#2C2C2C] to-[#222] rounded-xl p-6 border border-[#3E3E3E] group hover:border-yellow-500/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(234,179,8,0.1)]">
                         <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">

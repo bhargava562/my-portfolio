@@ -19,6 +19,7 @@ export default function LockScreen({ onUnlock }: LockScreenProps) {
             src={process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL ? `${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL}${process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL.endsWith('/') ? '' : '/'}profile/profile.webp` : "/linux-placeholder.webp"}
             alt="Bhargava"
             fill
+            sizes="(max-width: 640px) 96px, 128px"
             className="object-cover"
             priority
           />

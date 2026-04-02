@@ -59,9 +59,11 @@ export default function SocialsContent() {
     };
 
     return (
-        <div className="flex flex-col h-full w-full p-4 sm:p-6 md:p-8 overflow-y-auto text-white bg-[#1E1E1E]">
+        // Container query context
+        <div className="flex flex-col h-full w-full p-4 sm:p-6 md:p-8 overflow-y-auto text-white bg-[#1E1E1E] @container">
             <h1 className="text-xl sm:text-2xl font-bold mb-6 sm:mb-8 flex-shrink-0">Connect With Me</h1>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 auto-rows-max">
+            {/* Container query responsive grid: 1 col → 2 cols (@sm) → 3 cols (@md) → 4 cols (@lg) */}
+            <div className="grid grid-cols-1 @sm:grid-cols-2 @md:grid-cols-3 @lg:grid-cols-4 gap-3 sm:gap-4 auto-rows-max">
                 {socialLinks.map((link, index) => {
                     const platformName = String(link.platform || link.platformName || "Unknown");
                     const iconKey = platformName.toLowerCase();
