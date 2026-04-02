@@ -5,6 +5,8 @@
  *
  * Architecture: Single append-only buffer where the LAST line is always
  * the active editable prompt. No separate input component.
+ *
+ * PATTERN 2: Accepts pre-fetched portfolio data for synchronous command execution.
  */
 
 import { parseCommand } from './commandParser';
@@ -28,16 +30,22 @@ export class TerminalEngine {
   private outputQueue: OutputLine[] = [];
   private onUpdate: () => void;
   private streamTimer: ReturnType<typeof setTimeout> | null = null;
-  private context: TerminalContext;
+  context: TerminalContext;
 
   /**
    * @param onUpdate  Called whenever the buffer changes — triggers React re-render.
    * @param openWindow  OS-level callback to open a desktop window by ID.
+   * @param portfolioData  Pre-fetched portfolio data for synchronous command execution.
    */
-  constructor(onUpdate: () => void, openWindow?: (id: string) => void) {
+  constructor(
+    onUpdate: () => void,
+    openWindow?: (id: string) => void,
+    portfolioData?: Record<string, unknown> | null,
+  ) {
     this.onUpdate = onUpdate;
     this.context = {
       openWindow: openWindow ?? (() => {}),
+      portfolioData: portfolioData ?? {},
     };
   }
 
@@ -270,6 +278,15 @@ export class TerminalEngine {
   }
 
   // ─── Controls ────────────────────────────────────────────────
+
+  /** Getter for the current active prompt text (what the user is typing) */
+  get activePrompt(): string {
+    const lastLine = this.outputBuffer[this.outputBuffer.length - 1];
+    if (lastLine && lastLine.type === 'input') {
+      return lastLine.text;
+    }
+    return '';
+  }
 
   abort(): void {
     if (this.abortController) this.abortController.abort();

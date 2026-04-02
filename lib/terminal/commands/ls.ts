@@ -1,7 +1,9 @@
 /**
- * B Terminal — ls command
+ * B Terminal — ls command (PATTERN 2: Synchronous portfolio data access)
  * Dynamic section discovery from portfolio.json.
  * Supports sections, column extraction, column filtering, date ranges, and limits.
+ *
+ * Now uses pre-fetched context.portfolioData for O(1) access instead of async fetch.
  */
 
 import type { ParsedCommand, CommandResult, ITerminalEngine, TerminalContext } from '../types';
@@ -17,11 +19,6 @@ function parseDateValue(val: unknown): Date | null {
   if (!val) return null;
   const d = new Date(String(val));
   return isNaN(d.getTime()) ? null : d;
-}
-
-async function fetchPortfolioData(): Promise<Record<string, unknown>> {
-  const { getPortfolioData } = await import('@/lib/actions');
-  return (await getPortfolioData()) as Record<string, unknown>;
 }
 
 // Fake filesystem shown when `ls` is called with no arguments
@@ -48,9 +45,10 @@ const FAKE_FS_LINES = [
 export async function lsCommand(
   cmd: ParsedCommand,
   engine: ITerminalEngine,
-  _ctx: TerminalContext,
+  ctx: TerminalContext,
 ): Promise<CommandResult> {
-  const data = await fetchPortfolioData();
+  // PATTERN 2: Use pre-fetched data from context (synchronous, O(1) lookup)
+  const data = (ctx.portfolioData || {}) as Record<string, unknown>;
   const sections = Object.keys(data).filter(k => k !== 'profile' && Array.isArray(data[k]));
 
   // ls (no section, no date flag) → fake filesystem

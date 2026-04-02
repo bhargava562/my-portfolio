@@ -12,6 +12,8 @@ export type { ParsedCommand };
 export interface TerminalContext {
   /** Open a desktop window by its registry ID (e.g. 'projects', 'learnings'). */
   openWindow: (id: string) => void;
+  /** Pre-fetched portfolio data (PATTERN 2: synchronous access for fast command execution) */
+  portfolioData?: Record<string, unknown>;
 }
 
 // ─── Command ──────────────────────────────────────────────────────────────────
