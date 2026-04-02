@@ -117,12 +117,16 @@ export default function BlogsContent() {
                                     sizes="(max-width: 768px) 100vw, 224px"
                                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                                     onLoadingComplete={() => {
+                                        // Only run on client
+                                        if (typeof window === 'undefined') return;
                                         if (timeoutRefs[blog.id]) {
                                             clearTimeout(timeoutRefs[blog.id]);
                                             delete timeoutRefs[blog.id];
                                         }
                                     }}
                                     onError={() => {
+                                        // Only run on client
+                                        if (typeof window === 'undefined') return;
                                         if (timeoutRefs[blog.id]) {
                                             clearTimeout(timeoutRefs[blog.id]);
                                             delete timeoutRefs[blog.id];
@@ -138,6 +142,8 @@ export default function BlogsContent() {
                                         }
                                     }}
                                     onLoadStart={() => {
+                                        // Only run on client
+                                        if (typeof window === 'undefined') return;
                                         // Set 10 second timeout for image loading
                                         timeoutRefs[blog.id] = setTimeout(() => {
                                             console.warn(`[BlogsContent] Image load timeout for blog: ${blog.title}`);

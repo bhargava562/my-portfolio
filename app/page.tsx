@@ -9,8 +9,8 @@ import WindowContainer from "@/components/WindowContainer";
 import BootOverlay from "@/components/BootOverlay";
 import { BootProvider } from "@/hooks/useBootState";
 
-// Dynamic import Desktop for code splitting (entire page is "use client")
-const Desktop = dynamic(() => import("@/components/Desktop"));
+// Dynamic import Desktop with ssr: false to prevent hydration mismatch
+const Desktop = dynamic(() => import("@/components/Desktop"), { ssr: false });
 
 export default function Home() {
   return (

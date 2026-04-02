@@ -14,7 +14,11 @@ export default function WindowContainer() {
     : { top: '28px', left: '64px' };
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-10" style={containerStyle}>
+    <div
+      className="fixed inset-0 pointer-events-none z-10"
+      style={containerStyle}
+      suppressHydrationWarning
+    >
       {windows.map((window) => (
         !window.isMinimized && (
           <Window key={window.id} windowData={window} />

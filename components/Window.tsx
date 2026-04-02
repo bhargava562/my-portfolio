@@ -58,6 +58,7 @@ const Window = memo(function Window({ windowData }: WindowProps) {
           height: '100dvh',
           zIndex: windowData.zIndex,
         }}
+        suppressHydrationWarning
       >
         <WindowFrame
           windowData={windowData}
@@ -80,6 +81,7 @@ const Window = memo(function Window({ windowData }: WindowProps) {
       <div
         className="fixed inset-0 flex flex-col pointer-events-auto"
         style={{ top: '28px', left: '64px', width: 'calc(100vw - 64px)', height: 'calc(100vh - 28px)', zIndex: windowData.zIndex }}
+        suppressHydrationWarning
       >
         <WindowFrame
           windowData={windowData}
