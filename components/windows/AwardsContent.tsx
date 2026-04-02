@@ -48,15 +48,36 @@ export default function AwardsContent() {
     };
 
     if (loading) {
-        return <div className="p-8 text-white h-full bg-[#1E1E1E] flex items-center justify-center">Loading awards...</div>;
+        return (
+            <div className="p-2 @sm:p-3 @md:p-4 @lg:p-6 @xl:p-8 text-white h-full bg-[#1E1E1E] flex items-center justify-center @container">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-500 mx-auto mb-4"></div>
+                    <p className="text-sm @sm:text-base text-gray-400">Loading awards...</p>
+                </div>
+            </div>
+        );
     }
 
     if (error) {
-        return <div className="p-8 text-red-400 h-full bg-[#1E1E1E] flex items-center justify-center">{error}</div>;
+        return (
+            <div className="p-2 @sm:p-3 @md:p-4 @lg:p-6 @xl:p-8 text-red-400 h-full bg-[#1E1E1E] flex items-center justify-center @container">
+                <div className="text-center">
+                    <p className="text-sm @sm:text-base font-semibold mb-2">Error</p>
+                    <p className="text-xs @sm:text-sm">{error}</p>
+                </div>
+            </div>
+        );
     }
 
     if (awards.length === 0) {
-        return <div className="p-8 text-gray-400 h-full bg-[#1E1E1E] flex items-center justify-center">No awards found.</div>;
+        return (
+            <div className="p-2 @sm:p-3 @md:p-4 @lg:p-6 @xl:p-8 text-gray-400 h-full bg-[#1E1E1E] flex items-center justify-center @container">
+                <div className="text-center">
+                    <Award className="w-12 h-12 @sm:w-14 @sm:h-14 @md:w-16 @md:h-16 mx-auto mb-3 @sm:mb-4 opacity-50" />
+                    <p className="text-sm @sm:text-base">No awards found.</p>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -79,37 +100,37 @@ export default function AwardsContent() {
             {/* Container query responsive grid: 1 col → 2 cols (@3xl) → 3 cols (@4xl) */}
             <div className="grid grid-cols-1 @3xl:grid-cols-2 @4xl:grid-cols-3 gap-3 @sm:gap-4 @md:gap-5 @lg:gap-6">
                 {awards.map((award) => (
-                    <div key={award.id} className="relative overflow-hidden bg-gradient-to-br from-[#2C2C2C] to-[#222] rounded-lg p-3 @sm:p-4 @md:p-5 @lg:p-6 border border-[#3E3E3E] group hover:border-yellow-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-yellow-500/10">
-                        <div className="absolute top-0 right-0 p-2 @sm:p-3 @md:p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <Star className="w-16 h-16 @sm:w-20 @sm:h-20 @md:w-24 @md:h-24 text-yellow-500" />
+                    <div key={award.id} className="relative overflow-hidden bg-gradient-to-br from-[#2C2C2C] to-[#222] rounded-lg p-3 @sm:p-4 @md:p-5 @lg:p-6 border border-[#3E3E3E] group hover:border-yellow-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-yellow-500/10 flex flex-col h-full">
+                        <div className="absolute top-0 right-0 p-1 @sm:p-2 @md:p-3 @lg:p-4 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
+                            <Star className="w-14 h-14 @sm:w-16 @sm:h-16 @md:w-20 @md:h-20 text-yellow-500" />
                         </div>
 
-                        <div className="relative z-10">
-                            <h3 className="font-bold text-sm @sm:text-base @md:text-lg @lg:text-xl text-gray-100 mb-1 @sm:mb-2 @md:mb-3 leading-tight pr-4">
+                        <div className="relative z-10 flex flex-col flex-1">
+                            <h3 className="font-bold text-sm @sm:text-base @md:text-lg @lg:text-xl text-gray-100 mb-1 @sm:mb-2 @md:mb-3 leading-snug pr-6 line-clamp-2">
                                 {award.title}
                             </h3>
                             {getAwarder(award) && (
-                                <p className="text-yellow-500 font-medium text-[10px] @sm:text-xs @md:text-sm mb-2 @sm:mb-3 @md:mb-4 truncate">
+                                <p className="text-yellow-500 font-medium text-[10px] @sm:text-xs @md:text-sm mb-2 @sm:mb-3 @md:mb-4 truncate opacity-90">
                                     {getAwarder(award)}
                                 </p>
                             )}
 
-                            <div className="flex flex-wrap items-center gap-1.5 @sm:gap-2 @md:gap-2.5 mb-2 @sm:mb-3 @md:mb-4">
+                            <div className="flex flex-wrap items-center gap-1.5 @sm:gap-2 @md:gap-2.5 mb-3 @sm:mb-4 @md:mb-5">
                                 {award.award_date && (
-                                    <div className="flex items-center gap-1 @sm:gap-1.5 text-[9px] @sm:text-[10px] @md:text-xs text-gray-400 bg-black/30 w-fit px-2 @sm:px-2.5 @md:px-3 py-0.5 @sm:py-1 rounded-full border border-[#444]">
-                                        <Calendar className="w-3 h-3 @sm:w-3.5 @sm:h-3.5 flex-shrink-0" />
-                                        <span>{formatDate(award.award_date)}</span>
+                                    <div className="flex items-center gap-1 @sm:gap-1.5 text-[8px] @sm:text-[9px] @md:text-[10px] text-gray-400 bg-black/30 w-fit px-2 @sm:px-2.5 @md:px-3 py-0.5 @sm:py-1 rounded-full border border-[#444]">
+                                        <Calendar className="w-2.5 h-2.5 @sm:w-3 @sm:h-3 @md:w-3.5 @md:h-3.5 flex-shrink-0" />
+                                        <span className="whitespace-nowrap">{formatDate(award.award_date)}</span>
                                     </div>
                                 )}
                                 {award.category && (
-                                    <span className="text-[9px] @sm:text-[10px] @md:text-xs px-2 @sm:px-2.5 @md:px-3 py-0.5 @sm:py-1 rounded-full bg-yellow-500/15 text-yellow-300 border border-yellow-500/30 whitespace-nowrap">
+                                    <span className="text-[8px] @sm:text-[9px] @md:text-[10px] px-2 @sm:px-2.5 @md:px-3 py-0.5 @sm:py-1 rounded-full bg-yellow-500/15 text-yellow-300 border border-yellow-500/30 whitespace-nowrap">
                                         {award.category}
                                     </span>
                                 )}
                             </div>
 
                             {award.description && (
-                                <p className="text-gray-300 text-[10px] @sm:text-xs @md:text-sm leading-relaxed">
+                                <p className="text-gray-300 text-[9px] @sm:text-[10px] @md:text-xs @lg:text-sm leading-relaxed line-clamp-3">
                                     {award.description}
                                 </p>
                             )}
