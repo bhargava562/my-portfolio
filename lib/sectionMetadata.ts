@@ -38,7 +38,7 @@ const SECTION_METADATA: Record<string, SectionMeta> = {
   terminal: { id: 'terminal', title: 'Terminal',    type: 'app',  sortOrder: 14 },
 
   // Data sections (keyed by portfolio.json key)
-  learnings:       { id: 'learnings',      title: 'Applied Knowledge', type: 'folder', sortOrder: 1 },
+  applied_knowledge: { id: 'applied_knowledge', title: 'Applied Knowledge', type: 'folder', sortOrder: 1 },
   skills:          { id: 'skills',         title: 'Skills',            type: 'folder', sortOrder: 2 },
   experience:      { id: 'experience',     title: 'Experience',        type: 'folder', sortOrder: 3 },
   projects:        { id: 'projects',       title: 'Projects',          type: 'folder', sortOrder: 4 },
@@ -64,7 +64,7 @@ export const ID_TO_DATA_KEY: Record<string, string> = {
 };
 
 /** Portfolio.json keys that should NOT generate desktop items */
-const EXCLUDED_DATA_KEYS = new Set(['profile', 'imageConfig']);
+const EXCLUDED_DATA_KEYS = new Set(['profile', 'imageConfig', 'knowledge_contexts']);
 
 /** Special item IDs that always appear regardless of portfolio data */
 const SPECIAL_ITEM_IDS = ['about', 'resume', 'contact', 'terminal'] as const;
@@ -99,9 +99,9 @@ function getDefaultMeta(dataKey: string): SectionMeta {
 // ─── Static Fallback (renders while data loads / if fetch fails) ──
 
 export const STATIC_FALLBACK_ITEMS: DesktopItem[] = [
-  { id: 'about',          title: 'About Me',          type: 'file' },
-  { id: 'learnings',      title: 'Applied Knowledge', type: 'folder', children: [] },
-  { id: 'skills',         title: 'Skills',            type: 'folder', children: [] },
+  { id: 'about',             title: 'About Me',          type: 'file' },
+  { id: 'applied_knowledge', title: 'Applied Knowledge', type: 'folder', children: [] },
+  { id: 'skills',            title: 'Skills',            type: 'folder', children: [] },
   { id: 'experience',     title: 'Experience',        type: 'folder', children: [] },
   { id: 'projects',       title: 'Projects',          type: 'folder', children: [] },
   { id: 'education',      title: 'Education',         type: 'folder', children: [] },

@@ -42,7 +42,6 @@ interface PortfolioData {
  * IMPORTANT: These are DATABASE TABLE NAMES, not UI folder names.
  * UI folder mappings are handled in lib/sectionMetadata.ts:
  *   - social_profiles (table) → socials (folder)
- *   - learnings (table) → Applied Knowledge (folder)
  */
 const TABLE_REGISTRY: readonly string[] = [
   // Core content tables
@@ -51,7 +50,7 @@ const TABLE_REGISTRY: readonly string[] = [
   'education',
   'certifications',
   'skills',
-  'learnings',          // UI: "Applied Knowledge"
+  'applied_knowledge',
   'hackathons',
   'awards',
   'blogs',
@@ -65,18 +64,18 @@ const TABLE_REGISTRY: readonly string[] = [
   'experience_skills',
   'certification_skills',
   'contribution_skills',
-  'learning_links',
+  'knowledge_contexts',
 ] as const;
 
 // ─── Declarative Configuration ───────────────────────────────
 
 const RELATIONS: Record<string, TableRelation> = {
-  project_collaborators:  { parentTable: 'projects',       foreignKey: 'project_id',       nestAs: 'collaborators' },
-  project_skills:         { parentTable: 'projects',       foreignKey: 'project_id',       nestAs: 'skills' },
-  experience_skills:      { parentTable: 'experience',     foreignKey: 'experience_id',    nestAs: 'skills' },
-  certification_skills:   { parentTable: 'certifications', foreignKey: 'certification_id', nestAs: 'skills' },
-  contribution_skills:    { parentTable: 'contributions',  foreignKey: 'contribution_id',  nestAs: 'skills' },
-  learning_links:         { parentTable: 'learnings',      foreignKey: 'learning_id',      nestAs: 'links' },
+  project_collaborators:  { parentTable: 'projects',          foreignKey: 'project_id',       nestAs: 'collaborators' },
+  project_skills:         { parentTable: 'projects',          foreignKey: 'project_id',       nestAs: 'skills' },
+  experience_skills:      { parentTable: 'experience',        foreignKey: 'experience_id',    nestAs: 'skills' },
+  certification_skills:   { parentTable: 'certifications',    foreignKey: 'certification_id', nestAs: 'skills' },
+  contribution_skills:    { parentTable: 'contributions',     foreignKey: 'contribution_id',  nestAs: 'skills' },
+  knowledge_contexts:     { parentTable: 'applied_knowledge', foreignKey: 'knowledge_id',     nestAs: 'contexts' },
 };
 
 const FILTERS: Record<string, TableFilter> = {
@@ -195,10 +194,7 @@ async function discoverTables(supabase: SupabaseClient): Promise<string[]> {
     if (!error && tables && Array.isArray(tables) && tables.length > 0) {
       const discovered = tables.map((t: { table_name: string }) => t.table_name);
       console.log(`[Sync] Discovered ${discovered.length} tables via RPC`);
-
-      // Merge with registry to catch any new tables not in registry
-      const mergedSet = new Set([...discovered, ...TABLE_REGISTRY]);
-      return Array.from(mergedSet);
+      return discovered;
     }
   } catch (err) {
     console.warn('[SYNC WARNING] RPC list_public_tables failed, using static registry');
@@ -380,7 +376,13 @@ export async function runSync(): Promise<void> {
       const result = settledResult.value;
 
       if (result.status === 'failed') {
-        // REQUIREMENT 4: Visible warning but continue with empty array
+        // Skip tables that don't exist (deleted from database)
+        if (result.error?.includes('does not exist') || result.error?.includes('relation') || result.error?.includes('not found')) {
+          console.warn(`[SYNC WARNING] Table '${tableName}' does not exist, skipping...`);
+          failCount++;
+          continue;
+        }
+        // Other errors: log warning and use empty array
         console.warn(`[SYNC WARNING] Table '${tableName}' failed: ${result.error}`);
         dataMap.set(tableName, []);
         failCount++;

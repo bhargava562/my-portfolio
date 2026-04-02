@@ -19,7 +19,7 @@ const BlogsContent = dynamic(() => import('./windows/BlogsContent'), { loading: 
 const TerminalContent = dynamic(() => import('./windows/TerminalContent'), { loading: () => <div>Loading...</div> });
 
 export const COMPONENT_REGISTRY: Record<string, React.ElementType> = {
-    'learnings': AppliedKnowledgeContent,
+    'applied_knowledge': AppliedKnowledgeContent,
     'about': AboutContent,
     'contact': ContactForm,
     'skills': SkillsContent,
