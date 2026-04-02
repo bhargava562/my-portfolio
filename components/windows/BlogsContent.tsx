@@ -111,7 +111,7 @@ export default function BlogsContent() {
                         {blog.cover_image_path && !imgErrors[blog.id] && !imgTimeouts[blog.id] ? (
                             <div className="w-full @2xl:w-56 h-36 @sm:h-44 @md:h-52 @2xl:h-auto relative bg-gray-800 shrink-0">
                                 <Image
-                                    src={fallbackImages[blog.id] ? '/assets/linux_placeholder.webp' : getImageUrl(blog.cover_image_path)}
+                                    src={fallbackImages[blog.id] ? '/linux-placeholder.webp' : getImageUrl(blog.cover_image_path)}
                                     alt={blog.title}
                                     fill
                                     sizes="(max-width: 768px) 100vw, 224px"
