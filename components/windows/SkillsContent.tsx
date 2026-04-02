@@ -52,19 +52,22 @@ export default function SkillsContent() {
   return (
     <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-auto text-white bg-[#1E1E1E]">
       <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Technical Skills & Expertise</h1>
-      {/* Responsive grid: 1 col mobile, 2 cols tablet, 3+ cols desktop */}
-      <div className="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {/* Mobile-First Responsive Grid: 1 col (mobile) → 2 cols (tablet: md) → 3 cols (desktop: lg) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
         {Object.entries(skillsByCategory).map(([category, skills]) => {
           const iconName = categoryIconsMap[category] || defaultIconStr;
           // @ts-expect-error - Dynamic lucide indexing
           const Icon = LucideIcons[iconName] || LucideIcons.Code2;
 
           return (
-            <div key={category} className="bg-[#2C2C2C] rounded-lg p-5 border border-[#3E3E3E] flex flex-col">
-              <div className="flex items-center gap-3 mb-4 border-b border-[#3E3E3E] pb-3 flex-shrink-0">
+            <div key={category} className="w-full bg-[#2C2C2C] rounded-lg p-5 border border-[#3E3E3E] flex flex-col overflow-hidden min-w-0">
+              {/* Category Header — min-w-0 prevents text overflow */}
+              <div className="flex items-center gap-3 mb-4 border-b border-[#3E3E3E] pb-3 flex-shrink-0 min-w-0">
                 <Icon className="w-5 h-5 text-[#E95420] flex-shrink-0" />
-                <h3 className="font-bold truncate">{category}</h3>
+                <h3 className="font-bold text-sm truncate text-ellipsis">{category}</h3>
               </div>
+
+              {/* Skills List */}
               <div className="space-y-3">
                 {skills.map((skill) => {
                   const level = (skill as unknown as Record<string, unknown>).proficiency as number ?? skill.level ?? 50;
@@ -73,14 +76,17 @@ export default function SkillsContent() {
                   const barColor = level <= 40 ? 'from-yellow-500 to-yellow-600' : level < 80 ? 'from-blue-500 to-blue-600' : 'from-green-500 to-green-600';
 
                   return (
-                    <div key={skill.id} className="space-y-1">
-                      <div className="flex justify-between items-center gap-2">
-                        <span className="text-sm font-medium truncate">{skill.name}</span>
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <div key={skill.id} className="space-y-1 w-full min-w-0">
+                      {/* Skill Name + Level Info — min-w-0 forces flex to respect parent width */}
+                      <div className="flex justify-between items-center gap-2 w-full min-w-0">
+                        <span className="text-sm font-medium truncate text-ellipsis">{skill.name}</span>
+                        <div className="flex items-center gap-1.5 flex-shrink-0 whitespace-nowrap">
                           <span className={`text-xs font-medium ${levelColor}`}>{levelText}</span>
                           <span className="text-xs text-gray-400">{level}%</span>
                         </div>
                       </div>
+
+                      {/* Progress Bar */}
                       <div className="w-full h-1.5 bg-gray-700 rounded-full overflow-hidden">
                         <div
                           className={`h-full bg-gradient-to-r ${barColor} rounded-full transition-all duration-500`}
