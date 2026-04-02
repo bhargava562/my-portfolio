@@ -4,12 +4,14 @@
  * B Terminal — Stream Buffer Renderer
  * Renders the terminal from a single linear buffer.
  * The prompt is the LAST LINE in the buffer (type 'input'), not a separate component.
+ * Uses global state store to persist history across window maximize/minimize.
  */
 
 import React, { useEffect, useRef, useState, useCallback, memo } from 'react';
 import { TerminalEngine, OutputLine } from '@/lib/terminal/terminalEngine';
 import { useWindows } from '@/components/WindowManager';
 import { getComponent } from '@/components/ComponentRegistry';
+import { getTerminalState, setTerminalEngine, clearTerminalState, hasTerminalState } from '@/lib/terminal/terminalStateStore';
 
 // Memoized output line (read-only lines)
 const TerminalLine = memo(function TerminalLine({ line }: { line: OutputLine }) {
@@ -98,7 +100,7 @@ function ActivePromptLine({
   );
 }
 
-export default function TerminalContent() {
+export default function TerminalContent({ windowId }: { windowId?: string }) {
   const [lines, setLines] = useState<OutputLine[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [cursorVisible, setCursorVisible] = useState(true);
@@ -111,13 +113,24 @@ export default function TerminalContent() {
   const cursorTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const userScrolledUpRef = useRef(false);
 
-  // Sync engine state → React state
+  // Use window ID or fallback to 'terminal-default'
+  const terminalId = windowId || 'terminal-default';
+
+  // Sync engine state → React state AND persist to global store
   const syncState = useCallback(() => {
     const engine = engineRef.current;
     if (!engine) return;
-    setLines([...engine.outputBuffer]);
-    setIsStreaming(engine.isStreaming);
-  }, []);
+    const newLines = [...engine.outputBuffer];
+    const isStr = engine.isStreaming;
+
+    setLines(newLines);
+    setIsStreaming(isStr);
+
+    // Persist to global store so state survives re-mounts
+    const state = getTerminalState(terminalId);
+    state.lines = newLines;
+    state.isStreaming = isStr;
+  }, [terminalId]);
 
   // OS-level openWindow bridge for the terminal engine
   const handleOpenWindow = useCallback((id: string) => {
@@ -131,17 +144,31 @@ export default function TerminalContent() {
     });
   }, [openWindow]);
 
-  // Initialize engine
+  // Initialize or restore engine from global store
   useEffect(() => {
+    // Check if we already have a persisted engine for this terminal
+    if (hasTerminalState(terminalId)) {
+      const state = getTerminalState(terminalId);
+      if (state.engine) {
+        engineRef.current = state.engine;
+        // Restore React state immediately from global store
+        if (state.lines) setLines([...state.lines]);
+        if (state.isStreaming !== undefined) setIsStreaming(state.isStreaming);
+        return;
+      }
+    }
+
+    // Create new engine and persist it
     const engine = new TerminalEngine(syncState, handleOpenWindow);
     engineRef.current = engine;
+    setTerminalEngine(terminalId, engine);
     engine.loadBootSequence().then(() => syncState());
 
     return () => {
-      engine.destroy();
-      engineRef.current = null;
+      // Don't destroy engine on unmount - keep it in global store
+      // Only clear when window is actually closed (handled by WindowManager)
     };
-  }, [syncState, handleOpenWindow]);
+  }, [terminalId, syncState, handleOpenWindow]);
 
   // Blinking cursor 500ms
   useEffect(() => {

@@ -30,7 +30,7 @@ export interface IconOverride {
 
 // ─── Master Lookup (O(1) by key) ─────────────────────────────
 
-const SECTION_METADATA: Record<string, SectionMeta> = {
+export const SECTION_METADATA: Record<string, SectionMeta> = {
   // Special items (always present, not derived from portfolio data)
   about:    { id: 'about',    title: 'About Me',   type: 'file', sortOrder: 0 },
   contact:  { id: 'contact',  title: 'Contact Me', type: 'app',  sortOrder: 12, appUrl: '/contact' },

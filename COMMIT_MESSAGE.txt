@@ -1,12 +1,16 @@
-feat: add image timeout fallback and production hardening
+feat: add GitHub-style Contributions UI with recruiter-optimized design
 
-- Implement 10s timeout for image loading with automatic fallback to linux-placeholder.webp
-- Add comprehensive error handling (loading, error, empty states) to all content components
-- Convert to responsive design with Tailwind breakpoints (sm, md, lg, xl)
-- Fix production warnings (Sentry deprecation, Image sizes, aspect ratio)
-- Add proper cleanup of timeouts and refs to prevent memory leaks
-- Implement dynamic mobile Desktop pagination based on viewport height
-- Add safe date parsing with try-catch fallbacks
-- Update README with timeout mechanism and production readiness documentation
+- Create ContributionsContent component with GitHub Dark Mode aesthetic
+- Implement authentic GitHub colors (#0d1117, #238636, #58a6ff, #30363d)
+- Add GitPullRequest, CheckCircle2, Tag, and ExternalLink icons
+- Display contributions as GitHub PR-style cards with green "merged" indicators
+- Show nested skills from junction table as blue topic badges
+- Sort contributions by date descending (most recent first)
+- Add comprehensive error handling (loading, error, empty states)
+- Implement responsive design with mobile-first breakpoints
+- Add custom GitHub-style scrollbar styling
+- Register ContributionsContent in ComponentRegistry to override GenericSectionContent
+- Use getSection() for dynamic data fetching from portfolio.json
 
-All components now production-ready with robust error handling and network issue detection.
+Psychological optimization: Leverages GitHub's trusted visual patterns to trigger
+instant recognition in technical recruiters (6-8 second scanning window).

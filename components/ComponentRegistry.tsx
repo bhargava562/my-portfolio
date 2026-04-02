@@ -16,6 +16,7 @@ const SocialsContent = dynamic(() => import('./windows/SocialsContent'), { loadi
 const HackathonsContent = dynamic(() => import('./windows/HackathonsContent'), { loading: () => <div>Loading...</div> });
 const AwardsContent = dynamic(() => import('./windows/AwardsContent'), { loading: () => <div>Loading...</div> });
 const BlogsContent = dynamic(() => import('./windows/BlogsContent'), { loading: () => <div>Loading...</div> });
+const ContributionsContent = dynamic(() => import('./windows/ContributionsContent'), { loading: () => <div>Loading...</div> });
 const TerminalContent = dynamic(() => import('./windows/TerminalContent'), { loading: () => <div>Loading...</div> });
 
 export const COMPONENT_REGISTRY: Record<string, React.ElementType> = {
@@ -31,6 +32,7 @@ export const COMPONENT_REGISTRY: Record<string, React.ElementType> = {
     'hackathons': HackathonsContent,
     'awards': AwardsContent,
     'blogs': BlogsContent,
+    'contributions': ContributionsContent,
     'resume': TextEditor,
     'terminal': TerminalContent,
 };

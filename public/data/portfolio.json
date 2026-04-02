@@ -1,19 +1,36 @@
 {
   "applied_knowledge": [
     {
+      "business_impact": "Enabled rapid local testing and validation of the automated portfolio synchronization pipeline without needing to deploy to production.",
+      "contexts": [
+        {
+          "context_role": "application",
+          "created_at": "2026-04-02T08:36:01.45277",
+          "entity_label": "Portfolio CI/CD and DB Sync Setup",
+          "entity_type": "self_study",
+          "id": "e6262be5-7000-45e1-8e45-f21020328cfe",
+          "knowledge_id": "8b564490-5cd5-49fd-a6e1-a036eb1f876d"
+        }
+      ],
+      "created_at": "2026-04-02T08:32:59.879985",
+      "date_logged": "2026-04-02",
+      "engineering_solution": "Created a secure tunnel using Ngrok to expose my local Next.js port 3000 to the public internet, allowing Supabase to successfully trigger the /api/sync endpoint.",
+      "id": "8b564490-5cd5-49fd-a6e1-a036eb1f876d",
+      "problem_statement": "Needed a way to test Supabase webhooks locally, but Supabase cannot send HTTP requests to a local machine (localhost).",
+      "technologies": [
+        "Ngrok",
+        "Supabase",
+        "Next.js"
+      ],
+      "topic": "Local Webhook Testing with Ngrok"
+    },
+    {
       "business_impact": "Delivered a smooth, performant user experience and highly accelerated frontend UI development iterations.",
       "contexts": [
         {
-          "context_role": "origin",
-          "created_at": "2026-04-01T08:01:55.104145",
-          "entity_label": "TEN: Brain Research",
-          "entity_type": "experience",
-          "id": "92326a58-57a3-4cac-b8bd-56b82109b3e7",
-          "knowledge_id": "9e665193-181f-4123-89cd-088bf1fcd62a"
-        },
-        {
           "context_role": "application",
           "created_at": "2026-04-01T08:01:55.104145",
+          "entity_id": "fb38c45e-19ae-44d9-9095-227708e862f9",
           "entity_label": "TEN: Brain Research",
           "entity_type": "experience",
           "id": "6149e937-195c-4b06-bb51-88d3cd51d2f3",
@@ -22,7 +39,6 @@
       ],
       "created_at": "2026-04-01T08:01:55.104145",
       "date_logged": "2026-04-01",
-      "display_order": 0,
       "engineering_solution": "Adopted React.js for component-based architecture, utilized Vite for rapid Hot Module Replacement (HMR) during development, and applied Tailwind CSS utility classes to engineer a fluid, responsive UI that adapts flawlessly to all screen sizes.",
       "id": "9e665193-181f-4123-89cd-088bf1fcd62a",
       "problem_statement": "Needed to build a fast, scalable, and responsive user interface from scratch, replacing traditional/slower development workflows.",
@@ -37,16 +53,9 @@
       "business_impact": "Successfully deployed a robust AI chatbot prototype within the strict time limit with zero \"it works on my machine\" deployment errors.",
       "contexts": [
         {
-          "context_role": "origin",
-          "created_at": "2026-04-01T08:01:55.104145",
-          "entity_label": "Yet Another Hackathon 26",
-          "entity_type": "hackathon",
-          "id": "140fd289-1d36-4ee5-8131-a779e1c9d400",
-          "knowledge_id": "a82abf21-fd5c-4361-bf56-405c5658ccbe"
-        },
-        {
           "context_role": "application",
           "created_at": "2026-04-01T08:01:55.104145",
+          "entity_id": "97fd6079-31e2-4663-bef8-60ed622bdfef",
           "entity_label": "Yet Another Hackathon 26",
           "entity_type": "hackathon",
           "id": "3270668f-200f-4c15-a3a9-6dbf2907aedb",
@@ -55,7 +64,6 @@
       ],
       "created_at": "2026-04-01T08:01:55.104145",
       "date_logged": "2026-04-01",
-      "display_order": 0,
       "engineering_solution": "Containerized the application using Docker to eliminate environment mismatches across the team. Built a lightweight REST API with FastAPI to execute LangGraph-powered agent logic, and connected the endpoints to a Telegram Bot for seamless user interaction.",
       "id": "a82abf21-fd5c-4361-bf56-405c5658ccbe",
       "problem_statement": "Required a fast, reproducible backend environment to serve complex AI agent workflows via a conversational UI under severe hackathon time constraints.",
@@ -66,7 +74,7 @@
         "LangGraph",
         "Telegram API"
       ],
-      "topic": "Containerized AI Microservices & Bot Integration"
+      "topic": "Containerized AI Monolithic & Bot Integration"
     }
   ],
   "awards": [],
@@ -294,7 +302,29 @@
       "title": "5-Day AI Agents Intensive Course with Google"
     }
   ],
-  "contributions": [],
+  "contributions": [
+    {
+      "contribution_date": "2026-04-02",
+      "contribution_type": "Open Source Documentation",
+      "created_at": "2026-04-02T09:47:16.527155",
+      "description": "Identified and fixed outdated developer documentation, including updating the local environment setup guide and API reference links.",
+      "display_order": 0,
+      "id": "ae040d8f-d308-4ddd-8472-48bccc491da2",
+      "impact_result": "Pull request successfully merged. Streamlined the onboarding process for new open-source contributors.",
+      "link_url": "https://github.com/openmrs/openmrs-core/pull/1234",
+      "project_or_org_name": "OpenMRS (GSoC 2026)",
+      "skills": [
+        {
+          "contribution_id": "ae040d8f-d308-4ddd-8472-48bccc491da2",
+          "skill_id": "15cbe21c-60b4-4a07-ab2f-59f63a44e996"
+        },
+        {
+          "contribution_id": "ae040d8f-d308-4ddd-8472-48bccc491da2",
+          "skill_id": "be727a6c-9b38-4ff7-ab2d-5985ab9ebb67"
+        }
+      ]
+    }
+  ],
   "education": [
     {
       "created_at": "2026-02-28T17:34:23.204095",
@@ -401,7 +431,7 @@
       "event_start_date": "2026-02-21",
       "id": "97fd6079-31e2-4663-bef8-60ed622bdfef",
       "location": "TANSAM Tidel Park",
-      "name": "YAH’26",
+      "name": "Yet Another Hackathon 26",
       "organizer": "SVCE ACM Student Chapter",
       "position": "2nd Place",
       "prize_amount": 15000

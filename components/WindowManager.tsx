@@ -107,9 +107,18 @@ export function WindowProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const closeWindow = useCallback((id: string) => {
+    // Clean up terminal state if this is a terminal window
+    const window = windows.find(w => w.id === id);
+    if (window?.baseId === 'terminal') {
+      // Dynamically import to avoid circular dependency
+      import('@/lib/terminal/terminalStateStore').then(({ clearTerminalState }) => {
+        clearTerminalState(id);
+      });
+    }
+    
     setWindows(prev => prev.filter(w => w.id !== id));
     setActiveWindowId(prev => prev === id ? null : prev);
-  }, []);
+  }, [windows]);
 
   const minimizeWindow = useCallback((id: string) => {
     setWindows(prev => prev.map(w =>
