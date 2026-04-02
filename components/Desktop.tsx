@@ -42,9 +42,47 @@ export default function Desktop() {
   const [desktopItems, setDesktopItems] = useState<DesktopItem[]>(STATIC_FALLBACK_ITEMS);
   const [currentPage, setCurrentPage] = useState(0);
   const desktopRef = useRef<HTMLDivElement>(null);
+  const [itemsPerPage, setItemsPerPage] = useState(12);
 
   // Mobile detection for responsive layout
   const isMobile = useMediaQuery('(max-width: 768px)');
+
+  // Calculate dynamic items per page for mobile based on available height
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const calculateItemsPerPage = () => {
+      const viewportHeight = window.innerHeight;
+      const topPadding = 20; // paddingTop from style
+      const bottomReserved = 120; // Space for carousel dots + safety margin (bottom-24 = 96px + 24px buffer)
+      const containerPadding = 16; // p-4 top/bottom
+      
+      // Actual item dimensions from the rendered component
+      const itemHeight = 96; // h-24 = 96px
+      const itemGap = 16; // gap-4 = 16px
+      const itemWidth = 80; // w-20 = 80px
+      const horizontalPadding = 32; // px-4 on both sides (16px each)
+      
+      const availableHeight = viewportHeight - topPadding - bottomReserved - containerPadding;
+      const availableWidth = window.innerWidth - horizontalPadding;
+      
+      // Calculate rows and columns that fit (including gaps)
+      const maxRows = Math.floor((availableHeight + itemGap) / (itemHeight + itemGap));
+      const maxCols = Math.floor((availableWidth + itemGap) / (itemWidth + itemGap));
+      
+      // Ensure at least 2 rows and 3 columns, but cap at calculated max
+      const rows = Math.max(2, Math.min(maxRows, 4)); // Cap at 4 rows for safety
+      const cols = Math.max(3, maxCols);
+      
+      const calculated = rows * cols;
+      
+      setItemsPerPage(calculated);
+    };
+
+    calculateItemsPerPage();
+    window.addEventListener('resize', calculateItemsPerPage);
+    return () => window.removeEventListener('resize', calculateItemsPerPage);
+  }, [isMobile]);
 
   // Derive desktop items from portfolio.json on mount
   useEffect(() => {
@@ -56,15 +94,15 @@ export default function Desktop() {
     });
   }, []);
 
-  // Chunk items into pages for mobile (12 items per page, 3x4 grid)
-  const itemsPerPage = isMobile ? 12 : 999; // Desktop shows all at once
+  // Chunk items into pages for mobile (dynamic based on screen size)
   const pages = useMemo(() => {
+    const perPage = isMobile ? itemsPerPage : 999; // Desktop shows all at once
     const chunks = [];
-    for (let i = 0; i < desktopItems.length; i += itemsPerPage) {
-      chunks.push(desktopItems.slice(i, i + itemsPerPage));
+    for (let i = 0; i < desktopItems.length; i += perPage) {
+      chunks.push(desktopItems.slice(i, i + perPage));
     }
     return chunks.length === 0 ? [[]] : chunks;
-  }, [desktopItems, itemsPerPage]);
+  }, [desktopItems, itemsPerPage, isMobile]);
 
   const handleItemClick = useCallback((item: DesktopItem) => {
     setSelectedItems([item.id]);

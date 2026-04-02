@@ -53,6 +53,10 @@ const nextConfig: NextConfig = {
   },
   // Optimizes the build footprint massively for Node/Docker clusters
   output: 'standalone',
+  experimental: {
+    // Suppress Sentry clientTraceMetadata experiment warning
+    clientTraceMetadata: undefined,
+  },
   images: {
     remotePatterns: [
       {
@@ -73,5 +77,9 @@ export default withSentryConfig(withSerwist(nextConfig), {
   silent: !process.env.CI,
   widenClientFileUpload: true,
   sourcemaps: { disable: true },
-  disableLogger: true,
+  webpack: {
+    treeshake: {
+      removeDebugLogging: true,
+    },
+  },
 });

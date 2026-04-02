@@ -11,14 +11,41 @@ import { IMAGE_SIZES } from '@/lib/image-sizes';
 export default function SocialsContent() {
     const [socialLinks, setSocialLinks] = useState<Record<string, unknown>[]>([]);
     const [uiConfig, setUiConfig] = useState<Record<string, unknown>>({});
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        getSocialLinks().then(setSocialLinks);
-        getUiConfigData().then(setUiConfig);
+        Promise.all([
+            getSocialLinks().catch(err => {
+                console.error('Failed to load social links:', err);
+                return [];
+            }),
+            getUiConfigData().catch(err => {
+                console.error('Failed to load UI config:', err);
+                return {};
+            })
+        ])
+            .then(([links, config]) => {
+                setSocialLinks(links);
+                setUiConfig(config);
+            })
+            .catch(err => {
+                console.error('Critical error loading socials:', err);
+                setError('Failed to load social links.');
+            })
+            .finally(() => setLoading(false));
     }, []);
 
+    if (loading) {
+        return <div className="p-8 text-white bg-[#1E1E1E] h-full flex items-center justify-center">Loading social links...</div>;
+    }
+
+    if (error) {
+        return <div className="p-8 text-red-400 bg-[#1E1E1E] h-full flex items-center justify-center">{error}</div>;
+    }
+
     if (socialLinks.length === 0) {
-        return <div className="p-8 text-white bg-[#1E1E1E]">Loading social links...</div>;
+        return <div className="p-8 text-gray-400 bg-[#1E1E1E] h-full flex items-center justify-center">No social links found.</div>;
     }
 
     const socialsConfig = (uiConfig?.socials as Record<string, unknown>) || {};
@@ -32,9 +59,9 @@ export default function SocialsContent() {
     };
 
     return (
-        <div className="flex flex-col h-full w-full p-8 overflow-y-auto text-white bg-[#1E1E1E]">
-            <h1 className="text-2xl font-bold mb-8 flex-shrink-0">Connect With Me</h1>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-max">
+        <div className="flex flex-col h-full w-full p-4 sm:p-6 md:p-8 overflow-y-auto text-white bg-[#1E1E1E]">
+            <h1 className="text-xl sm:text-2xl font-bold mb-6 sm:mb-8 flex-shrink-0">Connect With Me</h1>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 auto-rows-max">
                 {socialLinks.map((link, index) => {
                     const platformName = String(link.platform || link.platformName || "Unknown");
                     const iconKey = platformName.toLowerCase();

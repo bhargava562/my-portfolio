@@ -1,0 +1,12 @@
+feat: add image timeout fallback and production hardening
+
+- Implement 10s timeout for image loading with automatic fallback to linux-placeholder.webp
+- Add comprehensive error handling (loading, error, empty states) to all content components
+- Convert to responsive design with Tailwind breakpoints (sm, md, lg, xl)
+- Fix production warnings (Sentry deprecation, Image sizes, aspect ratio)
+- Add proper cleanup of timeouts and refs to prevent memory leaks
+- Implement dynamic mobile Desktop pagination based on viewport height
+- Add safe date parsing with try-catch fallbacks
+- Update README with timeout mechanism and production readiness documentation
+
+All components now production-ready with robust error handling and network issue detection.

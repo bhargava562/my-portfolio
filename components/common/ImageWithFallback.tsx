@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image"
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { buildSupabaseImageUrl } from "@/lib/image-utils"
 
 // ─── Types ───────────────────────────────────────────────────
@@ -11,6 +11,7 @@ interface BaseProps {
   className?: string
   priority?: boolean
   sizes?: string
+  loadTimeout?: number // Timeout in milliseconds (default: 10000ms = 10s)
 }
 
 interface FixedProps extends BaseProps {
@@ -34,6 +35,7 @@ type Props = FixedProps | FillProps
 // ─── Constants ───────────────────────────────────────────────
 
 const FALLBACK_URL = '/linux-placeholder.webp'
+const DEFAULT_TIMEOUT = 10000 // 10 seconds
 
 // ─── Helper ──────────────────────────────────────────────────
 
@@ -57,20 +59,69 @@ function resolveImageSrc(props: Props): string {
 // ─── Component ───────────────────────────────────────────────
 
 export function ImageWithFallback(props: Props) {
-  const { alt, className, priority = false, sizes } = props
+  const { alt, className, priority = false, sizes, loadTimeout = DEFAULT_TIMEOUT } = props
 
   const initialSrc = resolveImageSrc(props)
   const [src, setSrc] = useState(initialSrc)
+  const [isLoading, setIsLoading] = useState(true)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const hasLoadedRef = useRef(false)
 
   // React to prop changes
-  if (src !== initialSrc && src !== FALLBACK_URL) {
-    setSrc(initialSrc)
-  }
+  useEffect(() => {
+    if (src !== initialSrc && src !== FALLBACK_URL) {
+      setSrc(initialSrc)
+      setIsLoading(true)
+      hasLoadedRef.current = false
+    }
+  }, [initialSrc, src])
+
+  // Set timeout for image loading
+  useEffect(() => {
+    // Skip timeout if already using fallback or if image already loaded
+    if (src === FALLBACK_URL || hasLoadedRef.current) {
+      return
+    }
+
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
+
+    // Set new timeout
+    timeoutRef.current = setTimeout(() => {
+      if (isLoading && !hasLoadedRef.current) {
+        console.warn(`[ImageWithFallback] Image load timeout after ${loadTimeout}ms:`, src)
+        setSrc(FALLBACK_URL)
+        setIsLoading(false)
+      }
+    }, loadTimeout)
+
+    // Cleanup on unmount
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [src, isLoading, loadTimeout])
 
   const handleError = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
     if (src !== FALLBACK_URL) {
+      console.warn('[ImageWithFallback] Image load error:', src)
       setSrc(FALLBACK_URL)
     }
+    setIsLoading(false)
+  }
+
+  const handleLoad = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
+    }
+    hasLoadedRef.current = true
+    setIsLoading(false)
   }
 
   const defaultSizes = "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -85,6 +136,7 @@ export function ImageWithFallback(props: Props) {
         className={className || 'object-cover'}
         sizes={sizes || defaultSizes}
         onError={handleError}
+        onLoad={handleLoad}
         priority={priority}
       />
     )
@@ -100,6 +152,7 @@ export function ImageWithFallback(props: Props) {
       className={`object-contain bg-[#1E1E1E] ${className || ''}`}
       sizes={sizes || defaultSizes}
       onError={handleError}
+      onLoad={handleLoad}
       priority={priority}
     />
   )

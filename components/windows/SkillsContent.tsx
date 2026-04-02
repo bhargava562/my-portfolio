@@ -7,14 +7,41 @@ import { getSkillsByCategory, getUiConfigData } from '@/lib/actions';
 export default function SkillsContent() {
   const [skillsByCategory, setSkillsByCategory] = useState<Record<string, { id: number; name: string; category: string; icon: string | null; level: number; }[]>>({});
   const [uiConfig, setUiConfig] = useState<Record<string, unknown>>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getSkillsByCategory().then(setSkillsByCategory);
-    getUiConfigData().then(setUiConfig);
+    Promise.all([
+      getSkillsByCategory().catch(err => {
+        console.error('Failed to load skills:', err);
+        return {};
+      }),
+      getUiConfigData().catch(err => {
+        console.error('Failed to load UI config:', err);
+        return {};
+      })
+    ])
+      .then(([skills, config]) => {
+        setSkillsByCategory(skills);
+        setUiConfig(config);
+      })
+      .catch(err => {
+        console.error('Critical error loading skills:', err);
+        setError('Failed to load skills. Please try again.');
+      })
+      .finally(() => setLoading(false));
   }, []);
 
+  if (loading) {
+    return <div className="p-8 text-white bg-[#1E1E1E] h-full flex items-center justify-center">Loading skills...</div>;
+  }
+
+  if (error) {
+    return <div className="p-8 text-red-400 bg-[#1E1E1E] h-full flex items-center justify-center">{error}</div>;
+  }
+
   if (Object.keys(skillsByCategory).length === 0) {
-    return <div className="p-8 text-white bg-[#1E1E1E]">Loading skills...</div>;
+    return <div className="p-8 text-gray-400 bg-[#1E1E1E] h-full flex items-center justify-center">No skills found.</div>;
   }
 
   // Safely extract the presentation config mapping
@@ -23,10 +50,10 @@ export default function SkillsContent() {
   const defaultIconStr = (skillsConfig.defaultIcon as string) || 'Code2';
 
   return (
-    <div className="flex-1 p-6 overflow-auto text-white bg-[#1E1E1E]">
-      <h1 className="text-2xl font-bold mb-6">Technical Skills & Expertise</h1>
-      {/* auto-fill minmax so tiles reflow at any window width, not viewport width */}
-      <div className="grid gap-5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))' }}>
+    <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-auto text-white bg-[#1E1E1E]">
+      <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Technical Skills & Expertise</h1>
+      {/* Responsive grid: 1 col mobile, 2 cols tablet, 3+ cols desktop */}
+      <div className="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {Object.entries(skillsByCategory).map(([category, skills]) => {
           const iconName = categoryIconsMap[category] || defaultIconStr;
           // @ts-expect-error - Dynamic lucide indexing

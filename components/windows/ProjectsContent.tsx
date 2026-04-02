@@ -96,18 +96,45 @@ function ProjectCard({ project, onOpen }: { project: ProjectNode; onOpen: () => 
 export default function ProjectsContent() {
   const [projects, setProjects] = useState<ProjectNode[]>([]);
   const [selected, setSelected] = useState<ProjectNode | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getProjects().then(p => setProjects(p as unknown as ProjectNode[]));
+    getProjects()
+      .then(p => {
+        setProjects(p as unknown as ProjectNode[]);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Failed to load projects:', err);
+        setError('Failed to load projects. Please try again.');
+        setLoading(false);
+      });
   }, []);
 
-  if (projects.length === 0) {
+  if (loading) {
     return (
       <div className="flex-1 h-full bg-[#1e1e1e] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-6 h-6 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
           <p className="text-sm text-gray-500">Loading projects…</p>
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex-1 h-full bg-[#1e1e1e] flex items-center justify-center">
+        <p className="text-sm text-red-400">{error}</p>
+      </div>
+    );
+  }
+
+  if (projects.length === 0) {
+    return (
+      <div className="flex-1 h-full bg-[#1e1e1e] flex items-center justify-center">
+        <p className="text-sm text-gray-500">No projects found.</p>
       </div>
     );
   }

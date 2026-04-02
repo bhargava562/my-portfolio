@@ -144,7 +144,7 @@ flowchart LR
 
 #### 3. Image Loading Pipeline
 
-All images follow a strict CDN-optimized pipeline with unified URL construction and universal fallback protection.
+All images follow a strict CDN-optimized pipeline with unified URL construction, universal fallback protection, and timeout-based network issue detection.
 
 ```mermaid
 flowchart TD
@@ -161,8 +161,8 @@ flowchart TD
     C --> G["Next.js Image Optimizer"]
     F --> G
     G --> H{"Load Success?"}
-    H -->|Yes| I["Render Image"]
-    H -->|No| J["/linux-placeholder.webp"]
+    H -->|Yes within 10s| I["Render Image"]
+    H -->|Timeout/Error| J["/linux-placeholder.webp"]
     J --> I
 
     style D fill:#3ECF8E,color:#fff
@@ -178,7 +178,7 @@ All URL construction functions (`buildSupabaseImageUrl`, `getImageUrl`, `resolve
 
 **ImageWithFallback Component:**
 
-Supports two modes via discriminated union types:
+Supports two modes via discriminated union types with automatic timeout detection:
 
 ```typescript
 // Fill mode (for responsive containers)
@@ -186,17 +186,31 @@ Supports two modes via discriminated union types:
 
 // Fixed mode (for known dimensions)
 <ImageWithFallback imagePath={path} width={200} height={150} alt="..." />
+
+// Custom timeout (default: 10s)
+<ImageWithFallback imagePath={path} width={200} height={150} alt="..." loadTimeout={5000} />
 ```
+
+**Timeout-Based Fallback System:**
+
+| Feature | Implementation |
+| :--- | :--- |
+| Default Timeout | 10 seconds (10,000ms) |
+| Configurable | Via `loadTimeout` prop |
+| Fallback Image | `/linux-placeholder.webp` |
+| Cleanup | Automatic timeout clearing on load/error/unmount |
+| Memory Safety | Ref-based tracking prevents leaks |
+| Debug Logging | Console warnings for timeout/error scenarios |
 
 | Component | Fallback Mechanism |
 | :--- | :--- |
-| `ImageWithFallback` | `onError` → `/linux-placeholder.webp` (both modes) |
-| `AboutContent` (avatar/banner) | Inherits `ImageWithFallback` fallback |
-| `ProjectsContent` | Inherits `ImageWithFallback` fallback |
-| `AppliedKnowledgeContent` | TOI-style image with `ImageWithFallback` fill mode |
-| `SocialsContent` | Inherits `ImageWithFallback` fallback; SVG icon branch |
-| `BlogsContent` | `onError` state → `BookOpen` icon placeholder |
-| `CertificationsContent` | `onError` → `/linux-placeholder.webp` + error message |
+| `ImageWithFallback` | `onError` + 10s timeout → `/linux-placeholder.webp` |
+| `AboutContent` (avatar/banner) | Inherits `ImageWithFallback` timeout fallback |
+| `ProjectsContent` | Inherits `ImageWithFallback` timeout fallback |
+| `AppliedKnowledgeContent` | TOI-style image with `ImageWithFallback` fill mode + timeout |
+| `SocialsContent` | Inherits `ImageWithFallback` timeout fallback; SVG icon branch |
+| `BlogsContent` | Custom 10s timeout → `BookOpen` icon placeholder |
+| `CertificationsContent` | `onError` + timeout → `/linux-placeholder.webp` + error message |
 
 #### 4. Resume Forced Download Pipeline
 
@@ -329,7 +343,7 @@ flowchart TD
 | Search | Real-time filtering by title/concept |
 | Trending | Sticky sidebar with top 5 recent articles |
 
-#### 8. Security Posture
+#### 8. Security Posture & Production Readiness
 
 | Check | Status | Details |
 | :--- | :---: | :--- |
@@ -343,6 +357,11 @@ flowchart TD
 | Window Resources | ✅ Bounded | Maximum 20 concurrent windows; terminal output buffer capped at 500 lines with DOM virtualized to 120 |
 | Dependency Audit | ✅ Lean | Unused shadcn/ui components and ~30 dead dependencies removed; only essential packages retained |
 | Resume Download | ✅ Domain-locked | Fetch restricted to configured Supabase domain |
+| Error Handling | ✅ Comprehensive | All components have loading, error, and empty states with proper try-catch wrappers |
+| Image Timeout | ✅ Implemented | 10s timeout with automatic fallback to prevent blank spaces on network issues |
+| Responsive Design | ✅ Mobile-First | All components use Tailwind breakpoints (sm, md, lg, xl) for full responsiveness |
+| Memory Management | ✅ Leak-Free | Proper cleanup of timeouts, event listeners, and refs on component unmount |
+| Date Parsing | ✅ Safe | Try-catch wrappers prevent crashes from invalid date formats |
 
 ---
 

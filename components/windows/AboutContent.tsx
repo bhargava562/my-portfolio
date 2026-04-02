@@ -45,7 +45,7 @@ export default function AboutContent() {
                     className="w-full h-full" 
                 />
             ) : (
-                <Image src="/linux-placeholder.webp" alt="Avatar Fallback" fill className="object-contain bg-[#1E1E1E]" />
+                <Image src="/linux-placeholder.webp" alt="Avatar Fallback" fill sizes="128px" className="object-contain bg-[#1E1E1E]" />
             )}
           </div>
         </div>
