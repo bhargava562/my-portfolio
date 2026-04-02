@@ -201,6 +201,11 @@ export default function TerminalContent({ windowId }: { windowId?: string }) {
       const state = getTerminalState(terminalId);
       if (state.engine) {
         engineRef.current = state.engine;
+
+        // BUG FIX #1: Rebind the callback to the newly mounted component's syncState
+        // This prevents the "dead callback" where the engine talks to the old unmounted component
+        state.engine.onUpdate = syncState;
+
         // Update engine's context with the pre-fetched data
         if (engineRef.current.context) {
           engineRef.current.context.portfolioData = portDataRef.current;

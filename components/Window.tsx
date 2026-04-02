@@ -18,7 +18,9 @@ interface WindowProps {
 /* eslint-disable react-hooks/static-components -- getComponent returns stable module-scope next/dynamic refs, not new components */
 const RegistryContent = memo(function RegistryContent({ windowData }: { windowData: WindowData }) {
   const Component = getComponent(windowData.baseId);
-  return <Component {...windowData.props} windowData={windowData} />;
+  // BUG FIX #3: Pass the unique windowId to terminal (and other multi-instance components)
+  // so they use the correct isolated store key
+  return <Component {...windowData.props} windowData={windowData} windowId={windowData.id} />;
 });
 /* eslint-enable react-hooks/static-components */
 

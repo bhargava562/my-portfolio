@@ -26,9 +26,11 @@ export class TerminalEngine {
   abortController: AbortController | null = null;
   isExecuting: boolean = false;
 
+  // BUG FIX #1: Make onUpdate PUBLIC so it can be rebound when component remounts
+  onUpdate: () => void;
+
   private lineIdCounter: number = 0;
   private outputQueue: OutputLine[] = [];
-  private onUpdate: () => void;
   private streamTimer: ReturnType<typeof setTimeout> | null = null;
   context: TerminalContext;
 
