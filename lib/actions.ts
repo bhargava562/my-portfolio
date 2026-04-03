@@ -34,7 +34,9 @@ export function getPortfolioData(): Promise<Record<string, unknown>> {
       return Promise.resolve({});
     }
 
-    const url = `${supabaseUrl}/storage/v1/object/public/system-cache/portfolio.json`;
+    const baseUrl = `${supabaseUrl}/storage/v1/object/public/system-cache/portfolio.json`;
+    // Cache-bust: append timestamp to bypass CDN/browser caching of stale JSON
+    const url = `${baseUrl}?t=${Date.now()}`;
 
     portfolioPromise = fetchWithRetry(url)
       .then(res => res.json())
