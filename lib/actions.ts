@@ -1,5 +1,8 @@
-// Session-scoped Promise caches for deduplication
+// Session-scoped Promise caches for deduplication (with TTL for freshness)
 let portfolioPromise: Promise<Record<string, unknown>> | null = null;
+let portfolioCacheTime = 0;
+const PORTFOLIO_CACHE_TTL_MS = 60_000; // 60 seconds
+
 let uiConfigPromise: Promise<Record<string, unknown>> | null = null;
 
 // Resilient fetch wrapper with timeout and exponential backoff
@@ -26,7 +29,15 @@ async function fetchWithRetry(url: string, retries = 3, timeoutMs = 5000): Promi
 
 // Read portfolio JSON from Supabase Storage (serverless-safe, no local filesystem).
 // The JSON is compiled & uploaded by the Background Sync pipeline (runSync).
+// Cache expires after 60s to pick up fresh data after a sync.
 export function getPortfolioData(): Promise<Record<string, unknown>> {
+  const now = Date.now();
+
+  // Invalidate cache if TTL has expired
+  if (portfolioPromise && (now - portfolioCacheTime) > PORTFOLIO_CACHE_TTL_MS) {
+    portfolioPromise = null;
+  }
+
   if (!portfolioPromise) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     if (!supabaseUrl) {
@@ -36,8 +47,9 @@ export function getPortfolioData(): Promise<Record<string, unknown>> {
 
     const baseUrl = `${supabaseUrl}/storage/v1/object/public/system-cache/portfolio.json`;
     // Cache-bust: append timestamp to bypass CDN/browser caching of stale JSON
-    const url = `${baseUrl}?t=${Date.now()}`;
+    const url = `${baseUrl}?t=${now}`;
 
+    portfolioCacheTime = now;
     portfolioPromise = fetchWithRetry(url)
       .then(res => res.json())
       .catch(error => {

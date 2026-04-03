@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import dynamic from "next/dynamic";
+import nextDynamic from "next/dynamic";
 import { WindowProvider } from "@/components/WindowManager";
 import TopBar from "@/components/TopBar";
 import ResponsiveNavigation from "@/components/ResponsiveNavigation";
@@ -10,7 +10,10 @@ import BootOverlay from "@/components/BootOverlay";
 import { BootProvider } from "@/hooks/useBootState";
 
 // Dynamic import Desktop with ssr: false to prevent hydration mismatch
-const Desktop = dynamic(() => import("@/components/Desktop"), { ssr: false });
+const Desktop = nextDynamic(() => import("@/components/Desktop"), { ssr: false });
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default function Home() {
   return (
