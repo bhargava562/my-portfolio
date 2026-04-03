@@ -1,5 +1,5 @@
 import type { NextConfig } from "next";
-import { withSentryConfig } from "@sentry/nextjs";
+// import { withSentryConfig } from "@sentry/nextjs";
 
 // Suppress Serwist Turbopack warning (safe — Serwist is disabled in dev mode)
 if (process.env.NODE_ENV === "development") {
@@ -175,15 +175,18 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSentryConfig(withSerwist(nextConfig), {
-  org: "placeholder-org",
-  project: "portfolio-os",
-  silent: !process.env.CI,
-  widenClientFileUpload: true,
-  sourcemaps: { disable: true },
-  webpack: {
-    treeshake: {
-      removeDebugLogging: true,
-    },
-  },
-});
+export default withSerwist(nextConfig);
+
+// Sentry is commented out to prevent CI/CD build failures with the placeholder org
+// export default withSentryConfig(withSerwist(nextConfig), {
+//   org: "placeholder-org",
+//   project: "portfolio-os",
+//   silent: !process.env.CI,
+//   widenClientFileUpload: true,
+//   sourcemaps: { disable: true },
+//   webpack: {
+//     treeshake: {
+//       removeDebugLogging: true,
+//     },
+//   },
+// });

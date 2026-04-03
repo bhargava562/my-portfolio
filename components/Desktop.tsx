@@ -94,11 +94,10 @@ export default function Desktop() {
     });
   }, []);
 
-  // Chunk items into pages for mobile (dynamic based on screen size)
-  const pages = useMemo(() => {
-    // 1. Nuclear Runtime Filter: Intercept right before rendering.
+  // 1. Unified Filter for BOTH Mobile and Desktop
+  const finalIconsToRender = useMemo(() => {
     // Destroys any resurrected localStorage items or mutated keys.
-    const finalIconsToRender = desktopItems.filter(item => {
+    return desktopItems.filter(item => {
       const id = (item.id || '').toLowerCase();
       const title = (item.title || '').toLowerCase();
       
@@ -114,14 +113,17 @@ export default function Desktop() {
 
       return true;
     });
+  }, [desktopItems]);
 
+  // 2. Chunk items into pages for mobile (dynamic based on screen size)
+  const pages = useMemo(() => {
     const perPage = isMobile ? itemsPerPage : 999; // Desktop shows all at once
     const chunks: DesktopItem[][] = [];
     for (let i = 0; i < finalIconsToRender.length; i += perPage) {
       chunks.push(finalIconsToRender.slice(i, i + perPage));
     }
     return chunks.length === 0 ? [[]] : chunks;
-  }, [desktopItems, itemsPerPage, isMobile]);
+  }, [finalIconsToRender, itemsPerPage, isMobile]);
 
   // Extract common window-opening logic to avoid circular dependencies
   const openDesktopItem = useCallback((item: DesktopItem) => {
@@ -327,12 +329,7 @@ export default function Desktop() {
         paddingLeft: '80px', // Space for Sidebar
       }}
     >
-      {desktopItems
-        .filter(item => {
-          const key = (item.id || '').toString().toLowerCase();
-          return !key.includes('sync');
-        })
-        .map((item) => {
+      {finalIconsToRender.map((item) => {
         const isSelected = selectedItems.includes(item.id);
 
         return (
