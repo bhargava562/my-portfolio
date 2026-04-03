@@ -24,13 +24,22 @@ async function fetchWithRetry(url: string, retries = 3, timeoutMs = 5000): Promi
   throw new Error("Unreachable");
 }
 
-// Read static optimized JSON strictly built by Background Sync pipeline via HTTP GET.
+// Read portfolio JSON from Supabase Storage (serverless-safe, no local filesystem).
+// The JSON is compiled & uploaded by the Background Sync pipeline (runSync).
 export function getPortfolioData(): Promise<Record<string, unknown>> {
   if (!portfolioPromise) {
-    portfolioPromise = fetchWithRetry('/data/portfolio.json')
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (!supabaseUrl) {
+      console.error('❌ NEXT_PUBLIC_SUPABASE_URL is not set');
+      return Promise.resolve({});
+    }
+
+    const url = `${supabaseUrl}/storage/v1/object/public/system-cache/portfolio.json`;
+
+    portfolioPromise = fetchWithRetry(url)
       .then(res => res.json())
       .catch(error => {
-        console.error("❌ Failed to fetch static portfolio JSON:", error);
+        console.error("❌ Failed to fetch portfolio JSON from Supabase Storage:", error);
         portfolioPromise = null;
         return {};
       });

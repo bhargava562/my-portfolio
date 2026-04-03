@@ -1,7 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
-import fs from 'fs/promises';
-import path from 'path';
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -87,6 +85,12 @@ const FILTERS: Record<string, TableFilter> = {
 };
 
 const SINGLETON_TABLES = new Set(['profile']);
+
+// ─── Storage Constants ──────────────────────────────────────
+
+const STORAGE_BUCKET = 'system-cache';
+const STORAGE_FILE = 'portfolio.json';
+const STORAGE_HASH_FILE = 'portfolio.hash';
 
 // ─── Sort Column Detection ──────────────────────────────────
 
@@ -279,44 +283,53 @@ async function introspectColumns(
   }
 }
 
+// ─── Supabase Storage Helpers ───────────────────────────────
+
+/**
+ * Read the stored hash from Supabase Storage to compare against new data.
+ * Returns null if the hash file doesn't exist yet (first sync).
+ */
+async function readStoredHash(supabase: SupabaseClient): Promise<string | null> {
+  try {
+    const { data, error } = await supabase
+      .storage
+      .from(STORAGE_BUCKET)
+      .download(STORAGE_HASH_FILE);
+
+    if (error || !data) return null;
+    return await data.text();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Upload a file to Supabase Storage, overwriting if it already exists.
+ */
+async function uploadToStorage(
+  supabase: SupabaseClient,
+  fileName: string,
+  content: string,
+  contentType: string
+): Promise<void> {
+  const { error } = await supabase
+    .storage
+    .from(STORAGE_BUCKET)
+    .upload(fileName, content, {
+      contentType,
+      upsert: true,
+    });
+
+  if (error) {
+    throw new Error(`[Sync] Failed to upload ${fileName} to storage: ${error.message}`);
+  }
+}
+
 // ─── Main Sync Engine ───────────────────────────────────────
 
 export async function runSync(): Promise<void> {
-  const DATA_DIR = path.join(process.cwd(), 'public', 'data');
-  const JSON_FILE = path.join(DATA_DIR, 'portfolio.json');
-  const MIN_JSON_FILE = path.join(DATA_DIR, 'portfolio.min.json');
-  const TMP_FILE = path.join(DATA_DIR, 'portfolio.json.tmp');
-  const HASH_FILE = path.join(DATA_DIR, 'portfolio.hash');
-  const LOCK_FILE = path.join(DATA_DIR, 'portfolio.lock');
-
   // ── Create Supabase Client (with RLS bypass if service key available) ──
   const { client: supabase } = createSyncClient();
-
-  // ── Lock Acquisition ──
-  try {
-    const lockStats = await fs.stat(LOCK_FILE);
-    if (Date.now() - lockStats.mtimeMs < 5 * 60 * 1000) {
-      console.log('[Sync] Already running, skipping...');
-      return;
-    }
-    console.log('[Sync] Stale lock found, removing...');
-    await fs.unlink(LOCK_FILE).catch(() => {});
-  } catch {
-    // Lock doesn't exist — proceed
-  }
-
-  try {
-    await fs.access(DATA_DIR);
-  } catch {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-  }
-
-  try {
-    await fs.writeFile(LOCK_FILE, 'locked');
-  } catch (err) {
-    console.error('[SYNC CRITICAL] Failed to acquire lock:', err);
-    return;
-  }
 
   try {
     console.log('\n════════════════════════════════════════════════════════════');
@@ -447,41 +460,31 @@ export async function runSync(): Promise<void> {
       }
     }
 
-    // ── Phase 6: Hash Comparison & Atomic Write ──
+    // ── Phase 6: Hash Comparison & Upload to Supabase Storage ──
     const sortedPayload = sortObject(payload);
-    const minifiedString = JSON.stringify(sortedPayload);
-    const jsonString = JSON.stringify(sortedPayload, null, 2);
-    const newHash = crypto.createHash('sha256').update(minifiedString).digest('hex');
+    const jsonString = JSON.stringify(sortedPayload);
+    const newHash = crypto.createHash('sha256').update(jsonString).digest('hex');
 
-    let oldHash: string | null = null;
-    try {
-      oldHash = await fs.readFile(HASH_FILE, 'utf8');
-    } catch {
-      // File might not exist
-    }
+    // Read previous hash from Supabase Storage
+    const oldHash = await readStoredHash(supabase);
 
     if (oldHash === newHash) {
-      console.log('\n[Sync] Data unchanged. Skipping file writes.');
+      console.log('\n[Sync] Data unchanged. Skipping upload.');
       console.log('════════════════════════════════════════════════════════════\n');
       return;
     }
 
-    console.log(`\n[Sync] Changes detected. Writing to disk [hash: ${newHash.slice(0, 12)}...]`);
+    console.log(`\n[Sync] Changes detected. Uploading to Supabase Storage [hash: ${newHash.slice(0, 12)}...]`);
 
-    // Atomic write: .tmp → rename
-    await fs.writeFile(TMP_FILE, jsonString, 'utf8');
-    await fs.rename(TMP_FILE, JSON_FILE);
+    // Upload portfolio JSON to Supabase Storage (overwrites existing)
+    await uploadToStorage(supabase, STORAGE_FILE, jsonString, 'application/json');
 
-    const TMP_MIN_FILE = path.join(DATA_DIR, 'portfolio.min.json.tmp');
-    await fs.writeFile(TMP_MIN_FILE, minifiedString, 'utf8');
-    await fs.rename(TMP_MIN_FILE, MIN_JSON_FILE);
+    // Upload hash file for future comparison
+    await uploadToStorage(supabase, STORAGE_HASH_FILE, newHash, 'text/plain');
 
-    await fs.writeFile(HASH_FILE, newHash, 'utf8');
-
-    console.log('[Sync] Files written:');
-    console.log(`  • ${JSON_FILE}`);
-    console.log(`  • ${MIN_JSON_FILE}`);
-    console.log(`  • ${HASH_FILE}`);
+    console.log('[Sync] Uploaded to Supabase Storage:');
+    console.log(`  • ${STORAGE_BUCKET}/${STORAGE_FILE}`);
+    console.log(`  • ${STORAGE_BUCKET}/${STORAGE_HASH_FILE}`);
     console.log('\n════════════════════════════════════════════════════════════');
     console.log('[Sync] ✓ Sync completed successfully!');
     console.log('════════════════════════════════════════════════════════════\n');
@@ -490,7 +493,5 @@ export async function runSync(): Promise<void> {
     console.error('[SYNC CRITICAL] Sync FAILED:', err);
     console.error('════════════════════════════════════════════════════════════\n');
     throw err;
-  } finally {
-    await fs.unlink(LOCK_FILE).catch(() => {});
   }
 }
