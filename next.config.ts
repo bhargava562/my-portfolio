@@ -113,17 +113,10 @@ const nextConfig: NextConfig = {
       },
     ];
 
-    return [
+    const customHeaders = [
       {
         source: '/(.*)',
         headers: securityHeaders,
-      },
-      {
-        source: '/_next/:path*',
-        headers: [
-          { key: 'Access-Control-Allow-Origin', value: '*' },
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-        ],
       },
       {
         source: '/sw.js',
@@ -132,6 +125,20 @@ const nextConfig: NextConfig = {
         ],
       },
     ];
+
+    // Only apply aggressive immutable caching in production.
+    // In development, this breaks Fast Refresh / HMR.
+    if (process.env.NODE_ENV === 'production') {
+      customHeaders.push({
+        source: '/_next/:path*',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      });
+    }
+
+    return customHeaders;
   },
 
   // Optimizes the build footprint massively for Node/Docker clusters
@@ -140,10 +147,6 @@ const nextConfig: NextConfig = {
   // Strip Next.js version info from generated files
   productionBrowserSourceMaps: false,
 
-  experimental: {
-    // Suppress Sentry clientTraceMetadata experiment warning
-    clientTraceMetadata: undefined,
-  },
 
   images: {
     remotePatterns: [
