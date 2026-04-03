@@ -64,7 +64,7 @@ export const ID_TO_DATA_KEY: Record<string, string> = {
 };
 
 /** Portfolio.json keys that should NOT generate desktop items */
-const EXCLUDED_DATA_KEYS = new Set(['profile', 'imageConfig', 'knowledge_contexts']);
+const EXCLUDED_DATA_KEYS = new Set(['profile', 'imageConfig', 'knowledge_contexts', 'sync_state']);
 
 /** Special item IDs that always appear regardless of portfolio data */
 const SPECIAL_ITEM_IDS = ['about', 'resume', 'contact', 'terminal'] as const;

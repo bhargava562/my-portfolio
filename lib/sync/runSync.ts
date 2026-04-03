@@ -86,6 +86,18 @@ const FILTERS: Record<string, TableFilter> = {
 
 const SINGLETON_TABLES = new Set(['profile']);
 
+// ─── Infrastructure Tables (never included in portfolio.json) ──
+
+/**
+ * Tables that exist in the `public` schema but are NOT portfolio content.
+ * These are filtered out during both RPC discovery and static registry paths
+ * to prevent data-leak bugs (e.g., lock state appearing as a desktop folder).
+ */
+const EXCLUDED_TABLES = new Set([
+  'sync_state',           // Distributed lock table for sync orchestration
+  'schema_migrations',    // Migration tracking (if present)
+]);
+
 // ─── Storage Constants ──────────────────────────────────────
 
 const STORAGE_BUCKET = 'system-cache';
@@ -152,40 +164,36 @@ function sortObject(obj: unknown): unknown {
 }
 
 // ─── Supabase Client Factory ────────────────────────────────
-// Requirement 3: RLS Bypassing with Service Role Key
+// Production: Service Role Key is REQUIRED for storage writes + lock management
 
-function createSyncClient(): { client: SupabaseClient; usingServiceRole: boolean } {
+function createSyncClient(): SupabaseClient {
   const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-  // Prefer service role key (bypasses RLS) → fallback to anon key
-  const SERVICE_KEY = process.env.NEXT_SUPABASE_SERVICE_ROLE_KEY;
-  const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const SUPABASE_KEY = SERVICE_KEY || ANON_KEY;
+  // Accept both env var names for compatibility
+  const SERVICE_KEY =
+    process.env.NEXT_SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!SUPABASE_URL) {
     throw new Error('[SYNC CRITICAL] Missing NEXT_PUBLIC_SUPABASE_URL in environment');
   }
 
-  if (!SUPABASE_KEY) {
-    throw new Error('[SYNC CRITICAL] Missing Supabase key. Provide NEXT_SUPABASE_SERVICE_ROLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY');
+  if (!SERVICE_KEY) {
+    throw new Error(
+      '[SYNC CRITICAL] Missing service role key. ' +
+      'Set NEXT_SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SERVICE_ROLE_KEY). ' +
+      'Anon keys cannot write to storage or manage the sync lock.'
+    );
   }
 
-  const usingServiceRole = Boolean(SERVICE_KEY);
+  console.log('[Sync] ✓ Using SERVICE_ROLE_KEY (RLS bypassed)');
 
-  if (usingServiceRole) {
-    console.log('[Sync] ✓ Using SERVICE_ROLE_KEY (RLS bypassed)');
-  } else {
-    console.warn('[SYNC WARNING] Using ANON_KEY - RLS policies may block data. Set NEXT_SUPABASE_SERVICE_ROLE_KEY for full access.');
-  }
-
-  const client = createClient(SUPABASE_URL, SUPABASE_KEY, {
+  return createClient(SUPABASE_URL, SERVICE_KEY, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
     },
   });
-
-  return { client, usingServiceRole };
 }
 
 // ─── Table Discovery ────────────────────────────────────────
@@ -196,8 +204,10 @@ async function discoverTables(supabase: SupabaseClient): Promise<string[]> {
     const { data: tables, error } = await supabase.rpc('list_public_tables');
 
     if (!error && tables && Array.isArray(tables) && tables.length > 0) {
-      const discovered = tables.map((t: { table_name: string }) => t.table_name);
-      console.log(`[Sync] Discovered ${discovered.length} tables via RPC`);
+      const discovered = tables
+        .map((t: { table_name: string }) => t.table_name)
+        .filter((name: string) => !EXCLUDED_TABLES.has(name));
+      console.log(`[Sync] Discovered ${discovered.length} tables via RPC (filtered ${tables.length - discovered.length} infrastructure tables)`);
       return discovered;
     }
   } catch {
@@ -329,7 +339,7 @@ async function uploadToStorage(
 
 export async function runSync(): Promise<void> {
   // ── Create Supabase Client (with RLS bypass if service key available) ──
-  const { client: supabase } = createSyncClient();
+  const supabase = createSyncClient();
 
   try {
     console.log('\n════════════════════════════════════════════════════════════');

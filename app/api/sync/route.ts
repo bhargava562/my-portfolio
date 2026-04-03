@@ -4,7 +4,15 @@ import { createClient } from '@supabase/supabase-js';
 
 const SYNC_SECRET = process.env.SYNC_API_SECRET;
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_SERVICE_KEY = process.env.NEXT_SUPABASE_SERVICE_ROLE_KEY;
+// Accept both env var names for compatibility
+const SUPABASE_SERVICE_KEY =
+  process.env.NEXT_SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+/** Cache-busting headers to prevent edge/CDN caching of API responses */
+const NO_CACHE_HEADERS = {
+  'Cache-Control': 'no-store, max-age=0',
+};
 
 /**
  * POST /api/sync
@@ -35,7 +43,7 @@ export async function POST(request: NextRequest) {
       console.error('[SYNC API] SYNC_API_SECRET not configured');
       return NextResponse.json(
         { success: false, error: 'Sync not configured' },
-        { status: 503 }
+        { status: 503, headers: NO_CACHE_HEADERS }
       );
     }
 
@@ -44,7 +52,7 @@ export async function POST(request: NextRequest) {
       console.warn('[SYNC API] Unauthorized sync request');
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
-        { status: 401 }
+        { status: 401, headers: NO_CACHE_HEADERS }
       );
     }
 
@@ -53,7 +61,7 @@ export async function POST(request: NextRequest) {
       console.error('[SYNC API] Supabase not configured');
       return NextResponse.json(
         { success: false, error: 'Supabase sync state not available' },
-        { status: 503 }
+        { status: 503, headers: NO_CACHE_HEADERS }
       );
     }
 
@@ -75,7 +83,7 @@ export async function POST(request: NextRequest) {
       console.error('[SYNC API] flag_sync_needed RPC failed:', flagError.message);
       return NextResponse.json(
         { success: false, error: 'Failed to flag sync' },
-        { status: 500 }
+        { status: 500, headers: NO_CACHE_HEADERS }
       );
     }
 
@@ -87,7 +95,7 @@ export async function POST(request: NextRequest) {
       console.error('[SYNC API] acquire_sync_lock RPC failed:', lockError.message);
       return NextResponse.json(
         { success: false, error: 'Failed to acquire lock' },
-        { status: 500 }
+        { status: 500, headers: NO_CACHE_HEADERS }
       );
     }
 
@@ -98,7 +106,7 @@ export async function POST(request: NextRequest) {
       console.log('[SYNC API] Lock held by another worker. Sync queued via dirty flag.');
       return NextResponse.json(
         { message: 'Sync queued' },
-        { status: 202 }
+        { status: 202, headers: NO_CACHE_HEADERS }
       );
     }
 
@@ -158,13 +166,13 @@ export async function POST(request: NextRequest) {
     // ─── Step 6: Return Success ──────────────────────────────────
     return NextResponse.json(
       { message: 'Sync complete' },
-      { status: 200 }
+      { status: 200, headers: NO_CACHE_HEADERS }
     );
   } catch (err) {
     console.error('[SYNC API] Unexpected error:', err);
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
-      { status: 500 }
+      { status: 500, headers: NO_CACHE_HEADERS }
     );
   }
 }
