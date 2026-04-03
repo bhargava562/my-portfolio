@@ -7,6 +7,7 @@
  */
 
 import type { ParsedCommand, CommandResult, ITerminalEngine, TerminalContext } from '../types';
+import { SECTION_METADATA } from '@/lib/sectionMetadata';
 
 const DATE_FIELD_PATTERNS = ['date', 'start_date', 'end_date', 'issue_date', 'created_at', 'year'];
 
@@ -49,7 +50,12 @@ export async function lsCommand(
 ): Promise<CommandResult> {
   // PATTERN 2: Use pre-fetched data from context (synchronous, O(1) lookup)
   const data = (ctx.portfolioData || {}) as Record<string, unknown>;
-  const sections = Object.keys(data).filter(k => k !== 'profile' && Array.isArray(data[k]));
+  const sections = Object.keys(data).filter(k => {
+    if (SECTION_METADATA[k]?.isHidden) return false;
+    const IGNORED_KEYS = ['profile', 'social_profiles', 'sync_state', 'ui_config', 'schema', 'schema_migrations', 'imageConfig', 'knowledge_contexts'];
+    if (IGNORED_KEYS.includes(k)) return false;
+    return Array.isArray(data[k]);
+  });
 
   // ls (no section, no date flag) → fake filesystem
   if (!cmd.section && !cmd.flags['date']) {

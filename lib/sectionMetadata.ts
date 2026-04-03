@@ -19,6 +19,7 @@ interface SectionMeta {
   type: DesktopItemType;  // 'file' | 'folder' | 'app'
   sortOrder: number;      // Lower = appears earlier on desktop grid
   appUrl?: string;        // For 'app' type items
+  isHidden?: boolean;     // Master switch to hide backend/system folders from UI
 }
 
 export interface IconOverride {
@@ -48,7 +49,14 @@ export const SECTION_METADATA: Record<string, SectionMeta> = {
   certifications:  { id: 'certifications', title: 'Certifications',    type: 'folder', sortOrder: 8 },
   awards:          { id: 'awards',         title: 'Awards',            type: 'folder', sortOrder: 9 },
   blogs:           { id: 'blogs',          title: 'Blogs',             type: 'folder', sortOrder: 10 },
-  social_profiles: { id: 'socials',        title: 'Socials',           type: 'folder', sortOrder: 11 },
+  social_profiles: { id: 'socials',        title: 'Socials',           type: 'folder', sortOrder: 11, isHidden: true },
+
+  // System explicit hidden tables
+  sync_state: { id: 'sync_state', title: "System Cache", type: 'folder', sortOrder: 99, isHidden: true },
+  profile: { id: 'profile', title: "Profile", type: 'folder', sortOrder: 99, isHidden: true },
+  ui_config: { id: 'ui_config', title: "UI Config", type: 'folder', sortOrder: 99, isHidden: true },
+  schema: { id: 'schema', title: "Schema", type: 'folder', sortOrder: 99, isHidden: true },
+  schema_migrations: { id: 'schema_migrations', title: "Schema Migrations", type: 'folder', sortOrder: 99, isHidden: true },
 };
 
 // ─── Alias Maps ──────────────────────────────────────────────
@@ -157,7 +165,13 @@ export function deriveDesktopItems(portfolioData: Record<string, unknown>): Desk
 
   // 2. Data-driven items from portfolio.json keys
   for (const key of Object.keys(portfolioData)) {
-    if (EXCLUDED_DATA_KEYS.has(key)) continue;
+    // 1. The Master Switch: If metadata explicitly says hide it, hide it.
+    if (SECTION_METADATA[key]?.isHidden) continue;
+
+    // 2. The Hardcoded Safety Net (Fallback)
+    const IGNORED_KEYS = ['profile', 'social_profiles', 'sync_state', 'ui_config', 'schema', 'schema_migrations', 'imageConfig', 'knowledge_contexts'];
+    if (IGNORED_KEYS.includes(key) || EXCLUDED_DATA_KEYS.has(key)) continue;
+
     if (!Array.isArray(portfolioData[key])) continue;
 
     const meta = SECTION_METADATA[key] || getDefaultMeta(key);
