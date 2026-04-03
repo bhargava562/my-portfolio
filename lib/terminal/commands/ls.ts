@@ -51,9 +51,14 @@ export async function lsCommand(
   // PATTERN 2: Use pre-fetched data from context (synchronous, O(1) lookup)
   const data = (ctx.portfolioData || {}) as Record<string, unknown>;
   const sections = Object.keys(data).filter(k => {
+    const lowerKey = k.toLowerCase();
+    // The Nuclear Check:
+    if (lowerKey.includes('sync')) return false;
+
     if (SECTION_METADATA[k]?.isHidden) return false;
-    const IGNORED_KEYS = ['profile', 'social_profiles', 'sync_state', 'ui_config', 'schema', 'schema_migrations', 'imageConfig', 'knowledge_contexts'];
-    if (IGNORED_KEYS.includes(k)) return false;
+    const IGNORED_KEYS = ['profile', 'social_profiles', 'ui_config', 'schema', 'schema_migrations', 'imageConfig', 'knowledge_contexts'];
+    if (IGNORED_KEYS.includes(lowerKey)) return false;
+    
     return Array.isArray(data[k]);
   });
 

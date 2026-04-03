@@ -6,7 +6,7 @@ import { motion, type PanInfo } from 'motion/react';
 import { useWindows } from './WindowManager';
 import { DesktopItem } from '@/types/desktop';
 import { YaruFolderIcon, YaruFileIcon, YaruAppIcon } from './icons/YaruIcons';
-import { STATIC_FALLBACK_ITEMS, ICON_OVERRIDES, deriveDesktopItems } from '@/lib/sectionMetadata';
+import { STATIC_FALLBACK_ITEMS, ICON_OVERRIDES, deriveDesktopItems, SECTION_METADATA } from '@/lib/sectionMetadata';
 import { getPortfolioData } from '@/lib/actions';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 
@@ -96,10 +96,29 @@ export default function Desktop() {
 
   // Chunk items into pages for mobile (dynamic based on screen size)
   const pages = useMemo(() => {
+    // 1. Nuclear Runtime Filter: Intercept right before rendering.
+    // Destroys any resurrected localStorage items or mutated keys.
+    const finalIconsToRender = desktopItems.filter(item => {
+      const id = (item.id || '').toLowerCase();
+      const title = (item.title || '').toLowerCase();
+      
+      // The Nuclear Check: Destroy anything containing 'sync'
+      if (id.includes('sync') || title.includes('sync')) return false;
+      
+      // The Metadata Check:
+      if (SECTION_METADATA[id]?.isHidden) return false;
+      
+      // Exact Hardcoded Fallbacks:
+      const IGNORED = ['profile', 'social_profiles', 'ui_config', 'schema', 'schema_migrations'];
+      if (IGNORED.includes(id)) return false;
+
+      return true;
+    });
+
     const perPage = isMobile ? itemsPerPage : 999; // Desktop shows all at once
-    const chunks = [];
-    for (let i = 0; i < desktopItems.length; i += perPage) {
-      chunks.push(desktopItems.slice(i, i + perPage));
+    const chunks: DesktopItem[][] = [];
+    for (let i = 0; i < finalIconsToRender.length; i += perPage) {
+      chunks.push(finalIconsToRender.slice(i, i + perPage));
     }
     return chunks.length === 0 ? [[]] : chunks;
   }, [desktopItems, itemsPerPage, isMobile]);
@@ -308,7 +327,12 @@ export default function Desktop() {
         paddingLeft: '80px', // Space for Sidebar
       }}
     >
-      {desktopItems.map((item) => {
+      {desktopItems
+        .filter(item => {
+          const key = (item.id || '').toString().toLowerCase();
+          return !key.includes('sync');
+        })
+        .map((item) => {
         const isSelected = selectedItems.includes(item.id);
 
         return (
