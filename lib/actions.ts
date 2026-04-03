@@ -6,13 +6,13 @@ const PORTFOLIO_CACHE_TTL_MS = 60_000; // 60 seconds
 let uiConfigPromise: Promise<Record<string, unknown>> | null = null;
 
 // Resilient fetch wrapper with timeout and exponential backoff
-async function fetchWithRetry(url: string, retries = 3, timeoutMs = 5000): Promise<Response> {
+async function fetchWithRetry(url: string, retries = 3, timeoutMs = 5000, options: RequestInit = {}): Promise<Response> {
   for (let i = 0; i < retries; i++) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      const res = await fetch(url, { signal: controller.signal });
+      const res = await fetch(url, { ...options, signal: controller.signal });
       clearTimeout(timeoutId);
       if (res.ok) return res;
       throw new Error(`HTTP ${res.status}`);
@@ -50,7 +50,8 @@ export function getPortfolioData(): Promise<Record<string, unknown>> {
     const url = `${baseUrl}?t=${now}`;
 
     portfolioCacheTime = now;
-    portfolioPromise = fetchWithRetry(url)
+    // Explicitly bypass browser disk cache completely using native APIs
+    portfolioPromise = fetchWithRetry(url, 3, 5000, { cache: 'no-store' })
       .then(res => res.json())
       .catch(error => {
         console.error("❌ Failed to fetch portfolio JSON from Supabase Storage:", error);

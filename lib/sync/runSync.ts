@@ -328,6 +328,7 @@ async function uploadToStorage(
     .upload(fileName, content, {
       contentType,
       upsert: true,
+      cacheControl: 'no-cache, no-store, must-revalidate',
     });
 
   if (error) {
