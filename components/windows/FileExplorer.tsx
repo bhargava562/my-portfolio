@@ -28,7 +28,7 @@ export default function FileExplorer({ windowId, rootItems, initialPath = '/', o
                 navigateWindow(windowId, initialPath);
             }
         }
-    }, []);
+    }, [currentPath, initialPath, navigateWindow, windowId]);
 
     // Helper to resolve items at current path
     const getItemsAtPath = (path: string, root: DesktopItem[]): DesktopItem[] => {

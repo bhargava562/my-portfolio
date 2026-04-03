@@ -196,7 +196,7 @@ async function discoverTables(supabase: SupabaseClient): Promise<string[]> {
       console.log(`[Sync] Discovered ${discovered.length} tables via RPC`);
       return discovered;
     }
-  } catch (err) {
+  } catch {
     console.warn('[SYNC WARNING] RPC list_public_tables failed, using static registry');
   }
 

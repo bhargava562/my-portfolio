@@ -140,3 +140,66 @@ body {
   scrollbar-width: thin;
   scrollbar-color: #d1d5db #f5f5f4;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   CHALLENGE 2: Backdrop-Filter Fallbacks for Legacy Browsers (Windows 7/XP)
+   ═══════════════════════════════════════════════════════════════════════════════
+
+   Problem: backdrop-filter: blur() causes heavy lag on systems without GPU acceleration
+   Solution: Use @supports to detect GPU blur support, fallback to solid opaque color
+
+   Affected browsers:
+   - Windows 7/XP: No GPU acceleration for blur
+   - Old mobile devices: Limited GPU memory
+   - VirtualBox/VM environments: Software rendering only
+*/
+
+/* Blur-backed components with fallback */
+@supports (backdrop-filter: blur(10px)) {
+  /* Modern browsers with GPU acceleration - use blur */
+  .backdrop-blur {
+    backdrop-filter: blur(10px);
+    background-color: rgba(30, 30, 30, 0.7);
+  }
+
+  .backdrop-blur-sm {
+    backdrop-filter: blur(4px);
+    background-color: rgba(30, 30, 30, 0.6);
+  }
+
+  .backdrop-blur-md {
+    backdrop-filter: blur(12px);
+    background-color: rgba(30, 30, 30, 0.75);
+  }
+
+  .backdrop-blur-lg {
+    backdrop-filter: blur(20px);
+    background-color: rgba(30, 30, 30, 0.8);
+  }
+}
+
+@supports not (backdrop-filter: blur(10px)) {
+  /* Fallback for legacy browsers - solid opaque background */
+  .backdrop-blur {
+    background-color: rgba(30, 30, 30, 0.92);
+  }
+
+  .backdrop-blur-sm {
+    background-color: rgba(30, 30, 30, 0.88);
+  }
+
+  .backdrop-blur-md {
+    background-color: rgba(30, 30, 30, 0.94);
+  }
+
+  .backdrop-blur-lg {
+    background-color: rgba(30, 30, 30, 0.96);
+  }
+}
+
+/* Tailwind-generated backdrop classes fallback */
+@supports (not (-webkit-backdrop-filter: blur(1px))) and (not (backdrop-filter: blur(1px))) {
+  [class*="backdrop-blur"] {
+    background-color: rgba(30, 30, 30, 0.92) !important;
+  }
+}

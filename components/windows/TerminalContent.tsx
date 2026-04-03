@@ -14,7 +14,7 @@ import { TerminalEngine, OutputLine } from '@/lib/terminal/terminalEngine';
 import { useWindows } from '@/components/WindowManager';
 import { getComponent } from '@/components/ComponentRegistry';
 import { getPortfolioData } from '@/lib/actions';
-import { getTerminalState, setTerminalEngine, clearTerminalState, hasTerminalState } from '@/lib/terminal/terminalStateStore';
+import { getTerminalState, setTerminalEngine, hasTerminalState } from '@/lib/terminal/terminalStateStore';
 
 // Memoized output line (read-only lines)
 const TerminalLine = memo(function TerminalLine({ line }: { line: OutputLine }) {
@@ -44,7 +44,6 @@ const TerminalLine = memo(function TerminalLine({ line }: { line: OutputLine }) 
 // This is memoized so typing NEVER causes parent re-renders
 const TerminalInput = memo(function TerminalInput({
   isStreaming,
-  isFocused,
   onFocus,
   onBlur,
   onSubmit,
@@ -52,7 +51,6 @@ const TerminalInput = memo(function TerminalInput({
   onTerminalClick,
 }: {
   isStreaming: boolean;
-  isFocused: boolean;
   onFocus: () => void;
   onBlur: () => void;
   onSubmit: (command: string) => void;
@@ -128,7 +126,7 @@ const TerminalInput = memo(function TerminalInput({
 export default function TerminalContent({ windowId }: { windowId?: string }) {
   const [lines, setLines] = useState<OutputLine[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
-  const [isFocused, setIsFocused] = useState(true);
+  const [, setIsFocused] = useState(true);
 
   const { openWindow } = useWindows();
   const engineRef = useRef<TerminalEngine | null>(null);
@@ -211,8 +209,8 @@ export default function TerminalContent({ windowId }: { windowId?: string }) {
           engineRef.current.context.portfolioData = portDataRef.current;
         }
         // Restore React state immediately from global store
-        if (state.lines) setLines([...state.lines]);
-        if (state.isStreaming !== undefined) setIsStreaming(state.isStreaming);
+        // Restore React state via syncState callback instead of calling setState directly
+        syncState();
         return;
       }
     }
@@ -329,7 +327,6 @@ export default function TerminalContent({ windowId }: { windowId?: string }) {
         {activePrompt && (
           <TerminalInput
             isStreaming={isStreaming}
-            isFocused={isFocused}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             onSubmit={handleCommandSubmit}

@@ -41,7 +41,7 @@ const WindowContext = createContext<WindowContextType | undefined>(undefined);
 export function WindowProvider({ children }: { children: ReactNode }) {
   const [windows, setWindows] = useState<WindowData[]>([]);
   const [activeWindowId, setActiveWindowId] = useState<string | null>(null);
-  const [nextZIndex, setNextZIndex] = useState(BASE_Z_INDEX + 1);
+  const [, setNextZIndex] = useState(BASE_Z_INDEX + 1);
 
   const openWindow = useCallback((windowData: Omit<WindowData, 'isMinimized' | 'isMaximized' | 'position' | 'size' | 'baseId' | 'zIndex'> & { allowMultiple?: boolean }) => {
     setWindows(prev => {

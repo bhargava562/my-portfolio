@@ -74,7 +74,7 @@ function Screenshot({ src, alt }: { src: string; alt: string }) {
  * - Suspense shows skeleton while this component loads
  * - Media streams in without blocking text paint
  */
-export default function ProjectMediaGallery({ demoVideoUrl, screenshots, imageUrl, title }: Props) {
+export default function ProjectMediaGallery({ demoVideoUrl, screenshots, title }: Props) {
   const media = demoVideoUrl ? getEmbedUrl(demoVideoUrl) : null;
   const screenshotList = Array.isArray(screenshots) ? screenshots.filter(Boolean) : [];
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 /**
  * Custom hook to detect media query matches (e.g., mobile, tablet breakpoints).
@@ -8,31 +8,32 @@ import { useState, useEffect } from 'react';
  * Safe for extension-injected attributes because it reads matchMedia, not DOM attrs.
  */
 export function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
+  // Lazy initializer: read matchMedia only on client, false on server
+  const [matches, setMatches] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia(query).matches;
+  });
+
+  const handleChange = useCallback((e: MediaQueryListEvent) => {
+    setMatches(e.matches);
+  }, []);
 
   useEffect(() => {
-    // Ensure we only run on client after hydration
-    setIsMounted(true);
-
     const mediaQueryList = window.matchMedia(query);
 
-    // Set initial value
-    setMatches(mediaQueryList.matches);
+    // If the query changed, the initial lazy state may be stale.
+    // Use requestAnimationFrame to avoid synchronous setState in effect body
+    const rafId = requestAnimationFrame(() => {
+      setMatches(mediaQueryList.matches);
+    });
 
-    // Listen for changes
-    const handler = (e: MediaQueryListEvent) => {
-      setMatches(e.matches);
-    };
-
-    // Modern browsers: addEventListener
-    mediaQueryList.addEventListener('change', handler);
+    mediaQueryList.addEventListener('change', handleChange);
 
     return () => {
-      mediaQueryList.removeEventListener('change', handler);
+      cancelAnimationFrame(rafId);
+      mediaQueryList.removeEventListener('change', handleChange);
     };
-  }, [query]);
+  }, [query, handleChange]);
 
-  // Return false during SSR, true/false after hydration
-  return isMounted && matches;
+  return matches;
 }

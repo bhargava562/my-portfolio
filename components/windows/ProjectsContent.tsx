@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowRight, Star, ChevronLeft, FolderGit2, Code2, Zap, Users } from "lucide-react";
+import { ArrowRight, Star, ChevronLeft, FolderGit2, Code2 } from "lucide-react";
 import { getProjects } from "@/lib/actions";
 import ProjectDetailView, { type ProjectNode } from "./ProjectDetailView";
 
