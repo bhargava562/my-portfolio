@@ -76,8 +76,16 @@ export function getUiConfigData(): Promise<Record<string, unknown>> {
   return uiConfigPromise;
 }
 
+const INVALID_PATH_STRINGS = ['null', 'undefined', 'sample', 'none', 'empty'];
+
 export function getImageUrl(path: string | null): string {
-    if (!path) return '';
+    const fallback = '/linux-placeholder.webp';
+    if (!path) return fallback;
+    
+    // Proactive validation: if path matches common "bad data" strings, return fallback immediately
+    const lowerPath = path.toLowerCase().trim();
+    if (INVALID_PATH_STRINGS.includes(lowerPath)) return fallback;
+
     if (path.startsWith('http') || path.startsWith('/')) return path;
 
     const storageUrl = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_URL;
@@ -85,7 +93,7 @@ export function getImageUrl(path: string | null): string {
 
     if (!storageUrl) {
         console.warn('[actions] NEXT_PUBLIC_SUPABASE_STORAGE_URL not set');
-        return '';
+        return fallback;
     }
 
     const baseUrl = storageUrl.endsWith('/') ? storageUrl : `${storageUrl}/`;

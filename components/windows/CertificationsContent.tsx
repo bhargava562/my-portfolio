@@ -34,13 +34,13 @@ function CertViewerContent({ imageUrl, alt }: { imageUrl: string; alt: string })
   const [failed, setFailed] = useState(false);
 
   return (
-    <div className="w-full h-full bg-[#1E1E1E] flex flex-col items-center justify-center p-2">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+    <div className="w-full h-full bg-[#1E1E1E] flex flex-col items-center justify-center p-2 relative">
+      <Image
         src={src}
         alt={alt}
-        className="max-w-full max-h-full object-contain"
-        loading="eager"
+        fill
+        className="object-contain"
+        priority
         onError={() => {
           if (!failed) {
             setFailed(true);
@@ -49,7 +49,9 @@ function CertViewerContent({ imageUrl, alt }: { imageUrl: string; alt: string })
         }}
       />
       {failed && (
-        <p className="text-gray-500 text-xs mt-2">Failed to load certificate image</p>
+        <div className="absolute bottom-4 left-0 right-0 text-center">
+            <p className="text-gray-500 text-xs bg-black/50 py-1 px-2 rounded-full inline-block">Failed to load certificate image</p>
+        </div>
       )}
     </div>
   );

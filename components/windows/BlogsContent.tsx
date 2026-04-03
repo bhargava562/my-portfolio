@@ -18,12 +18,9 @@ interface BlogData {
 
 export default function BlogsContent() {
     const [blogs, setBlogs] = useState<BlogData[]>([]);
-    const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
-    const [imgTimeouts, setImgTimeouts] = useState<Record<string, boolean>>({});
     const [fallbackImages, setFallbackImages] = useState<Record<string, boolean>>({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const timeoutRefs = useState<Record<string, NodeJS.Timeout>>(() => ({}))[0];
 
     useEffect(() => {
         getBlogs()
@@ -36,12 +33,7 @@ export default function BlogsContent() {
                 setError('Failed to load blogs.');
                 setLoading(false);
             });
-
-        // Cleanup timeouts on unmount
-        return () => {
-            Object.values(timeoutRefs).forEach(timeout => clearTimeout(timeout));
-        };
-    }, [timeoutRefs]);
+    }, []);
 
     const formatDate = (date: Date | string | null) => {
         if (!date) return '';
@@ -108,7 +100,7 @@ export default function BlogsContent() {
             <div className="space-y-3 @sm:space-y-4 @md:space-y-5 @lg:space-y-6">
                 {blogs.map((blog) => (
                     <div key={blog.id} className="flex flex-col @2xl:flex-row bg-[#2C2C2C] rounded-lg overflow-hidden border border-[#3E3E3E] group hover:border-blue-400/50 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10">
-                        {blog.cover_image_path && !imgErrors[blog.id] && !imgTimeouts[blog.id] ? (
+                        {blog.cover_image_path ? (
                             <div className="w-full @2xl:w-56 h-36 @sm:h-44 @md:h-52 @2xl:h-auto relative bg-gray-800 shrink-0">
                                 <Image
                                     src={fallbackImages[blog.id] ? '/linux-placeholder.webp' : getImageUrl(blog.cover_image_path)}
@@ -116,39 +108,12 @@ export default function BlogsContent() {
                                     fill
                                     sizes="(max-width: 768px) 100vw, 224px"
                                     className="object-cover group-hover:scale-105 transition-transform duration-500"
-                                    onLoadingComplete={() => {
-                                        // Only run on client
-                                        if (typeof window === 'undefined') return;
-                                        if (timeoutRefs[blog.id]) {
-                                            clearTimeout(timeoutRefs[blog.id]);
-                                            delete timeoutRefs[blog.id];
-                                        }
+                                    onLoad={(event) => {
+                                        const img = event.target as HTMLImageElement;
+                                        if (img.src.includes('linux-placeholder.webp')) return;
                                     }}
                                     onError={() => {
-                                        // Only run on client
-                                        if (typeof window === 'undefined') return;
-                                        if (timeoutRefs[blog.id]) {
-                                            clearTimeout(timeoutRefs[blog.id]);
-                                            delete timeoutRefs[blog.id];
-                                        }
-                                        // First try fallback image
-                                        if (!fallbackImages[blog.id]) {
-                                            console.warn(`[BlogsContent] Primary image failed for blog: ${blog.title}, using fallback`);
-                                            setFallbackImages(prev => ({ ...prev, [blog.id]: true }));
-                                        } else {
-                                            // If fallback also fails, mark as error
-                                            console.warn(`[BlogsContent] Fallback image also failed for blog: ${blog.title}`);
-                                            setImgErrors(prev => ({ ...prev, [blog.id]: true }));
-                                        }
-                                    }}
-                                    onLoadStart={() => {
-                                        // Only run on client
-                                        if (typeof window === 'undefined') return;
-                                        // Set 10 second timeout for image loading
-                                        timeoutRefs[blog.id] = setTimeout(() => {
-                                            console.warn(`[BlogsContent] Image load timeout for blog: ${blog.title}`);
-                                            setImgTimeouts(prev => ({ ...prev, [blog.id]: true }));
-                                        }, 10000);
+                                        setFallbackImages(prev => ({ ...prev, [blog.id]: true }));
                                     }}
                                 />
                             </div>

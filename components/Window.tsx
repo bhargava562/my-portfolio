@@ -198,7 +198,7 @@ const WindowFrame = memo(function WindowFrame({ children, windowData, isActive, 
       </div>
 
       {/* Window Content */}
-      <div className="flex-1 overflow-auto bg-white relative cursor-default">
+      <div className="flex-1 overflow-auto bg-[#1a1c23] h-full relative cursor-default">
         {children}
       </div>
     </div>

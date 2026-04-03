@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Calendar, MapPin } from 'lucide-react';
 import Image from 'next/image';
-import { getExperiences } from '@/lib/actions';
+import { getExperiences, getImageUrl } from '@/lib/actions';
 
 interface ExperienceData {
     id: number;
@@ -25,6 +25,7 @@ interface DynamicMediaCarouselProps {
 
 function DynamicMediaCarousel({ images }: DynamicMediaCarouselProps) {
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [failedImages, setFailedImages] = useState<Record<number, boolean>>({});
 
     // Return null if no images
     if (!images || (Array.isArray(images) && images.length === 0)) {
@@ -33,14 +34,23 @@ function DynamicMediaCarousel({ images }: DynamicMediaCarouselProps) {
 
     const imageArray = Array.isArray(images) ? images : [images];
 
+    const getSafeSrc = (idx: number) => {
+        if (failedImages[idx]) return '/linux-placeholder.webp';
+        // Note: Hackathons used getImageUrl, here we check if its a full URL or path
+        const path = imageArray[idx];
+        if (path.startsWith('http') || path.startsWith('/')) return path;
+        return getImageUrl(path);
+    };
+
     if (imageArray.length === 1) {
         return (
             <div className="relative w-full h-48 @sm:h-56 @md:h-64 rounded-lg overflow-hidden shadow-md flex-shrink-0">
                 <Image
-                    src={imageArray[0]}
+                    src={getSafeSrc(0)}
                     alt="Experience media"
                     fill
                     className="object-cover hover:scale-105 transition-transform duration-500"
+                    onError={() => setFailedImages(prev => ({ ...prev, [0]: true }))}
                 />
             </div>
         );
@@ -51,10 +61,11 @@ function DynamicMediaCarousel({ images }: DynamicMediaCarouselProps) {
         <div className="flex flex-col gap-2 @sm:gap-2.5">
             <div className="relative w-full h-48 @sm:h-56 @md:h-64 rounded-lg overflow-hidden shadow-md flex-shrink-0">
                 <Image
-                    src={imageArray[currentIndex]}
+                    src={getSafeSrc(currentIndex)}
                     alt={`Experience media ${currentIndex + 1}`}
                     fill
                     className="object-cover hover:scale-105 transition-transform duration-500"
+                    onError={() => setFailedImages(prev => ({ ...prev, [currentIndex]: true }))}
                 />
             </div>
             {/* Carousel Controls */}

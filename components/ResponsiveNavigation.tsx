@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { Home, Trash2, File, Globe } from 'lucide-react';
 import Image from 'next/image';
 import { useWindows } from './WindowManager';
@@ -12,8 +12,11 @@ interface DockItem {
   label: string;
 }
 
+import { useIsMounted } from '@/hooks/useIsMounted';
+
 export default memo(function ResponsiveNavigation() {
   const { openWindow, windows, minimizeWindow, activeWindowId, setActiveWindow } = useWindows();
+  const isMounted = useIsMounted();
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   // Build dock items once, memoized
@@ -61,6 +64,12 @@ export default memo(function ResponsiveNavigation() {
       setActiveWindow(app.id);
     }
   };
+
+  // ZERO-SSR: Return null on server and initial hydration pass
+  // Must be placed AFTER all hooks (useWindows, useMemo, etc.) to follow React rules.
+  if (!isMounted) {
+    return null;
+  }
 
   // Desktop layout: fixed left sidebar
   if (!isMobile) {

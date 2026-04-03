@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import QuickSettings from './QuickSettings';
 import CalendarDropdown from './CalendarDropdown';
 import { useBoot } from '@/hooks/useBootState';
+import { useIsMounted } from '@/hooks/useIsMounted';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 export default function TopBar() {
@@ -13,8 +14,7 @@ export default function TopBar() {
   const [showCalendar, setShowCalendar] = useState(false);
 
   const { lockDesktop } = useBoot();
-
-  // Hide topbar on mobile
+  const isMounted = useIsMounted();
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   const [dateString, setDateString] = useState<string>('');
@@ -40,8 +40,8 @@ export default function TopBar() {
     return () => clearInterval(interval);
   }, []);
 
-  // Hide on mobile
-  if (isMobile) {
+  // ZERO-SSR: Return null on server and initial hydration pass
+  if (!isMounted || isMobile) {
     return null;
   }
 

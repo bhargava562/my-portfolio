@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Trophy, Calendar, MapPin } from 'lucide-react';
 import Image from 'next/image';
-import { getHackathons } from '@/lib/actions';
+import { getHackathons, getImageUrl } from '@/lib/actions';
 
 interface HackathonData {
     id: string;
@@ -24,6 +24,7 @@ interface DynamicMediaCarouselProps {
 
 function DynamicMediaCarousel({ images }: DynamicMediaCarouselProps) {
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [failedImages, setFailedImages] = useState<Record<number, boolean>>({});
 
     // Return null if no images
     if (!images || (Array.isArray(images) && images.length === 0)) {
@@ -32,59 +33,69 @@ function DynamicMediaCarousel({ images }: DynamicMediaCarouselProps) {
 
     const imageArray = Array.isArray(images) ? images : [images];
 
+    const getSafeSrc = (idx: number) => {
+        if (failedImages[idx]) return '/linux-placeholder.webp';
+        return getImageUrl(imageArray[idx]);
+    };
+
     if (imageArray.length === 1) {
         return (
-            <div className="relative w-full h-48 @sm:h-56 @md:h-64 rounded-lg overflow-hidden shadow-lg flex-shrink-0 border border-violet-500/30">
+            <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-lg flex-shrink-0 border border-violet-500/30 group/media">
                 <Image
-                    src={imageArray[0]}
+                    src={getSafeSrc(0)}
                     alt="Hackathon media"
                     fill
-                    className="object-cover hover:scale-105 transition-transform duration-500"
+                    className="object-cover group-hover/media:scale-105 transition-transform duration-500"
+                    onError={() => setFailedImages(prev => ({ ...prev, [0]: true }))}
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
             </div>
         );
     }
 
     // Multi-image carousel
     return (
-        <div className="flex flex-col gap-2 @sm:gap-2.5">
-            <div className="relative w-full h-48 @sm:h-56 @md:h-64 rounded-lg overflow-hidden shadow-lg flex-shrink-0 border border-violet-500/30">
+        <div className="flex flex-col gap-2 @sm:gap-3 group/carousel">
+            <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-lg flex-shrink-0 border border-violet-500/30">
                 <Image
-                    src={imageArray[currentIndex]}
+                    src={getSafeSrc(currentIndex)}
                     alt={`Hackathon media ${currentIndex + 1}`}
                     fill
-                    className="object-cover hover:scale-105 transition-transform duration-500"
+                    className="object-cover transition-opacity duration-300"
+                    onError={() => setFailedImages(prev => ({ ...prev, [currentIndex]: true }))}
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
             </div>
-            {/* Carousel Controls */}
-            <div className="flex items-center justify-between gap-2 @sm:gap-3">
-                <button
-                    onClick={() => setCurrentIndex((prev) => (prev === 0 ? imageArray.length - 1 : prev - 1))}
-                    className="px-2 @sm:px-3 py-1 @sm:py-1.5 text-[10px] @sm:text-xs rounded bg-violet-600/20 text-violet-300 hover:bg-violet-600/40 transition-colors font-medium border border-violet-500/30"
-                >
-                    ← Prev
-                </button>
-                <span className="text-[9px] @sm:text-[10px] text-violet-400 whitespace-nowrap">
-                    {currentIndex + 1} / {imageArray.length}
-                </span>
-                <button
-                    onClick={() => setCurrentIndex((prev) => (prev === imageArray.length - 1 ? 0 : prev + 1))}
-                    className="px-2 @sm:px-3 py-1 @sm:py-1.5 text-[10px] @sm:text-xs rounded bg-violet-600/20 text-violet-300 hover:bg-violet-600/40 transition-colors font-medium border border-violet-500/30"
-                >
-                    Next →
-                </button>
-            </div>
-            {/* Scroll-snap dots */}
-            <div className="flex justify-center gap-1.5">
-                {imageArray.map((_, idx) => (
+            {/* Carousel Controls - Sleeker, more minimal */}
+            <div className="flex items-center justify-between gap-3 px-1">
+                <div className="flex gap-1.5">
+                    {imageArray.map((_, idx) => (
+                        <button
+                            key={idx}
+                            onClick={() => setCurrentIndex(idx)}
+                            className={`h-1.5 rounded-full transition-all duration-300 ${
+                                idx === currentIndex ? 'bg-violet-500 w-6' : 'bg-violet-500/30 w-1.5 hover:bg-violet-500/50'
+                            }`}
+                            aria-label={`Go to slide ${idx + 1}`}
+                        />
+                    ))}
+                </div>
+                <div className="flex items-center gap-2">
                     <button
-                        key={idx}
-                        onClick={() => setCurrentIndex(idx)}
-                        className={`w-2 h-2 rounded-full transition-all ${
-                            idx === currentIndex ? 'bg-violet-500 w-6' : 'bg-violet-500/40'
-                        }`}
-                    />
-                ))}
+                        onClick={() => setCurrentIndex((prev) => (prev === 0 ? imageArray.length - 1 : prev - 1))}
+                        className="p-1 @sm:p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-violet-300 transition-colors border border-white/5"
+                    >
+                        <span className="sr-only">Previous</span>
+                        <svg className="w-3 h-3 @sm:w-4 @sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
+                    </button>
+                    <button
+                        onClick={() => setCurrentIndex((prev) => (prev === imageArray.length - 1 ? 0 : prev + 1))}
+                        className="p-1 @sm:p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-violet-300 transition-colors border border-white/5"
+                    >
+                        <span className="sr-only">Next</span>
+                        <svg className="w-3 h-3 @sm:w-4 @sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -130,7 +141,7 @@ export default function HackathonsContent() {
     }
 
     return (
-        <div className="flex-1 p-2 @sm:p-3 @md:p-4 @lg:p-6 @xl:p-8 overflow-auto text-white bg-gradient-to-br from-[#0f0f12] to-[#1a1a1f] @container">
+        <div className="flex-1 p-3 @sm:p-4 @md:p-6 @lg:p-8 overflow-auto text-white bg-gradient-to-br from-[#0f0f12] to-[#1a1a1f] @container h-full scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10 hover:scrollbar-thumb-white/20 transition-all">
             {/* Header */}
             <div className="flex items-center gap-2 @sm:gap-2.5 @md:gap-3 mb-4 @sm:mb-6 @md:mb-8">
                 <Trophy className="w-5 h-5 @sm:w-6 @sm:h-6 @md:w-8 @md:h-8 text-violet-500 flex-shrink-0" />
@@ -157,13 +168,13 @@ export default function HackathonsContent() {
                         {/* Content relative z */}
                         <div className="relative z-10">
                             {/* Header: Name + Position Badge */}
-                            <div className="flex items-start justify-between gap-2 @sm:gap-3 mb-2 @sm:mb-3 @md:mb-4">
+                            <div className="flex flex-col @sm:flex-row items-start justify-between gap-3 mb-3 @sm:mb-4">
                                 <div className="flex-1 min-w-0">
-                                    <h3 className="font-bold text-sm @sm:text-base @md:text-lg @lg:text-xl text-white group-hover:text-violet-300 transition-colors">
+                                    <h3 className="font-bold text-base @sm:text-lg @md:text-xl text-white group-hover:text-violet-300 transition-colors leading-tight">
                                         {hack.name}
                                     </h3>
                                     {hack.organizer && (
-                                        <p className="text-[9px] @sm:text-[10px] @md:text-xs text-gray-400 mt-0.5 @sm:mt-1 truncate">
+                                        <p className="text-[10px] @sm:text-xs text-gray-400 mt-1 truncate">
                                             by {hack.organizer}
                                         </p>
                                     )}
@@ -171,11 +182,11 @@ export default function HackathonsContent() {
 
                                 {/* Trophy Badge - Position */}
                                 {hack.position && (
-                                    <div className="flex-shrink-0">
-                                        <div className="relative px-2 @sm:px-3 @md:px-4 py-1 @sm:py-1.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-lg shadow-lg shadow-violet-500/50 border border-violet-400/50">
-                                            <div className="flex items-center gap-1 whitespace-nowrap">
-                                                <Trophy className="w-3 h-3 @sm:w-3.5 @sm:h-3.5 @md:w-4 @md:h-4 text-yellow-300" />
-                                                <span className="text-[8px] @sm:text-[9px] @md:text-[10px] font-bold text-white uppercase tracking-wider">
+                                    <div className="flex-shrink-0 self-start">
+                                        <div className="relative px-3 py-1 @sm:py-1.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-lg shadow-lg shadow-violet-500/30 border border-violet-400/30">
+                                            <div className="flex items-center gap-1.5 whitespace-nowrap">
+                                                <Trophy className="w-3.5 h-3.5 @sm:w-4 @sm:h-4 text-yellow-300" />
+                                                <span className="text-[9px] @sm:text-[10px] font-bold text-white uppercase tracking-wider">
                                                     {hack.position}
                                                 </span>
                                             </div>
