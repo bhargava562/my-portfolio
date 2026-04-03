@@ -55,6 +55,8 @@ const nextConfig: NextConfig = {
           "img-src 'self' data: https: blob:",
           "font-src 'self' data: https:",
           "connect-src 'self' https: wss:",
+          "frame-src https://www.youtube.com https://player.vimeo.com https://drive.google.com",
+          "media-src 'self' https: blob:",
           "frame-ancestors 'none'",
           "base-uri 'self'",
           "form-action 'self'",
@@ -101,10 +103,10 @@ const nextConfig: NextConfig = {
       },
 
       // ─── Additional Hardening ───
-      {
-        key: 'Cross-Origin-Embedder-Policy',
-        value: 'require-corp',
-      },
+      // NOTE: Cross-Origin-Embedder-Policy (COEP) `require-corp` is intentionally
+      // omitted — it blocks all cross-origin resources (Supabase Storage images,
+      // external fonts, etc.) that don't serve a Cross-Origin-Resource-Policy header,
+      // which is outside our control. CSP + X-Frame-Options already prevent XSS/clickjacking.
       {
         key: 'Cross-Origin-Opener-Policy',
         value: 'same-origin',

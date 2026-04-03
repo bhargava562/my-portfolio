@@ -68,15 +68,8 @@ export const BootProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return;
     }
 
-    // Preload critical static assets via link[rel=preload] for instant desktop responsiveness
-    if (!document.querySelector('link[href="/photos.webp"][rel="preload"]')) {
-      const preloadLink = document.createElement('link');
-      preloadLink.rel = 'preload';
-      preloadLink.as = 'image';
-      preloadLink.href = '/photos.webp';
-      preloadLink.setAttribute('fetchpriority', 'high');
-      document.head.appendChild(preloadLink);
-    }
+    // Note: photos.webp preload removed — it's only used by cert-viewer windows
+    // and preloading it during boot causes 'not used within a few seconds' warnings.
 
     // Dynamic Data Prime Sequence (only runs on fresh boot)
     import('@/lib/actions').then(({ getPortfolioData, getUiConfigData, getImageUrl }) => {

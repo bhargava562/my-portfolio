@@ -87,9 +87,9 @@ export default memo(function ResponsiveNavigation() {
                 {/* Icon */}
                 <div className={`w-12 h-12 flex items-center justify-center rounded-lg transition-all ${isActive ? 'bg-white/20' : (isOpen ? 'bg-white/5' : 'hover:bg-white/10')}`}>
                   {app.id === 'terminal' || app.id.startsWith('terminal-') ? (
-                    <Image src="/terminal.webp" alt="Terminal" width={24} height={24} />
+                    <Image src="/terminal.webp" alt="Terminal" width={24} height={24} style={{ width: 'auto', height: 'auto' }} />
                   ) : app.id.startsWith('cert-viewer-') ? (
-                    <Image src="/photos.webp" alt={app.label} width={24} height={24} className="rounded" />
+                    <Image src="/photos.webp" alt={app.label} width={24} height={24} style={{ width: 'auto', height: 'auto' }} className="rounded" />
                   ) : (
                     <Icon className="w-6 h-6 text-white" />
                   )}

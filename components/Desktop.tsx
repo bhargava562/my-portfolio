@@ -24,7 +24,7 @@ function renderIcon(item: DesktopItem) {
     if (override.fill) {
       return <Image src={override.src} alt={item.title} fill sizes="48px" className={override.className} priority={override.priority} />;
     }
-    return <Image src={override.src} alt={item.title} width={48} height={48} className={override.className} priority={override.priority} />;
+    return <Image src={override.src} alt={item.title} width={48} height={48} className={override.className} priority={override.priority} style={{ width: 'auto', height: 'auto' }} />;
   }
 
   // 2. Fall back to type-based Yaru SVG icon (O(1))

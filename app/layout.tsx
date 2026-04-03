@@ -5,7 +5,7 @@ import "./globals.css";
 const ubuntu = Ubuntu({
   variable: "--font-ubuntu",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "700"],
+  weight: ["400", "500", "700"],
 });
 
 const ubuntuMono = Ubuntu_Mono({
