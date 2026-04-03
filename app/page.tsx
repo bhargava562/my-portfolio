@@ -12,9 +12,6 @@ import { BootProvider } from "@/hooks/useBootState";
 // Dynamic import Desktop with ssr: false to prevent hydration mismatch
 const Desktop = nextDynamic(() => import("@/components/Desktop"), { ssr: false });
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
 export default function Home() {
   return (
     <BootProvider>
