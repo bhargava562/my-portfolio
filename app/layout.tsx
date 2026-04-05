@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Ubuntu, Ubuntu_Mono } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const ubuntu = Ubuntu({
   variable: "--font-ubuntu",
@@ -45,6 +46,7 @@ export default function RootLayout({
         <div id="boot-fallback"></div>
         {children}
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
