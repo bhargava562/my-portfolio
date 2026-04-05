@@ -117,7 +117,7 @@ export default function Desktop() {
       if (SECTION_METADATA[id]?.isHidden) return false;
       
       // Exact Hardcoded Fallbacks:
-      const IGNORED = ['profile', 'social_profiles', 'ui_config', 'schema', 'schema_migrations'];
+      const IGNORED = ['profile', 'ui_config', 'schema', 'schema_migrations'];
       if (IGNORED.includes(id)) return false;
 
       return true;
