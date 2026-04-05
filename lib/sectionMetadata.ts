@@ -49,7 +49,7 @@ export const SECTION_METADATA: Record<string, SectionMeta> = {
   certifications:  { id: 'certifications', title: 'Certifications',    type: 'folder', sortOrder: 8 },
   awards:          { id: 'awards',         title: 'Awards',            type: 'folder', sortOrder: 9 },
   blogs:           { id: 'blogs',          title: 'Blogs',             type: 'folder', sortOrder: 10 },
-  social_profiles: { id: 'socials',        title: 'Socials',           type: 'folder', sortOrder: 11, isHidden: true },
+  social_profiles: { id: 'socials',        title: 'Socials',           type: 'folder', sortOrder: 11 },
 
   // System explicit hidden tables
   sync_state: { id: 'sync_state', title: "System Cache", type: 'folder', sortOrder: 99, isHidden: true },
@@ -169,7 +169,7 @@ export function deriveDesktopItems(portfolioData: Record<string, unknown>): Desk
     if (SECTION_METADATA[key]?.isHidden) continue;
 
     // 2. The Hardcoded Safety Net (Fallback)
-    const IGNORED_KEYS = ['profile', 'social_profiles', 'sync_state', 'ui_config', 'schema', 'schema_migrations', 'imageConfig', 'knowledge_contexts'];
+    const IGNORED_KEYS = ['profile', 'sync_state', 'ui_config', 'schema', 'schema_migrations', 'imageConfig', 'knowledge_contexts'];
     if (IGNORED_KEYS.includes(key) || EXCLUDED_DATA_KEYS.has(key)) continue;
 
     if (!Array.isArray(portfolioData[key])) continue;
